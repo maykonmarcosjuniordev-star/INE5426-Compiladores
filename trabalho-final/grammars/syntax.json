@@ -1,6 +1,7 @@
 [
   ["PROGRAM", ["STATEMENT", "FUNCLIST", "''"]],
-  ["FUNCLIST", ["FUNCDEF FUNCLIST", "FUNCDEF"]],
+  ["FUNCLIST", ["FUNCDEF FUNCLIST'"]],
+  ["FUNCLIST'", ["FUNCDEF FUNCLIST'", "''"]],
   ["FUNCDEF", ["kw_def id lparenthesis PARAMLIST rparenthesis rbrace STATELIST lbrace"]],
   ["PARAMLIST", ["VAR_TYPE id PARAMLIST'"]],
   ["PARAMLIST'", ["comma VAR_TYPE id PARAMLIST'", "''"]],
@@ -28,7 +29,6 @@
   ["ALLOCEXPRESSION", ["kw_new VAR_TYPE VAR_INDEX"]],
   ["VAR_INDEX", ["lbracket NUMEXPRESSION rbracket VAR_INDEX'"]],
   ["VAR_INDEX'", ["lbracket NUMEXPRESSION rbracket VAR_INDEX'", "''"]],
-
   ["EXPRESSION", ["NUMEXPRESSION EXPRESSION'"]],
   ["EXPRESSION'", ["OP_COMP NUMEXPRESSION", "''"]],
   ["NUMEXPRESSION", ["TERM NUMEXPRESSION'"]],
