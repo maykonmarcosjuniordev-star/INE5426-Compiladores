@@ -1,16 +1,21 @@
 use crate::token::{Token, TokenType};
 use crate::cfg::{NonTerminal, Symbol, ParseTable};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 struct Node {
   value: Symbol,
   children: Vec<Box<Node>>,
-  parse_table: ParseTable,
-  rules: Vec<(NonTerminal, Option<Vec<Symbol>>)>,
+  parse_table: Rc<ParseTable>,
+  rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
 }
 
 impl Node {
-  fn new(value: Symbol, parse_table: HashMap<(NonTerminal, TokenType), u32>, rules: Vec<(NonTerminal, Option<Vec<Symbol>>)>) -> Box<Self> {
+  fn new(
+    value: Symbol,
+    parse_table: Rc<HashMap<(NonTerminal, TokenType), u32>>,
+    rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>
+  ) -> Box<Self> {
     Box::new(Node {
       value,
       children: vec![],
@@ -19,7 +24,7 @@ impl Node {
     })
   }
 
-  fn parse(&mut self, tokens: Vec<Token>, index: usize) -> usize {
+  fn parse(&mut self, tokens: &Vec<Token>, index: usize) -> usize {
     let current_token = &tokens[index];
     match self.value {
       Symbol::Terminal(token) => {
@@ -34,8 +39,8 @@ impl Node {
               Some(body) => {
                 let mut new_index = index;
                 for symbol in body {
-                  let mut child = Node::new(symbol.clone(), self.parse_table.clone(), self.rules.clone());
-                  new_index = child.parse(tokens.clone(), new_index);
+                  let mut child = Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules));
+                  new_index = child.parse(tokens, new_index);
                   self.children.push(child);
                 }
                 new_index
@@ -68,8 +73,8 @@ impl Node {
 
 pub struct SyntaxTree {
   root: Node,
-  _parse_table: HashMap<(NonTerminal, TokenType), u32>,
-  _rules: Vec<(NonTerminal, Option<Vec<Symbol>>)>,
+  _parse_table: Rc<HashMap<(NonTerminal, TokenType), u32>>,
+  _rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
 }
 
 impl SyntaxTree {
@@ -102,16 +107,18 @@ impl SyntaxTree {
       parse_table.insert((head, token), rule_index);
     }
     // Create the root node
+    let rules = Rc::new(rules);
+    let parse_table = Rc::new(parse_table);
     let root = Node { 
       value: Symbol::NonTerminal(NonTerminal::E),
       children: vec![],
-      parse_table: parse_table.clone(),
-      rules: rules.clone()
+      parse_table: Rc::clone(&parse_table),
+      rules: Rc::clone(&rules)
     };
     Ok(SyntaxTree { root, _rules: rules, _parse_table: parse_table })
   }
 
-  pub fn parse(&mut self, tokens: Vec<Token>) {
+  pub fn parse(&mut self, tokens: &Vec<Token>) {
     self.root.parse(tokens, 0);
   }
 

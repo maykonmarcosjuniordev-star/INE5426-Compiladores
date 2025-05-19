@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // Syntax analysis
   let mut tree = SyntaxTree::new()?;
-  tree.parse(token_list);
+  tree.parse(&token_list);
   tree.print();
   Ok(())
 }
