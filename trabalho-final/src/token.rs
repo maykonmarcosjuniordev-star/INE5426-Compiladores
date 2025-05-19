@@ -179,19 +179,3 @@ pub struct Token {
   pub line: usize,
   pub column: usize,
 }
-
-impl Token {
-  pub fn to_string(&self) -> String {
-    let value_str = match &self.value {
-      Some(value) => {
-        match value {
-          ConstType::Char(c) => format!("'{}'", c),
-          ConstType::String(s) => format!("\"{}\"", s),
-          _ => format!("{}", value),
-        }
-      },
-      None => String::new(),
-    };
-    format!("Token {{ type: {:?}, value: {}, line: {}, column: {} }}", self.token_type, value_str, self.line, self.column)
-  }
-}

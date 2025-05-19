@@ -1,51 +1,75 @@
-use crate::token::TokenType;
+use crate::token::{Token, TokenType};
 use crate::cfg::{NonTerminal, Symbol, ParseTable};
 use std::collections::HashMap;
 
-#[derive(Debug)]
 struct Node {
   value: Symbol,
   children: Vec<Box<Node>>,
-  parse_table: ParseTable
+  parse_table: ParseTable,
+  rules: Vec<(NonTerminal, Option<Vec<Symbol>>)>,
 }
 
 impl Node {
-  fn new(value: Symbol, parse_table: HashMap<(NonTerminal, TokenType), u32>) -> Box<Self> {
+  fn new(value: Symbol, parse_table: HashMap<(NonTerminal, TokenType), u32>, rules: Vec<(NonTerminal, Option<Vec<Symbol>>)>) -> Box<Self> {
     Box::new(Node {
       value,
       children: vec![],
       parse_table,
+      rules
     })
   }
 
-  // fn parse(&mut self, tokens: Vec<Token>, index: usize) -> (usize, u32) {
-  //   let stack_top = self.token.unwrap().token_type;
-  //   let current_token = &tokens[index];
-    
-  //   // If the node represents the terminal symbol, this is a leaf node
-  //   if stack_top == current_token.token_type { return (index + 1, 1); }
-  //   // Get children of the node from the parsing table
-  //   let children = PARSE_TABLE[stack_top as usize][current_token.token_type as usize];
-  //   let mut index = index;
-  //   for child in children {
-  //     let child_node = Node::new(Some(Token {
-  //       token_type: *child,
-  //       lexeme: String::new(), // Placeholder for lexeme
-  //       line: 0, // Placeholder for line number
-  //     }));
-  //     let (next_index, child_count) = child_node.parse(tokens.clone(), index);
-  //     index = next_index;
-  //     self.children.push(child_node);
-  //   }
-  //   (index, children.len() as u32)
-  // }
+  fn parse(&mut self, tokens: Vec<Token>, index: usize) -> usize {
+    let current_token = &tokens[index];
+    match self.value {
+      Symbol::Terminal(token) => {
+        // If the token type matches the current token, move to the next token
+        if token == current_token.token_type { return index + 1; }
+        else { panic!("Syntax error: expected {:?}, found {:?} at line {} column {}", token, current_token.token_type, current_token.line, current_token.column); }
+      }
+      Symbol::NonTerminal(non_terminal) => {
+        match self.parse_table.get(&(non_terminal, current_token.token_type)) {
+          Some(&rule_index) => {
+            match &self.rules[rule_index as usize].1 {
+              Some(body) => {
+                let mut new_index = index;
+                for symbol in body {
+                  let mut child = Node::new(symbol.clone(), self.parse_table.clone(), self.rules.clone());
+                  new_index = child.parse(tokens.clone(), new_index);
+                  self.children.push(child);
+                }
+                new_index
+              },
+              None => index
+            }
+          }
+          None => panic!("Syntax error: no rule for {:?} with token {:?}", non_terminal, current_token.token_type),
+        }
+      }
+    }
+  }
+
+  fn print(&self) -> String {
+    match self.value {
+      Symbol::Terminal(token) => format!("{:?}", token),
+      Symbol::NonTerminal(_) => {
+        let mut result = format!("{:?}, Children(", self.value);
+        for child in &self.children {
+          result.push_str(&format!("{},", child.print()));
+        }
+        // Remove the last comma
+        result = result.trim_end_matches(',').to_string();
+        result.push(')');
+        result
+      }
+    }
+  }
 }
 
-#[derive(Debug)]
 pub struct SyntaxTree {
   root: Node,
-  parse_table: HashMap<(NonTerminal, TokenType), u32>,
-  rules: Vec<(NonTerminal, Option<Vec<Symbol>>)>,
+  _parse_table: HashMap<(NonTerminal, TokenType), u32>,
+  _rules: Vec<(NonTerminal, Option<Vec<Symbol>>)>,
 }
 
 impl SyntaxTree {
@@ -81,14 +105,17 @@ impl SyntaxTree {
     let root = Node { 
       value: Symbol::NonTerminal(NonTerminal::E),
       children: vec![],
-      parse_table: parse_table.clone()
+      parse_table: parse_table.clone(),
+      rules: rules.clone()
     };
-    Ok(SyntaxTree { root, rules, parse_table })
+    Ok(SyntaxTree { root, _rules: rules, _parse_table: parse_table })
   }
 
-  // pub fn parse(&mut self, tokens: Vec<Token>) {
-  //   self.root.parse(tokens, 0);
-  // }
+  pub fn parse(&mut self, tokens: Vec<Token>) {
+    self.root.parse(tokens, 0);
+  }
 
+  pub fn print(&self) {
+    println!("Parse tree: {:?}", self.root.print());
+  }
 }
-

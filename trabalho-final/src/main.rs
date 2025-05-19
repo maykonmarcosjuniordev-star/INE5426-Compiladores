@@ -19,9 +19,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let token_list = lexer.parse(&input)?;
 
   // Syntax analysis
-  let mut tree = SyntaxTree::new();
-  // tree.parse(token_list);
-
-  println!("{:?}", tree);
+  let mut tree = SyntaxTree::new()?;
+  tree.parse(token_list);
+  tree.print();
   Ok(())
 }

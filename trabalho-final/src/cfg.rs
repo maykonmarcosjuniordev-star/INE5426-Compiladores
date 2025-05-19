@@ -1,7 +1,7 @@
 use crate::token::TokenType;
 use std::collections::HashMap;
 
-#[derive(Debug)] 
+#[derive(Debug, Clone, Copy)] 
 pub enum Symbol {
   NonTerminal(NonTerminal),
   Terminal(TokenType),
@@ -9,7 +9,7 @@ pub enum Symbol {
 
 pub type ParseTable = HashMap<(NonTerminal, TokenType), u32>;
 
-#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum NonTerminal {
   E,
   E_,
