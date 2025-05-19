@@ -1,5 +1,5 @@
 use crate::fda::FDA;
-use crate::token::{ConstType, Token};
+use crate::token::{ConstType, Token, TokenType};
 use std::error::Error;
 
 pub struct Lexer {
@@ -87,6 +87,12 @@ impl Lexer {
     else if !token_value.is_empty() {
       println!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value);
     }
+    token_list.push(Token{
+      token_type: TokenType::EOF,
+      value: None,
+      line: line_count,
+      column: column_count,
+    });
     Ok(token_list)
   }
 }
