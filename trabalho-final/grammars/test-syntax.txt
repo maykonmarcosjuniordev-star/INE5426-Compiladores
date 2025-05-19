@@ -5,4 +5,4 @@ T,F T_
 T_,op_mult F T_
 T_, 
 F,lparenthesis E rparenthesis
-F,id
+F,const_int
