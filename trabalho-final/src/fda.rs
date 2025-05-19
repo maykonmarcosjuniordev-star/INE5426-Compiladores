@@ -3,7 +3,10 @@ use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::error::Error;
 
-use crate::{State, Symbol, token::TokenType};
+use crate::{token::TokenType};
+
+type State = u32;
+type Symbol = char;
 
 fn byte_vec_into_u32(vec: &Vec<u8>) -> u32 {
   let mut result = 0;

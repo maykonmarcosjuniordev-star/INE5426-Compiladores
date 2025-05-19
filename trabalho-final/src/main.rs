@@ -7,9 +7,6 @@ mod cfg;
 use lexer::Lexer;
 use syntax::SyntaxTree;
 
-type State = u32;
-type Symbol = char;
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Read the file to be compiled from command line arguments
   let args: Vec<String> = std::env::args().collect();
