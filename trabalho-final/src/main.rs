@@ -1,8 +1,11 @@
 mod token;
 mod fda;
 mod lexer;
+mod syntax;
+mod cfg;
 
 use lexer::Lexer;
+use syntax::SyntaxTree;
 
 type State = u32;
 type Symbol = char;
@@ -14,12 +17,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let input_file = &args[1];
   let input = std::fs::read_to_string(input_file)?;
 
-  // Run each test case
+  // Lexical analysis
   let lexer = Lexer::new();
   let token_list = lexer.parse(&input)?;
-  for token in token_list {
-    println!("{}", token.to_string());
-  }
 
+  // Syntax analysis
+  let mut tree = SyntaxTree::new();
+  // tree.parse(token_list);
+
+  println!("{:?}", tree);
   Ok(())
 }

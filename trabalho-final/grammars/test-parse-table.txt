@@ -1,0 +1,13 @@
+E,lparenthesis,0
+E,id,0
+E_,op_plus,1
+E_,rparenthesis,2
+E_,eof,2
+T,lparenthesis,3
+T,id,3
+T_,op_plus,5
+T_,op_mult,4
+T_,rparenthesis,5
+T_,eof,5
+F,lparenthesis,6
+F,id,7
