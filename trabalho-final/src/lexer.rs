@@ -53,7 +53,7 @@ impl Lexer {
           } else {
             // If the current state is not a final state, we have an invalid token
             // Print an error message and discard the token
-            println!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value);
+            return Err(format!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value).into());
           }
 
           token_value.clear();
@@ -66,7 +66,7 @@ impl Lexer {
             if !character.is_whitespace() { token_value.push(character); }
           } else {
             current_state = self.fda.initial_state;
-            println!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, character);
+            return Err(format!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value).into());
           }
         }
       }
@@ -85,14 +85,16 @@ impl Lexer {
     }
     // If the last token is not valid, return an error
     else if !token_value.is_empty() {
-      println!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value);
+      return Err(format!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value).into());
     }
+    // Push EOF token to end of list for syntax analysis
     token_list.push(Token{
       token_type: TokenType::EOF,
       value: None,
       line: line_count,
       column: column_count,
     });
+
     Ok(token_list)
   }
 }
