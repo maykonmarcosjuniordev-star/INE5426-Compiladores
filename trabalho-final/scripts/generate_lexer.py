@@ -4,7 +4,7 @@ from fda import FDA
 VALID_LETTERS = { chr(i) for i in range(256) if chr(i).isalpha() and chr(i).islower() }
 EMPTY_CHARS = { chr(i) for i in range(256) if chr(i).isspace() }
 
-with open("../grammars/tokens.json", "r") as f: token_types = json.load(f)
+with open("grammars/tokens.json", "r") as f: token_types = json.load(f)
 new_token_types = []
 for token_type, token_data in token_types:
   if "string" in token_data and type(token_data["string"]) == list:
@@ -89,7 +89,7 @@ for token_type, automaton in automata:
 mega_automaton = mega_automaton.deterministic_equivalent().enumerate_states()
 # Manually add transitions to ignore empty spaces when the automaton is in the initial state; i.e., when the automaton is not in any token.
 for char in EMPTY_CHARS: mega_automaton.transitions[mega_automaton.initial_state][char] = frozenset((mega_automaton.initial_state,))
-mega_automaton.save("../machines/lexer")
+mega_automaton.save("machines/lexer")
 print("Lexer generated successfully.")
 print(f"Lexer has {len(automata)} automata and {len(mega_automaton.final_states)} final states.")
 print(f"Lexer has {len(mega_automaton.states)} states and {mega_automaton.transition_count()} transitions.")
