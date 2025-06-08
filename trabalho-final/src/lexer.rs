@@ -66,7 +66,7 @@ impl Lexer {
             current_state = *next_state;
             if !character.is_whitespace() { token_value.push(character); }
           } else {
-            current_state = self.fda.initial_state;
+            // Since the compilation process halts at the first error, it doesn't need to reset the current state
             return Err(format!("Error: Invalid token at line {}, column {}: '{}'", line_count, column_count, token_value).into());
           }
         }
