@@ -30,6 +30,8 @@ impl FDA {
   }
 
   pub fn from_file() -> Result<FDA, Box<dyn Error>> {
+    // /machines/lexer.automata precisa existir durante a compilação do projeto
+    // O mesmo vale para /machines/lexer_table.automata
     let raw_bytes = include_bytes!("../machines/lexer.automata");
     let mut transitions: HashMap<(State, Symbol), State> = HashMap::new();
 
