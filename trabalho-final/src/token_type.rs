@@ -80,6 +80,7 @@ impl TokenType {
       "rparenthesis" => Ok(TokenType::Rparenthesis),
       "semicolon" => Ok(TokenType::Semicolon),
       "var_type" => Ok(TokenType::VarType),
+      "eof" => Ok(TokenType::EOF),
       _ => Err(format!("Invalid TokenType: {}", s).into())    }
   }
 

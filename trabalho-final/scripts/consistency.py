@@ -65,6 +65,7 @@ with open("src/token_type.rs", "w") as f:
   f.write("    match s {\n")
   for token in sorted(terminals):
     f.write(f"      \"{token}\" => Ok(TokenType::{clean_token(token)}),\n")
+  f.write(f"      \"eof\" => Ok(TokenType::EOF),\n")
   f.write("      _ => Err(format!(\"Invalid TokenType: {}\", s).into())")
   f.writelines(["    }\n", "  }\n\n"])
 
