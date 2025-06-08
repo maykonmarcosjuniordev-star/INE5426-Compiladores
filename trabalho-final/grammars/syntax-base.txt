@@ -8,7 +8,7 @@ FUNCLIST -> ''
 FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
 
 PARAMLIST -> ''
-PARAMLIST -> VAR_TYPE id PARAMLIST_1 
+PARAMLIST -> var_type id PARAMLIST_1 
 PARAMLIST_1 -> comma PARAMLIST_1
 PARAMLIST_1 -> ''
 
@@ -27,7 +27,7 @@ STATEMENT -> lbrace STATELIST rbrace
 STATEMENT -> kw_break semicolon
 STATEMENT -> semicolon
 
-VARDECL -> VAR_TYPE id CONST_INDEX
+VARDECL -> var_type id CONST_INDEX
 CONST_INDEX -> lbracket const_int rbracket CONST_INDEX
 CONST_INDEX -> ''
 
@@ -57,7 +57,7 @@ ELSESTAT_1 -> lbrace STATELIST rbrace ELSESTAT_1
 
 FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
 
-ALLOCEXPRESSION -> kw_new VAR_TYPE VAR_INDEX
+ALLOCEXPRESSION -> kw_new var_type VAR_INDEX
 
 EXPRESSION -> NUMEXPRESSION EXPRESSION_1
 EXPRESSION_1 -> OP_EXPRESSION NUMEXPRESSION
@@ -80,10 +80,6 @@ FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
 
 LVALUE -> id VAR_INDEX
 
-VAR_TYPE -> kw_int
-VAR_TYPE -> kw_float
-VAR_TYPE -> kw_string
-
 CONSTANT -> const_int
 CONSTANT -> const_float
 CONSTANT -> const_string
@@ -100,5 +96,5 @@ OP_NUMEXPRESSION -> op_plus
 OP_NUMEXPRESSION -> op_minus
 
 OP_TERM -> op_mult
-OP_TERM -> op_div
-OP_TERM -> op_mod
+OP_TERM -> op_division
+OP_TERM -> op_modular
