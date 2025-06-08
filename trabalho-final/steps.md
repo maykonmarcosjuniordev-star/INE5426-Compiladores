@@ -18,6 +18,7 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
     - [ ] Lista de aparições no código (Vec<u32, u32>)
 - [ ] Perguntar pro Álvaro como serão os erros léxicos (Visto que a maioria dos erros léxicos só são percebidos na análise sintática)
 - [x] O autômato criado automaticamente não está guardando referência para quais estados representam quais tokens, é preciso que essa informação seja atualizada sempre que os estados do autômato forem alterados por operações de união/determinização
+- [ ] id com ~ tá dando problema
 ## Adicionais
 - [ ] Otimizar a função de transição do autômato finito com uma hash específica.
 - [x] Substituir if por comandos retornados pelas transições; Os "comandos" foram substituídos pela classificação do token. A ação é sempre determinada pelo tipo do token que acaba de ser lido, logo a existência de comandos específicos para cada transição é desnecessária. Além disso, o único comando observado até o momento foi o de armazenar o valor do token lido junto do tipo. Acredito que no máximo do máximo será feita a distinção para decodificar constantes numéricas em vez de armazenar seus valores como strings.
