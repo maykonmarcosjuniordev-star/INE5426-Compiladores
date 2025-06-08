@@ -1,4 +1,4 @@
-use crate::token::TokenType;
+use crate::token_type::TokenType;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)] 
