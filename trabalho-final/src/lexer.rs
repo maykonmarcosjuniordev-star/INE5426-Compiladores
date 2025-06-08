@@ -1,5 +1,6 @@
 use crate::fda::FDA;
-use crate::token::{ConstType, Token, TokenType};
+use crate::token::{ConstType, Token};
+use crate::token_type::TokenType;
 use std::error::Error;
 
 pub struct Lexer {

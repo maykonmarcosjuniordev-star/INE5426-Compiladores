@@ -1,5 +1,6 @@
-use crate::token::{Token, TokenType};
-use crate::cfg::{NonTerminal, Symbol, ParseTable};
+use crate::token::Token;
+use crate::token_type::TokenType;
+use crate::cfg::{NonTerminal, Symbol, ParseTable, E};
 use std::collections::HashMap;
 use std::rc::Rc;
 

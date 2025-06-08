@@ -1,4 +1,5 @@
 mod token;
+mod token_type;
 mod fda;
 mod lexer;
 mod syntax;
