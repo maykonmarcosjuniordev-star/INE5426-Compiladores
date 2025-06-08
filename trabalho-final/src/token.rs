@@ -1,6 +1,6 @@
 use crate::token_type::TokenType;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ConstType {
   Int(i64),
   Float(f64),
@@ -17,32 +17,19 @@ impl ConstType {
   }
 }
 
-impl std::fmt::Debug for ConstType {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      ConstType::Int(i) => write!(f, "{}", i),
-      ConstType::Float(fl) => write!(f, "{}", fl),
-      ConstType::String(s) => write!(f, "\"{}\"", s),
-      ConstType::KeyWord(s) => write!(f, "{}", s),
-    }
-  }
-}
-
-impl std::fmt::Display for ConstType {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      ConstType::Int(i) => write!(f, "{}", i),
-      ConstType::Float(fl) => write!(f, "{}", fl),
-      ConstType::String(s) => write!(f, "{}", s),
-      ConstType::KeyWord(s) => write!(f, "{}", s),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Token {
   pub token_type: TokenType,
   pub value: Option<ConstType>,
   pub line: usize,
   pub column: usize,
+}
+
+impl std::fmt::Debug for Token {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match &self.value {
+      Some(value) => write!(f, "Token {{ type: {:?}, value: {:?} }}", self.token_type, value),
+      None => write!(f, "Token {{ type: {:?} }}", self.token_type)
+    }
+  }
 }
