@@ -77,4 +77,22 @@ with open("src/grammar/token_type.rs", "w") as f:
     }}
   }}\n""".format(valued_string))
 
+  # is_id function
+  f.write("""
+  pub fn is_id(&self) -> bool {
+    match self {
+      TokenType::Id | TokenType::FuncId => true,
+      _ => false
+    }
+  }\n""")
+
   f.write("}\n")
+
+
+# Sytax
+with open("src/grammar/non_terminals.rs", "w") as f:
+  f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]\n")
+  f.write("pub enum NonTerminal {\n")
+  for variable in sorted(variables):
+    f.write(f"  {variable},\n")
+  f.write("}")
