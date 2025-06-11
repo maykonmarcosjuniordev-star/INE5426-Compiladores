@@ -1,9 +1,9 @@
 mod token;
-mod token_type;
 mod fda;
 mod lexer;
 mod syntax;
 mod cfg;
+mod grammar;
 
 use lexer::Lexer;
 use syntax::SyntaxTree;

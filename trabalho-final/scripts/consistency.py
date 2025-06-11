@@ -51,7 +51,7 @@ def clean_token(token: str) -> str:
       new_string += char
   return new_string
 
-with open("src/token_type.rs", "w") as f:
+with open("src/grammar/token_type.rs", "w") as f:
   f.write("use std::error::Error;\n\n")
   f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]\n")
   f.write("pub enum TokenType {\n")

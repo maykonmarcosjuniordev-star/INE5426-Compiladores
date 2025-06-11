@@ -1,4 +1,4 @@
-use crate::token_type::TokenType;
+use crate::grammar::token_type::TokenType;
 
 #[derive(Clone, Debug)]
 pub enum ConstType {

@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::error::Error;
 
-use crate::token_type::TokenType;
+use crate::grammar::token_type::TokenType;
 
 type State = u32;
 type Symbol = char;
