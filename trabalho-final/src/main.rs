@@ -16,8 +16,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let input = std::fs::read_to_string(input_file)?;
 
   // Lexical analysis
-  let lexer = Lexer::new();
-  let token_list = lexer.parse(&input)?;
+  let mut lexer = Lexer::new();
+  let (token_list, token_table) = lexer.parse(&input)?;
+  println!("{:?}", token_list);
+  println!("{:?}", token_table);
 
   // Syntax analysis
   let mut tree = SyntaxTree::new()?;

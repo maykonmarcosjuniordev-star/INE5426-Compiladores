@@ -1,16 +1,22 @@
 use crate::fda::FDA;
 use crate::token::{ConstType, Token};
 use crate::token_type::TokenType;
+use std::collections::HashMap;
 use std::error::Error;
 
+type State = u32;
 pub struct Lexer {
   pub fda: FDA,
   line_count: usize,
   column_count: usize,
   token_value: String,
   string: bool,
-  current_state: u32
+  current_state: State
 }
+
+pub type TokenList = Vec<Token>;
+pub type TokenTable = HashMap<String, TokenEntry>;
+pub type TokenEntry = Vec<(u32, u32)>;
 
 impl Lexer {
   pub fn new() -> Lexer {
@@ -25,16 +31,27 @@ impl Lexer {
     }
   }
 
-  fn step(&mut self) {
+  // TODO: this ffs
+  // fn step(&mut self, char: char, use_state: Option<State>) {
+  //   let next_state = match use_state {
+  //     Some(state) => self.fda.transtion(state, char),
+  //     None => self.fda.transtion(self.current_state, char)
+  //   };
 
-  }
+  //   match next_state {
+  //     Some(next_state) => {},
+  //     None => {}
+  //   }
+  // }
 
-  pub fn parse(&mut self, input: &str) -> Result<Vec<Token>, Box<dyn Error>> {
-    let mut token_list: Vec<Token> = vec![];
+  pub fn parse(&mut self, input: &str) -> Result<(TokenList, TokenTable), Box<dyn Error>> {
+    let mut token_list: TokenList = vec![];
+    // TODO: Diferenciar ids de func_ids e armazenar em quais posições o token aparece.
+    let mut token_table: TokenTable = HashMap::new();
     for char in input.chars() {
       // Keep track of current position in the input
       self.column_count += 1;
-      if char == '"' || char == '\'' { self.string = !self.string; }
+      if char == '"' { self.string = !self.string; }
       else if self.current_state == self.fda.initial_state && char.is_whitespace() { continue; }
       // Language only accepts uppercase letters inside of strings
       let character = if !self.string && char.is_alphabetic() { char.to_ascii_lowercase() } else { char };
@@ -61,6 +78,7 @@ impl Lexer {
               line: self.line_count,
               column: self.column_count-self.token_value.len(),
             };
+            if token_type.is_id() { token_table.insert(self.token_value.clone(), vec![]); }
             token_list.push(token);
           } else {
             // If the current state is not a final state, we have an invalid token
@@ -93,6 +111,7 @@ impl Lexer {
         line: self.line_count,
         column: self.column_count-self.token_value.len(),
       };
+      if token_type.is_id() { token_table.insert(self.token_value.clone(), vec![]); }
       token_list.push(token);
     }
     // If the last token is not valid, return an error
@@ -107,6 +126,6 @@ impl Lexer {
       column: self.column_count,
     });
 
-    Ok(token_list)
+    Ok((token_list, token_table))
   }
 }

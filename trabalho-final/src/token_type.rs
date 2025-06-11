@@ -90,4 +90,11 @@ impl TokenType {
       _ => false,
     }
   }
+
+  pub fn is_id(&self) -> bool {
+    match self {
+      TokenType::Id | TokenType::FuncId => true,
+      _ => false
+    }
+  }
 }
