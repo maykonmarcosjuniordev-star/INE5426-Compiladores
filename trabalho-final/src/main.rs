@@ -2,7 +2,6 @@ mod token;
 mod fda;
 mod lexer;
 mod syntax;
-mod cfg;
 mod grammar;
 
 use lexer::Lexer;

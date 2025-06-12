@@ -7,6 +7,7 @@ pub enum TokenType {
   ConstInt,
   ConstNull,
   ConstString,
+  Eof,
   FuncId,
   Id,
   KwBreak,
@@ -38,7 +39,6 @@ pub enum TokenType {
   Rparenthesis,
   Semicolon,
   VarType,
-  EOF,
 }
 
 impl TokenType {
@@ -49,6 +49,7 @@ impl TokenType {
       "const_int" => Ok(TokenType::ConstInt),
       "const_null" => Ok(TokenType::ConstNull),
       "const_string" => Ok(TokenType::ConstString),
+      "eof" => Ok(TokenType::Eof),
       "func_id" => Ok(TokenType::FuncId),
       "id" => Ok(TokenType::Id),
       "kw_break" => Ok(TokenType::KwBreak),
@@ -80,8 +81,8 @@ impl TokenType {
       "rparenthesis" => Ok(TokenType::Rparenthesis),
       "semicolon" => Ok(TokenType::Semicolon),
       "var_type" => Ok(TokenType::VarType),
-      "eof" => Ok(TokenType::EOF),
-      _ => Err(format!("Invalid TokenType: {}", s).into())    }
+      _ => Err(format!("Invalid TokenType: {}", s).into())
+    }
   }
 
   pub fn has_value(&self) -> bool {

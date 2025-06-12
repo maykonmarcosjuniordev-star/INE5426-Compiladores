@@ -1,8 +1,17 @@
 use crate::token::Token;
 use crate::grammar::token_type::TokenType;
-use crate::cfg::{NonTerminal, Symbol, ParseTable};
+use crate::grammar::non_terminals::NonTerminal;
 use std::collections::HashMap;
 use std::rc::Rc;
+
+#[derive(Debug, Clone, Copy)] 
+pub enum Symbol {
+  NonTerminal(NonTerminal),
+  Terminal(TokenType),
+}
+
+pub type ParseTable = HashMap<(NonTerminal, TokenType), u32>;
+
 
 struct Node {
   value: Symbol,
@@ -81,28 +90,28 @@ pub struct SyntaxTree {
 impl SyntaxTree {
   pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
     // Load Grammar rules
-    let rule_file = std::fs::read_to_string("grammars/test-syntax.txt")?;
+    let rule_file = std::fs::read_to_string("grammars/syntax.txt")?;
     let mut rules = vec![];
     for line in rule_file.lines() {
       let parts: Vec<&str> = line.split(",").collect();
       if parts.len() != 2 { continue; }
-      let head = NonTerminal::from_char(parts[0])?;
+      let head = NonTerminal::from_str(parts[0])?;
       let body: Option<Vec<Symbol>> = match parts[1] {
-        " " => None,
+        "''" => None,
         _ => Some(parts[1].split_whitespace().map(|s| {
           if let Ok(token) = TokenType::from_str(s) { Symbol::Terminal(token) }
-          else { Symbol::NonTerminal(NonTerminal::from_char(s).unwrap()) }
+          else { Symbol::NonTerminal(NonTerminal::from_str(s).unwrap()) }
         }).collect()),
       };
       rules.push((head, body));
     }
     // Load LL1 Parse Table
-    let parse_table_file = std::fs::read_to_string("grammars/test-parse-table.txt")?;
+    let parse_table_file = std::fs::read_to_string("grammars/parse-table.txt")?;
     let mut parse_table = HashMap::new();
     for line in parse_table_file.lines() {
       let parts: Vec<&str> = line.split(",").collect();
       if parts.len() != 3 { continue; }
-      let head = NonTerminal::from_char(parts[0])?;
+      let head = NonTerminal::from_str(parts[0])?;
       let token = TokenType::from_str(parts[1])?;
       let rule_index = parts[2].parse::<u32>()?;
       parse_table.insert((head, token), rule_index);
@@ -111,7 +120,7 @@ impl SyntaxTree {
     let rules = Rc::new(rules);
     let parse_table = Rc::new(parse_table);
     let root = Node { 
-      value: Symbol::NonTerminal(NonTerminal::E),
+      value: Symbol::NonTerminal(NonTerminal::Program),
       children: vec![],
       parse_table: Rc::clone(&parse_table),
       rules: Rc::clone(&rules)

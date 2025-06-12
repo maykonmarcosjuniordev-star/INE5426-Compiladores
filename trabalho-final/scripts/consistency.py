@@ -57,7 +57,6 @@ with open("src/grammar/token_type.rs", "w") as f:
   f.write("pub enum TokenType {\n")
   for token in sorted(terminals):
     f.write(f"  {clean_token(token)},\n")
-  f.write("  EOF,\n")
   f.write("}")
   f.write("\n\n")
   f.write("impl TokenType {\n")
@@ -65,9 +64,8 @@ with open("src/grammar/token_type.rs", "w") as f:
   f.write("    match s {\n")
   for token in sorted(terminals):
     f.write(f"      \"{token}\" => Ok(TokenType::{clean_token(token)}),\n")
-  f.write(f"      \"eof\" => Ok(TokenType::EOF),\n")
   f.write("      _ => Err(format!(\"Invalid TokenType: {}\", s).into())")
-  f.writelines(["    }\n", "  }\n\n"])
+  f.writelines(["\n    }\n", "  }\n\n"])
 
   valued_string = " | ".join([f"TokenType::{clean_token(token)}" for token in VALUED_TOKENS])
   f.write("""  pub fn has_value(&self) -> bool {{
@@ -88,11 +86,27 @@ with open("src/grammar/token_type.rs", "w") as f:
 
   f.write("}\n")
 
+non_terminal_from_str = """
+impl NonTerminal {{
+  pub fn from_str(s: &str) -> Result<Self, Box<dyn std::error::Error>> {{
+    match s {{
+{},
+      _ => Err("Invalid non-terminal".into()),
+    }}
+  }}
+}}
+"""[1:]
+def clean_variable(var: str) -> str:
+  return var.replace("_", " ").title().replace(" ", "")
+
+non_terminal_from_str_fill = ",\n".join([f"      \"{clean_variable(variable)}\" => Ok(NonTerminal::{clean_variable(variable)})" for variable in sorted(variables)])
+
 
 # Sytax
 with open("src/grammar/non_terminals.rs", "w") as f:
   f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]\n")
   f.write("pub enum NonTerminal {\n")
   for variable in sorted(variables):
-    f.write(f"  {variable},\n")
-  f.write("}")
+    f.write(f"  {clean_variable(variable)},\n")
+  f.write("}\n\n")
+  f.write(non_terminal_from_str.format(non_terminal_from_str_fill))

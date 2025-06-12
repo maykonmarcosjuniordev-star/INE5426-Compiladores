@@ -120,7 +120,7 @@ impl Lexer {
     }
     // Push EOF token to end of list for syntax analysis
     token_list.push(Token{
-      token_type: TokenType::EOF,
+      token_type: TokenType::Eof,
       value: None,
       line: self.line_count,
       column: self.column_count,
