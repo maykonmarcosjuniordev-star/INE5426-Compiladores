@@ -1,8 +1,0 @@
-E,T E_
-E_,op_plus T E_
-E_, 
-T,F T_
-T_,op_mult F T_
-T_, 
-F,lparenthesis E rparenthesis
-F,const_int
