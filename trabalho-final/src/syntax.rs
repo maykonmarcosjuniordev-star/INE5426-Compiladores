@@ -90,8 +90,8 @@ impl Node {
       Symbol::Terminal(_token) => {},
       Symbol::NonTerminal(_nt) => {
         if self.children.is_empty() {
-          result.push_str(&format!("  Empty_{} [label=\"&\" color=\"gray\"]\n", count));
-          result.push_str(&format!("  {} -> Empty_{};\n", node_name, count));
+          result.push_str(&format!("  Empty_{} [label=\"ε\" color=\"gray\"]\n", count));
+          result.push_str(&format!("  {} -> Empty_{}\n", node_name, count));
           *count += 1;
           return result;
         } else {
