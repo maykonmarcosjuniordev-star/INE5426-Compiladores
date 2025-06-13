@@ -99,7 +99,7 @@ impl NonTerminal {{
 def clean_variable(var: str) -> str:
   return var.replace("_", " ").title().replace(" ", "")
 
-non_terminal_from_str_fill = ",\n".join([f"      \"{clean_variable(variable)}\" => Ok(NonTerminal::{clean_variable(variable)})" for variable in sorted(variables)])
+non_terminal_from_str_fill = ",\n".join([f"      \"{variable}\" => Ok(NonTerminal::{clean_variable(variable)})" for variable in sorted(variables)])
 
 
 # Sytax
