@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // Syntax analysis
   let mut tree = SyntaxTree::new()?;
-  tree.parse(&lexer.token_list);
+  tree.parse(&lexer.token_list)?;
   tree.save("output/parse_tree.txt")?;
   Ok(())
 }

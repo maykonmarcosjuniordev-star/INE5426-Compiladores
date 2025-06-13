@@ -44,13 +44,13 @@ impl Node {
     })
   }
 
-  fn parse(&mut self, tokens: &Vec<Token>, index: usize) -> usize {
+  fn parse(&mut self, tokens: &Vec<Token>, index: usize) -> Result<usize, Box<dyn std::error::Error>> {
     let current_token = &tokens[index];
     match self.value {
       Symbol::Terminal(token) => {
         // If the token type matches the current token, move to the next token
-        if token == current_token.token_type { return index + 1; }
-        else { panic!("Syntax error: expected {:?}, found {:?} at line {} column {}", token, current_token.token_type, current_token.line, current_token.column); }
+        if token == current_token.token_type { return Ok(index + 1); }
+        else { return Err(format!("Syntax error: expected {:?}, found {:?} at line {} column {}", token, current_token.token_type, current_token.line, current_token.column).into()); }
       }
       Symbol::NonTerminal(non_terminal) => {
         match self.parse_table.get(&(non_terminal, current_token.token_type)) {
@@ -60,12 +60,12 @@ impl Node {
                 let mut new_index = index;
                 for symbol in body {
                   let mut child = Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules));
-                  new_index = child.parse(tokens, new_index);
+                  new_index = child.parse(tokens, new_index)?;
                   self.children.push(child);
                 }
-                new_index
+                Ok(new_index)
               },
-              None => index
+              None => Ok(index)
             }
           }
           None => panic!("Syntax error: no rule for {:?} with token {:?} at line {} column {}", non_terminal, current_token.token_type, current_token.line, current_token.column),
@@ -152,8 +152,9 @@ impl SyntaxTree {
     Ok(SyntaxTree { root })
   }
 
-  pub fn parse(&mut self, tokens: &Vec<Token>) {
-    self.root.parse(tokens, 0);
+  pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn std::error::Error>> {
+    self.root.parse(tokens, 0)?;
+    Ok(())
   }
 
   pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
