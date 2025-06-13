@@ -1,19 +1,18 @@
 use crate::grammar::token_type::TokenType;
+#[allow(dead_code)]
 
 #[derive(Clone, Debug)]
 pub enum ConstType {
   Int(i64),
   Float(f64),
   String(String),
-  KeyWord(String),
 }
 
 impl ConstType {
   pub fn from_str(s: &str) -> ConstType {
     if let Ok(i) = s.parse::<i64>() { return ConstType::Int(i); }
     if let Ok(f) = s.parse::<f64>() { return ConstType::Float(f); }
-    if s.starts_with('"') && s.ends_with('"') { return ConstType::String(s[1..s.len()-1].to_string()); }
-    ConstType::KeyWord(s.to_string())
+    ConstType::String(s.to_string())
   }
 }
 

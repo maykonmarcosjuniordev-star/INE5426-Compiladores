@@ -3,10 +3,13 @@ use crate::token::{ConstType, Token};
 use crate::grammar::token_type::TokenType;
 use std::collections::HashMap;
 use std::error::Error;
+use std::io::Write;
 
 type State = u32;
 pub struct Lexer {
   pub fda: FDA,
+  pub token_list: TokenList,
+  pub token_table: TokenTable,
   line_count: usize,
   column_count: usize,
   token_value: String,
@@ -23,6 +26,8 @@ impl Lexer {
     let fda = FDA::from_file().expect("Lexer automata file not found");
     Lexer { 
       fda,
+      token_list: vec![],
+      token_table: HashMap::new(),
       line_count: 1,
       column_count: 0,
       token_value: String::new(),
@@ -44,10 +49,8 @@ impl Lexer {
   //   }
   // }
 
-  pub fn parse(&mut self, input: &str) -> Result<(TokenList, TokenTable), Box<dyn Error>> {
-    let mut token_list: TokenList = vec![];
+  pub fn parse(&mut self, input: &str) -> Result<(), Box<dyn Error>> {
     // TODO: Diferenciar ids de func_ids e armazenar em quais posições o token aparece.
-    let mut token_table: TokenTable = HashMap::new();
     for char in input.chars() {
       // Keep track of current position in the input
       self.column_count += 1;
@@ -78,8 +81,8 @@ impl Lexer {
               line: self.line_count,
               column: self.column_count-self.token_value.len(),
             };
-            if token_type.is_id() { token_table.insert(self.token_value.clone(), vec![]); }
-            token_list.push(token);
+            if token_type.is_id() { self.token_table.insert(self.token_value.clone(), vec![]); }
+            self.token_list.push(token);
           } else {
             // If the current state is not a final state, we have an invalid token
             // Print an error message and discard the token
@@ -111,21 +114,37 @@ impl Lexer {
         line: self.line_count,
         column: self.column_count-self.token_value.len(),
       };
-      if token_type.is_id() { token_table.insert(self.token_value.clone(), vec![]); }
-      token_list.push(token);
+      if token_type.is_id() { self.token_table.insert(self.token_value.clone(), vec![]); }
+      self.token_list.push(token);
     }
     // If the last token is not valid, return an error
     else if !self.token_value.is_empty() {
       return Err(format!("Error: Invalid token at line {}, column {}: '{}'", self.line_count, self.column_count, self.token_value).into());
     }
     // Push EOF token to end of list for syntax analysis
-    token_list.push(Token{
+    self.token_list.push(Token{
       token_type: TokenType::Eof,
       value: None,
       line: self.line_count,
       column: self.column_count,
     });
 
-    Ok((token_list, token_table))
+    Ok(())
+  }
+
+  pub fn save_token_list(&self, path: &str) -> Result<(), Box<dyn Error>> {
+    let mut file = std::fs::File::create(path)?;
+    for token in &self.token_list {
+      writeln!(file, "{:?}", token)?;
+    }
+    Ok(())
+  }
+
+  pub fn save_token_table(&self, path: &str) -> Result<(), Box<dyn Error>> {
+    let mut file = std::fs::File::create(path)?;
+    for (key, value) in &self.token_table {
+      writeln!(file, "{}: {:?}", key, value)?;
+    }
+    Ok(())
   }
 }

@@ -16,13 +16,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // Lexical analysis
   let mut lexer = Lexer::new();
-  let (token_list, token_table) = lexer.parse(&input)?;
-  println!("{:?}", token_list);
-  println!("{:?}", token_table);
+  lexer.parse(&input)?;
+  lexer.save_token_list("output/token_list.txt")?;
+  lexer.save_token_table("output/token_table.txt")?;
 
   // Syntax analysis
   let mut tree = SyntaxTree::new()?;
-  tree.parse(&token_list);
-  tree.print();
+  tree.parse(&lexer.token_list);
+  tree.save("output/parse_tree.txt")?;
   Ok(())
 }

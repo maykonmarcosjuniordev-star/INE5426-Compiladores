@@ -3,11 +3,21 @@ use crate::grammar::token_type::TokenType;
 use crate::grammar::non_terminals::NonTerminal;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::io::Write;
 
-#[derive(Debug, Clone, Copy)] 
+#[derive(Clone, Copy)] 
 pub enum Symbol {
   NonTerminal(NonTerminal),
   Terminal(TokenType),
+}
+
+impl std::fmt::Debug for Symbol {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Symbol::NonTerminal(nt) => write!(f, "{:?}", nt),
+      Symbol::Terminal(tt) => write!(f, "{:?}", tt),
+    }
+  }
 }
 
 pub type ParseTable = HashMap<(NonTerminal, TokenType), u32>;
@@ -58,26 +68,35 @@ impl Node {
               None => index
             }
           }
-          None => panic!("Syntax error: no rule for {:?} with token {:?}", non_terminal, current_token.token_type),
+          None => panic!("Syntax error: no rule for {:?} with token {:?} at line {} column {}", non_terminal, current_token.token_type, current_token.line, current_token.column),
         }
       }
     }
   }
 
-  fn print(&self) -> String {
+  fn to_string(&self, count: &mut u32) -> String {
+    let mut result = String::new();
+    let node_name = format!("{:?}_{}", self.value, count);
+    *count += 1;
+    result.push_str(&format!("  {} [label=\"{:?}\"]\n", node_name, self.value));
     match self.value {
-      Symbol::Terminal(token) => format!("{:?}", token),
-      Symbol::NonTerminal(_) => {
-        let mut result = format!("{:?}, Children(", self.value);
-        for child in &self.children {
-          result.push_str(&format!("{},", child.print()));
+      Symbol::Terminal(_token) => {},
+      Symbol::NonTerminal(_nt) => {
+        if self.children.is_empty() {
+          result.push_str(&format!("  Empty_{} [label=\"&\"]\n", count));
+          result.push_str(&format!("  {} -> Empty_{};\n", node_name, count));
+          *count += 1;
+          return result;
+        } else {
+          for child in &self.children {
+            let child_name = format!("{:?}_{}", child.value, count);
+            result.push_str(&format!("  {} -> {}\n", node_name, child_name));
+            result.push_str(&child.to_string(count));
+          }
         }
-        // Remove the last comma
-        result = result.trim_end_matches(',').to_string();
-        result.push(')');
-        result
-      }
+      }    
     }
+    result
   }
 }
 
@@ -132,7 +151,11 @@ impl SyntaxTree {
     self.root.parse(tokens, 0);
   }
 
-  pub fn print(&self) {
-    println!("Parse tree: {:?}", self.root.print());
+  pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let mut file = std::fs::File::create(path)?;
+    writeln!(file, "digraph G {{")?;
+    writeln!(file, "{}", self.root.to_string(&mut 0))?;
+    writeln!(file, "}}")?;
+    Ok(())
   }
 }
