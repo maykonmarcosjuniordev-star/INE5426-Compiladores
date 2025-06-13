@@ -78,12 +78,19 @@ impl Node {
     let mut result = String::new();
     let node_name = format!("{:?}_{}", self.value, count);
     *count += 1;
-    result.push_str(&format!("  {} [label=\"{:?}\"]\n", node_name, self.value));
+    match self.value {
+      Symbol::Terminal(token) => {
+        result.push_str(&format!("  {} [label=\"{:?}\" color=\"blue\"]\n", node_name, token));
+      },
+      Symbol::NonTerminal(nt) => {
+        result.push_str(&format!("  {} [label=\"{:?}\" color=\"green\"]\n", node_name, nt));
+      },
+    }
     match self.value {
       Symbol::Terminal(_token) => {},
       Symbol::NonTerminal(_nt) => {
         if self.children.is_empty() {
-          result.push_str(&format!("  Empty_{} [label=\"&\"]\n", count));
+          result.push_str(&format!("  Empty_{} [label=\"&\" color=\"gray\"]\n", count));
           result.push_str(&format!("  {} -> Empty_{};\n", node_name, count));
           *count += 1;
           return result;
@@ -153,6 +160,7 @@ impl SyntaxTree {
 
   pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut file = std::fs::File::create(path)?;
+    writeln!(file, "// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot")?;
     writeln!(file, "digraph G {{")?;
     writeln!(file, "{}", self.root.to_string(&mut 0))?;
     writeln!(file, "}}")?;

@@ -1,10 +1,7 @@
-def @fibonacci(int a) {
-  if (a==0) {
-    return;
-  } else if (a==1) {
-    return;
-  } else {
-    return;
+def @main() {
+  int i;
+  for (i = 0; i <= 10; i = i + 1) {
+    print i;
   }
   return;
 }
