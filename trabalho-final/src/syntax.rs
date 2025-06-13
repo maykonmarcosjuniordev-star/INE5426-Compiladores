@@ -108,9 +108,7 @@ impl Node {
 }
 
 pub struct SyntaxTree {
-  root: Node,
-  _parse_table: Rc<HashMap<(NonTerminal, TokenType), u32>>,
-  _rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
+  root: Node
 }
 
 impl SyntaxTree {
@@ -151,7 +149,7 @@ impl SyntaxTree {
       parse_table: Rc::clone(&parse_table),
       rules: Rc::clone(&rules)
     };
-    Ok(SyntaxTree { root, _rules: rules, _parse_table: parse_table })
+    Ok(SyntaxTree { root })
   }
 
   pub fn parse(&mut self, tokens: &Vec<Token>) {
