@@ -44,12 +44,15 @@ impl Node {
     })
   }
 
-  fn parse(&mut self, tokens: &Vec<Token>, index: usize) -> Result<usize, Box<dyn std::error::Error>> {
-    let current_token = &tokens[index];
+  fn parse(&mut self, tokens: &Vec<Token>, index: &mut usize) -> Result<(), Box<dyn std::error::Error>> {
+    let current_token = &tokens[*index];
     match self.value {
       Symbol::Terminal(token) => {
         // If the token type matches the current token, move to the next token
-        if token == current_token.token_type { return Ok(index + 1); }
+        if token == current_token.token_type { 
+          *index += 1;
+          return Ok(());
+        }
         else { return Err(format!("Syntax error: expected {:?}, found {:?} at line {} column {}", token, current_token.token_type, current_token.line, current_token.column).into()); }
       }
       Symbol::NonTerminal(non_terminal) => {
@@ -57,15 +60,14 @@ impl Node {
           Some(&rule_index) => {
             match &self.rules[rule_index as usize].1 {
               Some(body) => {
-                let mut new_index = index;
                 for symbol in body {
                   let mut child = Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules));
-                  new_index = child.parse(tokens, new_index)?;
+                  child.parse(tokens, index)?;
                   self.children.push(child);
                 }
-                Ok(new_index)
+                Ok(())
               },
-              None => Ok(index)
+              None => Ok(())
             }
           }
           None => panic!("Syntax error: no rule for {:?} with token {:?} at line {} column {}", non_terminal, current_token.token_type, current_token.line, current_token.column),
@@ -153,7 +155,7 @@ impl SyntaxTree {
   }
 
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn std::error::Error>> {
-    self.root.parse(tokens, 0)?;
+    self.root.parse(tokens, &mut 0)?;
     Ok(())
   }
 
