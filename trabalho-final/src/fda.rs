@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, BufRead};
 use std::error::Error;
 
 use crate::grammar::token_type::TokenType;
@@ -57,11 +55,9 @@ impl FDA {
     
     // Read the token table
     // TODO: Replace this with the include_bytes! macro
-    let token_table_file = File::open("machines/lexer_table.automata")?;
-    let reader = BufReader::new(token_table_file);
+    let token_table_content = include_str!("../machines/lexer_table.automata");
     let mut token_table = HashMap::new();
-    for line in reader.lines() {
-      let line = line?;
+    for line in token_table_content.lines() {
       let parts: Vec<&str> = line.split(':').collect();
       if parts.len() != 2 { return Err("Invalid token table format".into()); }
       let state = parts[0].parse::<u32>()?;

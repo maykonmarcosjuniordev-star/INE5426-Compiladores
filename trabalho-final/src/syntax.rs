@@ -116,9 +116,9 @@ pub struct SyntaxTree {
 impl SyntaxTree {
   pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
     // Load Grammar rules
-    let rule_file = std::fs::read_to_string("grammars/syntax.txt")?;
+    let rule_content = include_str!("../grammars/syntax.txt");
     let mut rules = vec![];
-    for line in rule_file.lines() {
+    for line in rule_content.lines() {
       let parts: Vec<&str> = line.split(",").collect();
       if parts.len() != 2 { continue; }
       let head = NonTerminal::from_str(parts[0])?;
