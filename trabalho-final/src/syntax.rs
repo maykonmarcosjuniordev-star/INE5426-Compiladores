@@ -53,7 +53,7 @@ impl Node {
           *index += 1;
           return Ok(());
         }
-        else { return Err(format!("Syntax error: expected {:?}, found {:?} at line {} column {}", token, current_token.token_type, current_token.line, current_token.column).into()); }
+        else { return Err(format!("Erro sintático: esperava {:?}, mas encontrou {:?} na linha {}, coluna {}", token, current_token.token_type, current_token.line, current_token.column).into()); }
       }
       Symbol::NonTerminal(non_terminal) => {
         match self.parse_table.get(&(non_terminal, current_token.token_type)) {
@@ -70,7 +70,7 @@ impl Node {
               None => Ok(())
             }
           }
-          None => panic!("Syntax error: no rule for {:?} with token {:?} at line {} column {}", non_terminal, current_token.token_type, current_token.line, current_token.column),
+          None => return Err(format!("Erro sintático: não há regra para {:?} com o token {:?} na linha {}, coluna {}", non_terminal, current_token.token_type, current_token.line, current_token.column).into()),
         }
       }
     }
@@ -124,9 +124,13 @@ impl SyntaxTree {
       let head = NonTerminal::from_str(parts[0])?;
       let body: Option<Vec<Symbol>> = match parts[1] {
         "''" => None,
+        // The else case is when grammars/syntax.txt has an invalid rule, this problem
+        // should be identified at compile time so that it's fixed in the grammar file instead of here.
+        // Hopefully the else case will never be hit.  
         _ => Some(parts[1].split_whitespace().map(|s| {
           if let Ok(token) = TokenType::from_str(s) { Symbol::Terminal(token) }
-          else { Symbol::NonTerminal(NonTerminal::from_str(s).unwrap()) }
+          else if let Ok(nt) = NonTerminal::from_str(s) { Symbol::NonTerminal(nt) }
+          else { panic!("Invalid grammar") }
         }).collect()),
       };
       rules.push((head, body));
