@@ -1,8 +1,11 @@
 import math
-import json
 State = frozenset[int]
 
 class FDA:
+  '''Classe que representa um autômato finito determinístico ou não determinístico.'''
+  '''Esse código foi feito originalmente para a matéria de Linguagens Formais, mas foi adaptado para ser usado na análise léxica do compilador.'''
+  '''Cada autômato é usado para representar um token, todo autômato possui uma tabela associando seus estados finais a qual token cada um representa.'''
+  '''Inicialmente essa tabela é preenchida com o mesmo token, porém após algoritmos de união dos vários autômatos, essa tabela será útil para identificar qual o token lido pelo autômato.'''
   def __init__(self) -> None:
     self.initial_state: State = None
     self.transitions: dict[State, dict[str, frozenset[State]]] = {}
@@ -33,6 +36,7 @@ class FDA:
   def enumerate_states(self) -> 'FDA':
     '''Converte todos os estados do autômato em ints de 0 a n-1, sendo n o número de estados do autômato.'''
     '''Exemplo: um autômato com 3 estados {"A", "B", "C"} vira {"0", "1", "2"}'''
+    '''O estado inicial é sempre 0, os demais são ordenaos pelo nome do estado.'''
     non_initial_states = self.states.difference(frozenset((self.initial_state,)))
     states = {
       **{self.initial_state: 0},
@@ -54,7 +58,9 @@ class FDA:
     return self
 
   def union(self, other: 'FDA') -> 'FDA':
-    '''Realiza a união entre dois autômatos.'''
+    '''Enumera e une dois autômatos de forma que o novo autômato mantenha a informação de quais estados originaram de qual autômato.'''
+    '''O novo estado inicial é 0, os estados do primeiro autômato são numerados de 1 a n, e os estados do segundo autômato são numerados de n+1 a m+n, onde m é o número de estados do primeiro autômato.'''
+    '''O autômato resultante é não determinístico. O algoritmo de determinização utilizará a enumeração dos estados para identificar quais estados representam quais tokens.'''
     a = self.copy().enumerate_states()
     b = other.copy().enumerate_states()
     union = FDA()
@@ -130,6 +136,8 @@ class FDA:
     return output
 
   def as_bytes(self) -> bytes:
+    '''Serializa o autômato em um vetor de bytes, para exportá-lo em um arquivo binário.'''
+    '''Esse arquivo será carregado e parseado em src/fda.rs'''
     output = bytearray()
     state_size = int(math.ceil(math.log(len(self.states))/math.log(256)))
     output.append(state_size)
@@ -142,6 +150,7 @@ class FDA:
     return output
 
   def __str__(self) -> str:
+    '''Legado da matéria de formais, não é usado no código atual.'''
     '''Ouput: finals;transitions'''
     state_size = int(math.ceil(math.log(len(self.states))/math.log(256)))
     output = chr(state_size) # Pelo amor de deus se tiver mais que 256^256 estados esse autômato não é pra existir
@@ -153,6 +162,12 @@ class FDA:
     return output
 
   def deterministic_equivalent(self) -> 'FDA':
+    '''Determiniza o autômato, aqui é considerado que cada estado do novo autômato representará no máximo um único token'''
+    '''Caso um estado surja do produto de dois estados do autômato original, o estado resultante representará o token de maior prioridade.'''
+    '''A prioridade dos tokens é definida pela ordem em que eles aparecem no arquivo tokens.json e se estão definidos como autômatos ou como strings, os autômatos vêm primeiro.'''
+    '''Os tokens estão ordenados de forma que tokens mais genéricos venham antes. Dessa forma, identificadores que poderiam ser intepretados como prefixos de palavras reservadas serão corretamente identificados como identificadores.'''
+    '''Exemplo: a string "ret" levaria ao estado não determinístico (id_1, return_2), por ser um id válido mas também estar na terceira letra da palavra reservada "return". Como o id vem primeiro, ele será considerado o representante desse estado.'''
+    # Algoritmo de determinização de autômatos não determinísticos
     def epsilon_closure(state: State, closure: set=None) -> State:
       '''Retorna o ε* de um estado, realizando uma busca em profundidade.'''
       if closure is None: closure = set(state)
@@ -220,10 +235,11 @@ class FDA:
           deterministic.final_states = deterministic.final_states.union(frozenset((state,)))
           break
 
-    deterministic.state_token_table = {}
     # Adiciona a tabela de estados do autômato determinístico
+    deterministic.state_token_table = {}
     for state in deterministic.final_states:
       for state_part in sorted(state):
+        # Adiciona na tabela o primeiro estado que for encontrado, de forma que o mais prioritário será o único a ser adicionado
         if frozenset((state_part, )) in self.state_token_table:
           deterministic.state_token_table[state] = self.state_token_table[frozenset((state_part,))]
           break
@@ -254,7 +270,10 @@ class FDA:
     return transitions
 
   def save(self, filename: str) -> None:
-    '''Salva o autômato em um arquivo.'''
+    '''Exporta as informações relevantes do autômato.'''
+    '''Essas informações estão separadas em duas partes: a lista de transições do autômato e a tabela de estados finais.'''
+    '''A lista de transições é serializada para um arquivo binário, no formato estado atual,símbolo,próximo estado.'''
+    '''A tabela de estados finais é armazenada num arquivo de texto, no formato estado:token.'''
     state_token_list = ""
     for state in self.state_token_table: state_token_list += f"{list(state)[0]}:{self.state_token_table[state]}\n"
     with open(f"{filename}.automata", "wb") as f: f.write(self.as_bytes())

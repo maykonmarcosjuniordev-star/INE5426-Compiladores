@@ -1,3 +1,4 @@
+// Esse arquivo foi gerado automaticamente pelo script {script_name}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NonTerminal {{
   {non_terminal_list}

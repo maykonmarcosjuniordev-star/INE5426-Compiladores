@@ -7,6 +7,10 @@
 # - src/grammar/token_type.rs
 # - src/grammar/non_terminals.rs
 
+# Os seguintes arquivos são templates para a geração dos arquivos de código-fonte:
+# - scripts/token_type_template.txt
+# - scripts/non_terminals_template.txt
+
 import json
 
 VALUED_TOKENS = [
@@ -22,6 +26,8 @@ ID_TOKENS = [
   "id",
   "func_id"
 ]
+
+SCRIPT_NAME = "/".join(__file__.split("/")[-2:])
 
 # Load syntax.txt
 with open("grammars/syntax.txt") as f: syntax = [line.strip() for line in f.readlines()]
@@ -63,7 +69,7 @@ with open("src/grammar/token_type.rs", "w") as f:
   token_string_list = "      ".join([f"\"{token}\" => Ok(TokenType::{clean_token(token)}),\n" for token in sorted(terminals)])[:-1]
   valued_string = " | ".join([f"TokenType::{clean_token(token)}" for token in VALUED_TOKENS])
   id_tokens = " | ".join([f"TokenType::{clean_token(token)}" for token in ID_TOKENS])
-  f.write(token_type_template.format(token_list=token_list, token_string_list=token_string_list, valued_string=valued_string, id_tokens=id_tokens))
+  f.write(token_type_template.format(token_list=token_list, token_string_list=token_string_list, valued_string=valued_string, id_tokens=id_tokens, script_name=SCRIPT_NAME))
 
 # Criar NonTerminal enum
 def clean_variable(var: str) -> str:
@@ -73,4 +79,4 @@ non_terminal_list = "  ".join([f"{clean_variable(variable)},\n" for variable in 
 non_terminal_string_list = "      ".join([f"\"{variable}\" => Ok(NonTerminal::{clean_variable(variable)}),\n" for variable in sorted(variables)])[:-1]
 with open("scripts/non_terminals_template.txt") as f: non_terminal_template = f.read()
 with open("src/grammar/non_terminals.rs", "w") as f:
-  f.write(non_terminal_template.format(non_terminal_list=non_terminal_list, non_terminal_string_list=non_terminal_string_list))
+  f.write(non_terminal_template.format(non_terminal_list=non_terminal_list, non_terminal_string_list=non_terminal_string_list, script_name=SCRIPT_NAME))

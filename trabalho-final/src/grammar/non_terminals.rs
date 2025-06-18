@@ -1,3 +1,4 @@
+// Esse arquivo foi gerado automaticamente pelo script scripts/consistency.py
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NonTerminal {
   Allocexpression,

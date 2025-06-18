@@ -40,22 +40,32 @@ for token_type, token_data in token_types:
     alphabet = set()
     for current_state, symbol, next_state in token_data["transitions"]:
       if current_state not in transitions: transitions[current_state] = {}
+      # Tipos específicos de transições:
+      # Apenas um símbolo: transição direta, nada a comentar
       if len(symbol) == 1:
         transitions[current_state][symbol] = next_state
         alphabet.add(symbol)
+      # Contendo "-": transição de intervalo, cria uma transição para cada caracter no intervalo definido
+      # O intervalo é definido pela tabela ASCII, a-c = 97-99, ou seja, 'a', 'b' e 'c'
       elif "-" in symbol and len(symbol) == 3:
         start, end = symbol.split("-")
         for i in range(ord(start), ord(end)+1):
           transitions[current_state][chr(i)] = next_state
           alphabet.add(chr(i))
+      # Símbolos especiais que podem ser usados nos autômatos:
+      # \c: Qualquer letra válida, definida nesse arquivo como qualquer caracter alfabético minúsculo.
+      # como letras com acento também são válidas, não é equivalente a [a-z]
       elif symbol == "\\c":
         for i in VALID_LETTERS:
           transitions[current_state][i] = next_state
           alphabet.add(i)
+      # \d: Qualquer dígito, de 0 a 9, equivalente a [0-9]
       elif symbol == "\\d":
         for i in range(10):
           transitions[current_state][str(i)] = next_state
           alphabet.add(str(i))
+      # \.: Wildcard para caso o caracter lido não possua uma transição própria mas o estado possua uma transição genérica
+      # O funcionamento está mais bem explicado na definição do autômato em src/fda.rs
       elif symbol == "\\.":
         transitions[current_state][chr(0)] = next_state
         alphabet.add(chr(0))
@@ -81,6 +91,7 @@ for token_type, token_data in token_types:
   automaton.initial_state = frozenset((0,))
   automata.append((token_type, automaton))
 
+# Une todos os autômatos e depois determiniza esse autômato que deve reconhecer todos os tokens da linguagem.
 mega_automaton = None
 for token_type, automaton in automata:
   if mega_automaton is None: mega_automaton = automaton

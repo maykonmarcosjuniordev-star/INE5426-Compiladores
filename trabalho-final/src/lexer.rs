@@ -19,6 +19,25 @@ pub struct Lexer {
 
 pub type TokenList = Vec<Token>;
 pub type TokenTable = HashMap<String, TokenEntry>;
+// TODO: Desenvolver o tipo TokenEntry para armazenar todas as informações relevantes do token
+// - posições onde o token aparece no código
+// - se é id ou func_id
+// - tipagem
+// - etc.
+// struct VarType {
+//   var_type: VarTypeType,
+//   dimesions: Vec<u32>
+// }
+// enum VarTypeType {
+//   String,
+//   Int,
+//   Float
+// }
+
+// pub enum TokenEntryType {
+//   Id(VarType),
+//   FuncId(Vec<VarType>)
+// }
 pub type TokenEntry = Vec<(u32, u32)>;
 
 impl Lexer {
@@ -50,7 +69,6 @@ impl Lexer {
   // }
 
   pub fn parse(&mut self, input: &str) -> Result<(), Box<dyn Error>> {
-    // TODO: Diferenciar ids de func_ids e armazenar em quais posições o token aparece.
     for char in input.chars() {
       // Keep track of current position in the input
       self.column_count += 1;

@@ -1,3 +1,4 @@
+// Esse arquivo foi gerado automaticamente pelo script scripts/consistency.py
 use std::error::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

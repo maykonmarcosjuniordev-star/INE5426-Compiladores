@@ -1,3 +1,5 @@
+'''Esse é um script de teste para verificar facilmente se a serialização do autômato está correta.'''
+'''Supostamente equivalente ao código em src/fda.rs, porém pode estar desatualizado.'''
 # THIS IS A TESTING SCRIPT
 # This script is only used to test if the automaton serialization is correct
 # It may not be up to date with the lastest form of serialization if the tests happened directly in the actual deserialization in the lexer 

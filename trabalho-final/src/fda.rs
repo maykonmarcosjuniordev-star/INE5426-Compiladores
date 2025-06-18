@@ -35,11 +35,11 @@ impl FDA {
     let raw_bytes = include_bytes!("../machines/lexer.automata");
     let mut transitions: HashMap<(State, Symbol), State> = HashMap::new();
 
-    // The first byte is the number of bytes per state
-    // Hopefully no automaton will ever need more than 256 bytes to encode its states
+    // O primeiro byte do arquivo contém o tamanho do estado em bytes
+    // Espera-se que nenhum autômato tenha mais do que 2^256 estados, então o tamanho do estado é limitado a 256 bytes
     let state_size = raw_bytes[0] as usize;
-    // Next groups of bytes are the transitions, in the format
-    // (state, symbol, next_state). Each symbol is a single byte
+    // Próximos bytes são as transições, no formato
+    // (estado, símbolo, próximo_estado). Cada símbolo é um único byte
     let mut i = 1;
     while i < raw_bytes.len() {
       match raw_bytes.get(i..i+2*state_size+1) {
@@ -56,6 +56,7 @@ impl FDA {
     }
     
     // Read the token table
+    // TODO: Replace this with the include_bytes! macro
     let token_table_file = File::open("machines/lexer_table.automata")?;
     let reader = BufReader::new(token_table_file);
     let mut token_table = HashMap::new();
@@ -72,6 +73,15 @@ impl FDA {
     Ok(fda)
   }
 
+  /// Retorna o próximo estado dado o estado atual e o símbolo lido.
+  /// Essa função segue uma lógica de camadas (apesar de que apenas uma camada foi utilizada)
+  /// A ideia é que existem grupos de símbolos, cada um com o seu nível de prioridade.
+  /// Cada transição é uma sequência de tentativas para cada nível de símbolos.
+  /// O mais prioritário é o símbolo específico, caso a transição (estado, símbolo) não exista, busca-se uma transição no pŕoximo nível.
+  /// Para o pŕoximo nível é usado o caracter '\x00', que representa um wildcard, ou seja, qualquer símbolo.
+  /// Após verificar todos os níveis, se nenhuma transição for encontrada então a transição é inválida.
+  /// Inicialmente essa função foi pensada para utilizar várias camadas, por exemplo: letra específica, conjunto de letras/números, wildcard.
+  /// Porém, isso seria incompatível com o algoritmo de determinização existente, que não identificaria uma transição por letra genérica e por letra específica como sendo não determinismo.
   pub fn transtion(&self, state: State, symbol: Symbol) -> Option<&State> {
     if self.transitions.contains_key(&(state, symbol)) { self.transitions.get(&(state, symbol)) }
     // Group transitions: If the specific character doesn't have a transition, check if there's a transition for a group in which the character belongs
