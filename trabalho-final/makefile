@@ -1,6 +1,7 @@
 all:
 	mkdir -p inputs
 	mkdir -p machines
+	mkdir -p output
 	if [[ ! -f machines/lexer.automata ]]; then \
 		python3 scripts/generate_lexer.py; \
 	fi
@@ -11,13 +12,12 @@ all:
 
 
 run:
-	@echo "opções:"
-	@echo ""
-	@ls inputs/
-	@echo ""
+	@clear
 	@INPUT="start"; \
 	while [ "$$INPUT" != "" ]; do \
-		read -p "Digite o nome do arquivo de input (ou ENTER para encerrar): " INPUT; \
+		ls inputs/; \
+		read -p "Digite apenas o nome (sem ".txt") do arquivo de input (ou ENTER para encerrar): " INPUT; \
+		clear; \
 		if [ "$$INPUT" != "" ]; then \
 			echo "Executando o analisador léxico no arquivo: inputs/$$INPUT.txt"; \
 			./target/release/compiler "inputs/$$INPUT.txt"; \
