@@ -55,7 +55,10 @@ impl Lexer {
       // Keep track of current position in the input
       self.column_count += 1;
       if char == '"' { self.string = !self.string; }
-      else if self.current_state == self.fda.initial_state && char.is_whitespace() { continue; }
+      else if self.current_state == self.fda.initial_state && char.is_whitespace() { 
+        if char == '\n' { self.line_count += 1; self.column_count = 0; }
+        continue; 
+      }
       // Language only accepts uppercase letters inside of strings
       let character = if !self.string && char.is_alphabetic() { char.to_ascii_lowercase() } else { char };
       
