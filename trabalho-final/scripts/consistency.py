@@ -1,3 +1,12 @@
+# Esse script gera as estruturas relacionadas à gramática do compilador.
+# Os arquivos de definição da gramática são lidos e usados para gerar os arquivos de código-fonte necessários.
+# Arquivos lidos:
+# - grammars/tokens.json
+# - grammars/syntax.txt 
+# Arquivos gerados:
+# - src/grammar/token_type.rs
+# - src/grammar/non_terminals.rs
+
 import json
 
 VALUED_TOKENS = [
@@ -10,28 +19,31 @@ VALUED_TOKENS = [
 ]
 
 # Load syntax.txt
-with open("grammars/syntax.txt") as f: syntax = f.readlines()
-syntax = [line.strip() for line in syntax]
+with open("grammars/syntax.txt") as f: syntax = [line.strip() for line in f.readlines()]
 # Load tokens.json
 with open("grammars/tokens.json") as f: tokens = json.load(f)
 
 variables = set()
 terminals = set()
+# Constrói o conjunto de símbolos não terminais da sintaxe
 for line in syntax:
-  head, *body = line.split(",")
+  head, _body = line.split(",")
   variables.add(head)
+# Constrói o conjunto de símbolos terminais da sintaxe
 for line in syntax:
-  head, *body = line.split(",")
+  head, body = line.split(",")
+  body = body.split()
   for symbol in body:
     if symbol == "''": continue
     if symbol not in variables: terminals.add(symbol)
 
 automata = set([token[0] for token in tokens])
 
-# Check if all tokens in syntax have a representation in tokens.json
+# Verificar se todos os tokens presentes na sintaxe estão definidos em tokens.json
 diff = terminals.difference(automata)
 if diff: print("Undefined tokens:", ", ".join(sorted(diff)), '\n')
-# Warn unused tokens in tokens.json
+# Verificar se todos os tokens definidos em tokens.json estão sendo usados na sintaxe
+# Isso não é um problema, é apenas boa prática garantir a paridade entre a análise léxica e sintática
 diff = automata.difference(terminals)
 if diff: print("Unused tokens:", ", ".join(sorted(diff)), '\n')
 
