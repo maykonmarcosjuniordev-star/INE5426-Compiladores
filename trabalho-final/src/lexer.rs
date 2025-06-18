@@ -55,115 +55,129 @@ impl Lexer {
     }
   }
 
-  // TODO: this ffs
-  // fn step(&mut self, char: char, use_state: Option<State>) {
-  //   let next_state = match use_state {
-  //     Some(state) => self.fda.transtion(state, char),
-  //     None => self.fda.transtion(self.current_state, char)
-  //   };
+  /// Retorna um erro léxico com a linha, coluna e o token inválido.
+  fn lexical_error(&self) -> Result<(), Box<dyn Error>> {
+    return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'",
+      self.line_count, self.column_count, self.token_value).into());
+  }
 
-  //   match next_state {
-  //     Some(next_state) => {},
-  //     None => {}
-  //   }
-  // }
-
-  pub fn parse(&mut self, input: &str) -> Result<(), Box<dyn Error>> {
-    for char in input.chars() {
-      // Keep track of current position in the input
-      self.column_count += 1;
-      if char == '"' { self.string = !self.string; }
-      else if self.current_state == self.fda.initial_state && char.is_whitespace() { 
-        if char == '\n' { self.line_count += 1; self.column_count = 0; }
-        continue; 
-      }
-      // Language only accepts uppercase letters inside of strings
-      let character = if !self.string && char.is_alphabetic() { char.to_ascii_lowercase() } else { char };
-      
-      // Process the character
-      let next_state = self.fda.transtion(self.current_state, character);
-      match next_state {
-        // If the transition is valid, just update the state and the token value
-        Some(next_state) => {
-          self.current_state = *next_state;
-          self.token_value.push(character);
-        },
-        // If the transition is invalid, check if the current state is a final state
-        // If it is, this means that a valid token was found
-        // And the current symbol is the start of a possible new token
-        // If it is not, this means that the token built until now is invalid and must be discarded
-        None => {
-          // If the current state is a final state, we have a valid token
-          match self.fda.token_table.get(&self.current_state) {
-            Some(token_type) => {
-            let token = Token{
-              token_type: *token_type,
-              value: if token_type.has_value() {Some(ConstType::from_str(&self.token_value))} else { None },
-              line: self.line_count,
-              column: self.column_count-self.token_value.len(),
-            };
-            if token_type.is_id() { 
-              let entry = self.token_table.get_mut(&self.token_value);
-              match entry {
-                Some(e) => {
-                  e.push((self.line_count as u32, (self.column_count - self.token_value.len()) as u32));
-                },
-                None => { self.token_table.insert(self.token_value.clone(), vec![(self.line_count as u32, (self.column_count - self.token_value.len()) as u32)]); }
-              }
-            }
-            self.token_list.push(token);
-            }
-            None => {
-              // If the current state is not a final state, we have an invalid token
-              // Print an error message and discard the token
-              return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
-            }
-          }
-
-          self.token_value.clear();
-          // Now that the previous token is stored
-          // Check if the current character is a valid start of a token
-          // If it is, execute the transition
-          // If it is not, return the lexical error and reset the state
-          if let Some(next_state) = self.fda.transitions.get(&(self.fda.initial_state, character)) {
-            self.current_state = *next_state;
-            if !character.is_whitespace() { self.token_value.push(character); }
-          } else {
-            // Since the compilation process halts at the first error, it doesn't need to reset the current state
-            return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
-          }
-        }
-      }
-      if char == '\n' { self.line_count += 1; self.column_count = 0; }
-    }
+  /// Verifica se o token construído até agora é válido.
+  /// Se for, cria um token com o tipo e valor do token encontrado até agora,
+  /// além da linha e coluna onde o token foi encontrado.
+  fn is_valid_token(&mut self, must_stop:bool) -> Result<(), Box<dyn Error>> {
     match self.fda.token_table.get(&self.current_state) {
-      // If the last token is valid, add it to the list
+      // Se o estado atual for um estado final, significa que um token válido foi encontrado
+      // -> e que o caractere atual é o início de um novo token possível
       Some(token_type) => {
-        let token = Token{
+        // Cria um token com o tipo e valor do token encontrado até agora,
+        // além da linha e coluna onde o token foi encontrado
+        let token = Token {
           token_type: *token_type,
           value: if token_type.has_value() {Some(ConstType::from_str(&self.token_value))} else { None },
           line: self.line_count,
           column: self.column_count-self.token_value.len(),
         };
+        // Se for um identificador, adiciona-o à tabela de símbolos
         if token_type.is_id() {
           let entry = self.token_table.get_mut(&self.token_value);
           match entry {
             Some(e) => {
-              e.push((self.line_count as u32, (self.column_count - self.token_value.len()) as u32));
+              // Se o identificador já existir na tabela de símbolos, adiciona a linha e coluna onde foi encontrado
+              e.push((token.line as u32, token.column as u32));
             },
-            None => { self.token_table.insert(self.token_value.clone(), vec![(self.line_count as u32, (self.column_count - self.token_value.len()) as u32)]); }
+            None => {
+            // Caso contrário, insere o identificador na tabela de símbolos
+            // TODO: Isso poderia ser feito com uma função auxiliar token.parse()?
+              self.token_table.insert(
+                self.token_value.clone(),
+                vec![(token.line as u32, token.column as u32)]
+                );
+            }
           }
         }
+        // Armazena o token encontrado na lista de tokens
         self.token_list.push(token);
       },
-      // If the last token is not valid, return an error
+    // Se não for, isso significa que o token construído até agora é inválido e deve ser descartado
       None => {
-        if !self.token_value.is_empty() {
-          return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
+        if must_stop {
+          return self.lexical_error();
         }
       }
     }
-    // Push EOF token to end of list for syntax analysis
+    Ok(())
+  }
+
+  /// Transita pelo autômato finito determinístico (AFD) com o estado atual e o caractere fornecido.
+  /// Atualisa o estado atual e o valor do token (se must_push for true), se a transição for válida.
+  /// Retorna true se a transição for válida, false caso contrário.
+  fn transtion(&mut self, state: State, character: char, must_push: bool) -> bool {
+    match self.fda.transtion(state, character) {
+      Some(next_state) => {
+        // Se a transição for válida, atualiza o estado atual e adiciona o caractere ao valor do token
+        self.current_state = *next_state;
+        if must_push {
+          self.token_value.push(character);
+        }
+        return true;
+      },
+      None => {
+          return false;
+      }
+    }
+  }
+
+  /// Realiza a análise léxica do input fornecido.
+  /// Lê o input caractere por caractere, atualizando o estado do autômato e construindo tokens válidos.
+  /// Se encontrar um erro léxico, retorna um erro.
+  pub fn parse(&mut self, input: &str) -> Result<(), Box<dyn Error>> {
+    // Para cada caractere do input, realiza a análise léxica
+    for char in input.chars() {
+      // contagem da coluna onde o caractere está
+      self.column_count += 1;
+      // Abrindo e fechando strings
+      if char == '"' {
+        self.string = !self.string;
+      }
+      // Se o caractere for um espaço em branco, ignore-o,
+      // Mas só se estivermos no estado inicial do autômato
+      // -> Isso permite ignorar vários espaços em branco seguidos; algo como em "return       ;"
+      else if self.current_state == self.fda.initial_state && char.is_whitespace() { 
+        // Se for uma quebra de linha, incrementa a contagem de linhas e reseta a contagem de colunas
+        if char == '\n' {
+          self.line_count += 1;
+          self.column_count = 0;
+        }
+        continue;
+      }
+      // A linguagem é case-insensitive (fora de uma string),
+      let character = if !self.string && char.is_alphabetic() {
+        // então converte o caractere para minúsculo
+        char.to_ascii_lowercase()
+      } else {
+        char
+      };
+      
+      if !self.transtion(self.current_state, character, true) {
+        // Se a transição não for válida, verifica se o estado atual é um estado final
+        self.is_valid_token(true)?;
+        // Reseta o token encontrado até agora
+        self.token_value.clear();
+        // Verifica se o caractere atual é um possível início de token
+        if !self.transtion(self.fda.initial_state, character, !character.is_whitespace()) {
+          // Se não for, retorna um erro léxico
+          // Já que a compilação para no primeiro erro, não precisa resetar o estado atual
+          return self.lexical_error();
+        }
+      }
+      if char == '\n' {
+        self.line_count += 1;
+        self.column_count = 0;
+      }
+    }
+    // Depois de ler todo o input, verifica se o último token lido é válido
+    self.is_valid_token(!self.token_value.is_empty())?;
+    // Adiciona um token de fim de arquivo (EOF) à lista de tokens
     self.token_list.push(Token{
       token_type: TokenType::Eof,
       value: None,
