@@ -86,7 +86,7 @@ impl Lexer {
           } else {
             // If the current state is not a final state, we have an invalid token
             // Print an error message and discard the token
-            return Err(format!("Error: Invalid token at line {}, column {}: '{}'", self.line_count, self.column_count, self.token_value).into());
+            return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
           }
 
           self.token_value.clear();
@@ -99,7 +99,7 @@ impl Lexer {
             if !character.is_whitespace() { self.token_value.push(character); }
           } else {
             // Since the compilation process halts at the first error, it doesn't need to reset the current state
-            return Err(format!("Error: Invalid token at line {}, column {}: '{}'", self.line_count, self.column_count, self.token_value).into());
+            return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
           }
         }
       }
@@ -119,7 +119,7 @@ impl Lexer {
     }
     // If the last token is not valid, return an error
     else if !self.token_value.is_empty() {
-      return Err(format!("Error: Invalid token at line {}, column {}: '{}'", self.line_count, self.column_count, self.token_value).into());
+      return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
     }
     // Push EOF token to end of list for syntax analysis
     self.token_list.push(Token{
@@ -129,6 +129,7 @@ impl Lexer {
       column: self.column_count,
     });
 
+    println!("Análise léxica concluída com sucesso, {} tokens no total.", self.token_list.len());
     Ok(())
   }
 
@@ -137,6 +138,7 @@ impl Lexer {
     for token in &self.token_list {
       writeln!(file, "{:?}", token)?;
     }
+    println!("Lista de tokens salva em {}", path);
     Ok(())
   }
 
@@ -145,6 +147,7 @@ impl Lexer {
     for (key, value) in &self.token_table {
       writeln!(file, "{}: {:?}", key, value)?;
     }
+    println!("Tabela de símbolos salva em {}", path);
     Ok(())
   }
 }
