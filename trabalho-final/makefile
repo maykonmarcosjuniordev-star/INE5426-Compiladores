@@ -15,12 +15,14 @@ run:
 	@clear
 	@INPUT="start"; \
 	while [ "$$INPUT" != "" ]; do \
+		echo "===================================="; \
 		ls inputs/; \
+		echo "===================================="; \
 		read -p "Digite apenas o nome (sem ".txt") do arquivo de input (ou ENTER para encerrar): " INPUT; \
 		clear; \
 		if [ "$$INPUT" != "" ]; then \
 			echo "Executando o analisador léxico no arquivo: inputs/$$INPUT.txt"; \
-			./target/release/compiler "inputs/$$INPUT.txt"; \
+			time ./target/release/compiler "inputs/$$INPUT.txt"; \
 		fi; \
 	done
 
