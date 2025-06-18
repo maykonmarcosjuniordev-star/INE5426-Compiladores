@@ -18,6 +18,11 @@ VALUED_TOKENS = [
   "var_type"
 ]
 
+ID_TOKENS = [
+  "id",
+  "func_id"
+]
+
 # Load syntax.txt
 with open("grammars/syntax.txt") as f: syntax = [line.strip() for line in f.readlines()]
 # Load tokens.json
@@ -47,78 +52,25 @@ if diff: print("Undefined tokens:", ", ".join(sorted(diff)), '\n')
 diff = automata.difference(terminals)
 if diff: print("Unused tokens:", ", ".join(sorted(diff)), '\n')
 
-# Create TokenType Enumerator
+# Criar TokenType Enumerator
 def clean_token(token: str) -> str:
-  new_string = token[0].upper()
-  x = False
-  for char in token[1:]:
-    if char == "_":
-      x = True
-      continue
+  return token.replace("_", " ").title().replace(" ", "")
 
-    if x:
-      new_string += char.upper()
-      x = False
-    else:
-      new_string += char
-  return new_string
-
+terminals.add("eof")  # Adiciona o token EOF para indicar o fim do arquivo
+with open("scripts/token_type_template.txt") as f: token_type_template = f.read()
 with open("src/grammar/token_type.rs", "w") as f:
-  f.write("use std::error::Error;\n\n")
-  f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]\n")
-  f.write("pub enum TokenType {\n")
-  for token in sorted(terminals):
-    f.write(f"  {clean_token(token)},\n")
-  f.write("}")
-  f.write("\n\n")
-  f.write("impl TokenType {\n")
-  f.write("  pub fn from_str(s: &str) -> Result<TokenType, Box<dyn Error>> {\n")
-  f.write("    match s {\n")
-  for token in sorted(terminals):
-    f.write(f"      \"{token}\" => Ok(TokenType::{clean_token(token)}),\n")
-  f.write("      _ => Err(format!(\"Invalid TokenType: {}\", s).into())")
-  f.writelines(["\n    }\n", "  }\n\n"])
-
+  token_list = "  ".join([f"{clean_token(token)},\n" for token in sorted(terminals)])[:-1]
+  token_string_list = "      ".join([f"\"{token}\" => Ok(TokenType::{clean_token(token)}),\n" for token in sorted(terminals)])[:-1]
   valued_string = " | ".join([f"TokenType::{clean_token(token)}" for token in VALUED_TOKENS])
-  f.write("""  pub fn has_value(&self) -> bool {{
-    match self {{
-      {} => true,
-      _ => false,
-    }}
-  }}\n""".format(valued_string))
+  id_tokens = " | ".join([f"TokenType::{clean_token(token)}" for token in ID_TOKENS])
+  f.write(token_type_template.format(token_list=token_list, token_string_list=token_string_list, valued_string=valued_string, id_tokens=id_tokens))
 
-  # is_id function
-  f.write("""
-  pub fn is_id(&self) -> bool {
-    match self {
-      TokenType::Id | TokenType::FuncId => true,
-      _ => false
-    }
-  }\n""")
-
-  f.write("}\n")
-
-non_terminal_from_str = """
-impl NonTerminal {{
-  pub fn from_str(s: &str) -> Result<Self, Box<dyn std::error::Error>> {{
-    match s {{
-{},
-      _ => Err("Invalid non-terminal".into()),
-    }}
-  }}
-}}
-"""[1:]
+# Criar NonTerminal enum
 def clean_variable(var: str) -> str:
   return var.replace("_", " ").title().replace(" ", "")
 
-non_terminal_from_str_fill = ",\n".join([f"      \"{variable}\" => Ok(NonTerminal::{clean_variable(variable)})" for variable in sorted(variables)])
-
-
-# Sytax
+non_terminal_list = "  ".join([f"{clean_variable(variable)},\n" for variable in sorted(variables)])[:-1]
+non_terminal_string_list = "      ".join([f"\"{variable}\" => Ok(NonTerminal::{clean_variable(variable)}),\n" for variable in sorted(variables)])[:-1]
+with open("scripts/non_terminals_template.txt") as f: non_terminal_template = f.read()
 with open("src/grammar/non_terminals.rs", "w") as f:
-  f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]\n")
-  f.write("pub enum NonTerminal {\n")
-  for variable in sorted(variables):
-    f.write(f"  {clean_variable(variable)},\n")
-  f.write("}\n\n")
-  f.write(non_terminal_from_str.format(non_terminal_from_str_fill))
+  f.write(non_terminal_template.format(non_terminal_list=non_terminal_list, non_terminal_string_list=non_terminal_string_list))

@@ -1,0 +1,13 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum NonTerminal {{
+  {non_terminal_list}
+}}
+
+impl NonTerminal {{
+  pub fn from_str(s: &str) -> Result<Self, Box<dyn std::error::Error>> {{
+    match s {{
+      {non_terminal_string_list}
+      _ => Err("Invalid non-terminal".into()),
+    }}
+  }}
+}}

@@ -1,0 +1,29 @@
+use std::error::Error;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum TokenType {{
+  {token_list}
+}}
+
+impl TokenType {{
+  pub fn from_str(s: &str) -> Result<TokenType, Box<dyn Error>> {{
+    match s {{
+      {token_string_list}
+      _ => Err(format!("Invalid TokenType: {{}}", s).into())
+    }}
+  }}
+
+  pub fn has_value(&self) -> bool {{
+    match self {{
+      {valued_string} => true,
+      _ => false,
+    }}
+  }}
+
+  pub fn is_id(&self) -> bool {{
+    match self {{
+      {id_tokens} => true,
+      _ => false
+    }}
+  }}
+}}
