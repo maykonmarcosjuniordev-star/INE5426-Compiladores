@@ -76,8 +76,8 @@ impl Lexer {
         // If it is not, this means that the token built until now is invalid and must be discarded
         None => {
           // If the current state is a final state, we have a valid token
-          if self.fda.token_table.contains_key(&self.current_state) {
-            let token_type = self.fda.token_table.get(&self.current_state).unwrap();
+          match self.fda.token_table.get(&self.current_state) {
+            Some(token_type) => {
             let token = Token{
               token_type: *token_type,
               value: if token_type.has_value() {Some(ConstType::from_str(&self.token_value))} else { None },
@@ -94,10 +94,12 @@ impl Lexer {
               }
             }
             self.token_list.push(token);
-          } else {
-            // If the current state is not a final state, we have an invalid token
-            // Print an error message and discard the token
-            return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
+            }
+            None => {
+              // If the current state is not a final state, we have an invalid token
+              // Print an error message and discard the token
+              return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
+            }
           }
 
           self.token_value.clear();
@@ -116,29 +118,32 @@ impl Lexer {
       }
       if char == '\n' { self.line_count += 1; self.column_count = 0; }
     }
-    // If the last token is valid, add it to the list
-    if self.fda.token_table.contains_key(&self.current_state) {
-      let token_type = self.fda.token_table.get(&self.current_state).unwrap();
-      let token = Token{
-        token_type: *token_type,
-        value: if token_type.has_value() {Some(ConstType::from_str(&self.token_value))} else { None },
-        line: self.line_count,
-        column: self.column_count-self.token_value.len(),
-      };
-      if token_type.is_id() {
-        let entry = self.token_table.get_mut(&self.token_value);
-        match entry {
-          Some(e) => {
-            e.push((self.line_count as u32, (self.column_count - self.token_value.len()) as u32));
-          },
-          None => { self.token_table.insert(self.token_value.clone(), vec![(self.line_count as u32, (self.column_count - self.token_value.len()) as u32)]); }
+    match self.fda.token_table.get(&self.current_state) {
+      // If the last token is valid, add it to the list
+      Some(token_type) => {
+        let token = Token{
+          token_type: *token_type,
+          value: if token_type.has_value() {Some(ConstType::from_str(&self.token_value))} else { None },
+          line: self.line_count,
+          column: self.column_count-self.token_value.len(),
+        };
+        if token_type.is_id() {
+          let entry = self.token_table.get_mut(&self.token_value);
+          match entry {
+            Some(e) => {
+              e.push((self.line_count as u32, (self.column_count - self.token_value.len()) as u32));
+            },
+            None => { self.token_table.insert(self.token_value.clone(), vec![(self.line_count as u32, (self.column_count - self.token_value.len()) as u32)]); }
+          }
+        }
+        self.token_list.push(token);
+      },
+      // If the last token is not valid, return an error
+      None => {
+        if !self.token_value.is_empty() {
+          return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
         }
       }
-      self.token_list.push(token);
-    }
-    // If the last token is not valid, return an error
-    else if !self.token_value.is_empty() {
-      return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into());
     }
     // Push EOF token to end of list for syntax analysis
     self.token_list.push(Token{

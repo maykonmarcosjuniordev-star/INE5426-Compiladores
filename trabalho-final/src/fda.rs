@@ -8,7 +8,7 @@ use crate::grammar::token_type::TokenType;
 type State = u32;
 type Symbol = char;
 
-fn byte_vec_into_u32(vec: &Vec<u8>) -> u32 {
+fn byte_vec_into_u32(vec: &[u8]) -> u32 {
   let mut result = 0;
   for byte in vec.iter() {
     result *= 256;
@@ -44,9 +44,9 @@ impl FDA {
     while i < raw_bytes.len() {
       match raw_bytes.get(i..i+2*state_size+1) {
         Some(transition) => {
-          let state = byte_vec_into_u32(&transition[..state_size].try_into().unwrap());
+          let state = byte_vec_into_u32(&transition[..state_size]);
           let symbol = transition[state_size] as char;
-          let next_state = byte_vec_into_u32(&transition[state_size+1..2*state_size+1].try_into().unwrap());
+          let next_state = byte_vec_into_u32(&transition[state_size+1..2*state_size+1]);
           let transition = next_state;
           transitions.insert((state, symbol), transition);
           i += 2*state_size + 1;
