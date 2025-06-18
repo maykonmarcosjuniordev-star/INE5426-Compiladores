@@ -1,3 +1,4 @@
+use crate::fda;
 use crate::fda::FDA;
 use crate::token::{ConstType, Token};
 use crate::grammar::token_type::TokenType;
@@ -23,9 +24,8 @@ pub type TokenEntry = Vec<(u32, u32)>;
 
 impl Lexer {
   pub fn new() -> Lexer {
-    let fda = FDA::from_file().expect("Lexer automata file not found");
     Lexer { 
-      fda,
+      fda: fda!["../machines/lexer.automata", "../machines/lexer_table.automata"],
       token_list: vec![],
       token_table: HashMap::new(),
       line_count: 1,

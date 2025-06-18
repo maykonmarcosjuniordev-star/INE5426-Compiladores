@@ -1,14 +1,11 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, BufRead};
-use std::error::Error;
 
 use crate::grammar::token_type::TokenType;
 
-type State = u32;
-type Symbol = char;
+pub type State = u32;
+pub type Symbol = char;
 
-fn byte_vec_into_u32(vec: &[u8]) -> u32 {
+pub fn byte_vec_into_u32(vec: &[u8]) -> u32 {
   let mut result = 0;
   for byte in vec.iter() {
     result *= 256;
@@ -24,16 +21,21 @@ pub struct FDA {
 }
 
 impl FDA {
-  pub fn new(initial_state: State, transitions: HashMap<(State, Symbol), State>, token_table: HashMap<State, TokenType>) -> FDA {
-
-    FDA { initial_state, transitions, token_table }
+  pub fn transtion(&self, state: State, symbol: Symbol) -> Option<&State> {
+    if self.transitions.contains_key(&(state, symbol)) { self.transitions.get(&(state, symbol)) }
+    // Group transitions: If the specific character doesn't have a transition, check if there's a transition for a group in which the character belongs
+    // Yeah for now there are no groups and I'm not sure if there'll ever be any.
+    // If the all groups above failed, check for the wildcard symbol. It skips any check and just runs the transition for whatever symbol it has read
+    else if self.transitions.contains_key(&(state, '\x00')) { self.transitions.get(&(state, '\x00')) }
+    else { None }
   }
+}
 
-  pub fn from_file() -> Result<FDA, Box<dyn Error>> {
-    // /machines/lexer.automata precisa existir durante a compilação do projeto
-    // O mesmo vale para /machines/lexer_table.automata
-    let raw_bytes = include_bytes!("../machines/lexer.automata");
-    let mut transitions: HashMap<(State, Symbol), State> = HashMap::new();
+#[macro_export]
+macro_rules! fda {
+  ($transitions:expr, $token_table:expr) => {{
+    let raw_bytes = include_bytes!($transitions);
+    let mut transitions: HashMap<(State, crate::fda::Symbol), State> = HashMap::new();
 
     // The first byte is the number of bytes per state
     // Hopefully no automaton will ever need more than 256 bytes to encode its states
@@ -44,9 +46,9 @@ impl FDA {
     while i < raw_bytes.len() {
       match raw_bytes.get(i..i+2*state_size+1) {
         Some(transition) => {
-          let state = byte_vec_into_u32(&transition[..state_size]);
+          let state = crate::fda::byte_vec_into_u32(&transition[..state_size]);
           let symbol = transition[state_size] as char;
-          let next_state = byte_vec_into_u32(&transition[state_size+1..2*state_size+1]);
+          let next_state = crate::fda::byte_vec_into_u32(&transition[state_size+1..2*state_size+1]);
           let transition = next_state;
           transitions.insert((state, symbol), transition);
           i += 2*state_size + 1;
@@ -56,28 +58,20 @@ impl FDA {
     }
     
     // Read the token table
-    let token_table_file = File::open("machines/lexer_table.automata")?;
-    let reader = BufReader::new(token_table_file);
+    let token_table_content = include_str!($token_table);
     let mut token_table = HashMap::new();
-    for line in reader.lines() {
-      let line = line?;
+    for line in token_table_content.lines() {
       let parts: Vec<&str> = line.split(':').collect();
-      if parts.len() != 2 { return Err("Invalid token table format".into()); }
-      let state = parts[0].parse::<u32>()?;
-      let token = TokenType::from_str(parts[1])?;
+      if parts.len() != 2 { panic!("Invalid token table format: {}", line); }
+      let state = parts[0].parse::<u32>().expect("Invalid state in token table");
+      let token = TokenType::from_str(parts[1]).expect("Invalid token type in token table");
       token_table.insert(state, token);
     }
 
-    let fda = FDA::new(0, transitions, token_table);
-    Ok(fda)
-  }
-
-  pub fn transtion(&self, state: State, symbol: Symbol) -> Option<&State> {
-    if self.transitions.contains_key(&(state, symbol)) { self.transitions.get(&(state, symbol)) }
-    // Group transitions: If the specific character doesn't have a transition, check if there's a transition for a group in which the character belongs
-    // Yeah for now there are no groups and I'm not sure if there'll ever be any.
-    // If the all groups above failed, check for the wildcard symbol. It skips any check and just runs the transition for whatever symbol it has read
-    else if self.transitions.contains_key(&(state, '\x00')) { self.transitions.get(&(state, '\x00')) }
-    else { None }
-  }
+    FDA {
+      initial_state: 0, // The initial state is always 0
+      transitions,
+      token_table,
+    }
+  }}
 }
