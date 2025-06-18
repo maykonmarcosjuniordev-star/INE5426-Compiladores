@@ -84,7 +84,15 @@ impl Lexer {
               line: self.line_count,
               column: self.column_count-self.token_value.len(),
             };
-            if token_type.is_id() { self.token_table.insert(self.token_value.clone(), vec![]); }
+            if token_type.is_id() { 
+              let entry = self.token_table.get_mut(&self.token_value);
+              match entry {
+                Some(e) => {
+                  e.push((self.line_count as u32, (self.column_count - self.token_value.len()) as u32));
+                },
+                None => { self.token_table.insert(self.token_value.clone(), vec![(self.line_count as u32, (self.column_count - self.token_value.len()) as u32)]); }
+              }
+            }
             self.token_list.push(token);
           } else {
             // If the current state is not a final state, we have an invalid token
@@ -117,7 +125,15 @@ impl Lexer {
         line: self.line_count,
         column: self.column_count-self.token_value.len(),
       };
-      if token_type.is_id() { self.token_table.insert(self.token_value.clone(), vec![]); }
+      if token_type.is_id() {
+        let entry = self.token_table.get_mut(&self.token_value);
+        match entry {
+          Some(e) => {
+            e.push((self.line_count as u32, (self.column_count - self.token_value.len()) as u32));
+          },
+          None => { self.token_table.insert(self.token_value.clone(), vec![(self.line_count as u32, (self.column_count - self.token_value.len()) as u32)]); }
+        }
+      }
       self.token_list.push(token);
     }
     // If the last token is not valid, return an error
