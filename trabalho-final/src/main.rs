@@ -1,3 +1,12 @@
+/// Exercício-Programa INE5426
+/// Trabalho Final - Compiladores
+/// Participantes:
+/// - Beatriz de Quadros Schmitt - 22100608
+/// - Clara Rosa Oliveira Gonçalves - 22103511
+/// - Gabriel Sartori Rangel - 22100617
+/// - Mateus Goulart Chedid - 22100635
+/// - Maykon Marcos Junior - 22102199
+
 mod token;
 mod fda;
 mod lexer;

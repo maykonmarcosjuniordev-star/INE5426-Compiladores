@@ -10,17 +10,17 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
   - [x] Tipo do token
   - [x] Valor do token
   - [x] Posição no código (linha, coluna)
-- [ ] Gerar tabela de símbolos para os tokens `id`
-  - [ ] Armazenar cada entrada
+- [ ] Gerar tabela de símbolos para os tokens `id` e `func_id`
+  - [x] Armazenar cada entrada
   - [ ] Armazenar dados da entrada
     - [ ] Valor
-    - [ ] Tipo
+    - [ ] Tipo, Vec<Type>. Para variáveis o tipo será apenas um, para funções será a lista de todos os tipos dos parâmetros
+    - [ ] Dimensão, Vec<u32>. Para dados simples será apenas [1], para arrays e matrizes serão os valores apropriados.
     - [ ] Lista de aparições no código (Vec<u32, u32>)
-- [ ] Perguntar pro Álvaro como serão os erros léxicos (Visto que a maioria dos erros léxicos só são percebidos na análise sintática)
+- [x] Perguntar pro Álvaro como serão os erros léxicos (Visto que a maioria dos erros léxicos só são percebidos na análise sintática)
 - [x] O autômato criado automaticamente não está guardando referência para quais estados representam quais tokens, é preciso que essa informação seja atualizada sempre que os estados do autômato forem alterados por operações de união/determinização
-- [ ] id com ~ tá dando problema
+- [ ] id com ~ tá dando problema; Provavelmente não vamos corrigir isso
 ## Adicionais
-- [ ] Otimizar a função de transição do autômato finito com uma hash específica.
 - [x] Substituir if por comandos retornados pelas transições; Os "comandos" foram substituídos pela classificação do token. A ação é sempre determinada pelo tipo do token que acaba de ser lido, logo a existência de comandos específicos para cada transição é desnecessária. Além disso, o único comando observado até o momento foi o de armazenar o valor do token lido junto do tipo. Acredito que no máximo do máximo será feita a distinção para decodificar constantes numéricas em vez de armazenar seus valores como strings.
 
 # Analisador Sintático
@@ -29,7 +29,7 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 - [x] Gramática da linguagem em LL1
   - [ ] Adicionar comentário: A gramática foi modificada para que os identificadores de função possuam uma regex própria, de forma a simplificar a remoção de não determinismo para o valor do ATRIBSTATE; LVALUE = (id | id()) -> LVALUE = (id | func_id())
 - [ ] Demonstrar que a gramática está em LL1 (Criar arquivo com first e follow)
-- [ ] Tabela de parsing LL1
+- [x] Tabela de parsing LL1
 ## Adicionais
 - [ ] Usar a posição do token para notificar em que parte do código erros sintáticos acontecem
 
@@ -47,6 +47,23 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 
 # Entrega
 - [ ] Programa com todas as fases
-- [ ] 3 Programas escritos na linguagem. +100 linhas.
-- [ ] Makefile
-- [ ] Documentação
+- [ ] 3 Programas escritos na linguagem. +100 linhas. (Clara)
+- [ ] Makefile (Maykon)
+ - [ ] Geração dos arquivos do autômato antes da compilação
+ - [ ] Geração dos arquivos de enumeradores antes da compilação
+- [ ] Documentação (Mateus)
+ - [ ] Documento com prova de que a gramática está em LL1
+ - [ ] 
+- [ ] Readme (Sartori)
+- [ ] Saída do programa no terminal
+ - [ ] Árvores de expressão
+  - [ ] Pergutar pro Álvaro se pode ser em um arquivo
+ - [ ] Tabela de símbolos com tipo
+  - [ ] Perguntar se precisa das posições do símbolo também
+ - [ ] Mensagem de sucesso para a análise das expressões
+ - [ ] Mensagem de sucesso para a análise das declarações por escopo
+ - [ ] Mensagem de sucesso para a análise de comandos por escopo
+ - [ ] Código intermediário
+  - [ ] Perguntar se pode ser num arquivo de saída
+ - [ ] Mensagem detalhada de erro caso haja erro no código fonte. Lembrando que o processo de compilação encerra no momento em que o primeiro erro for encontrado, independentemente da etapa de compilação.
+- [ ] Cabeçalho com nomes dos integrantes
