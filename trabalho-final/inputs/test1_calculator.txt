@@ -1,0 +1,125 @@
+def @soma(int a, int b) {
+    int resultado;
+    resultado = a + b;
+    print "Resultado da soma = ";
+    print resultado;
+    return;
+}
+
+def @subtrai(int a, int b) {
+    int resultado;
+    resultado = a - b;
+    print "Resultado da subtração = ";
+    print resultado;
+    return;
+}
+
+def @multiplica(int a, int b) {
+    int resultado;
+    resultado = a * b;
+    print "Resultado da multiplicação = ";
+    print resultado;
+    return;
+}
+
+def @divide(int a, int b) {
+    int resultado;
+    if (b == 0) {
+        print "Divisao por zero nao permitida";
+    } else {
+        resultado = a / b;
+    }
+    print "Resultado da divisão = ";
+    print resultado;
+    return;
+}
+
+def @fatorial(int n) {
+    int resultado;
+    resultado = 1;
+    for (i = 1; i <= n; i = i + 1) {
+        resultado = resultado * i;
+    }
+    print "Resultado dp fatorial = ";
+    print resultado;
+    return;
+}
+
+def @potencia(int base, int expoente) {
+    int resultado;
+    int i;
+    resultado = 1;
+    for (i = 0; i < expoente; i = i + 1) {
+        resultado = resultado * base;
+    }
+    print "Resultado da potência = ";
+    print resultado;
+    return;
+}
+
+def @modulo(int a, int b) {
+    int resultado;
+    resultado = a%b;
+    print "Resultado do módulo = ";
+    print resultado;
+    return;
+}
+
+def @menu() {
+    int opcao;
+    int x;
+    int y;
+    int valorResultante;
+    print "Escolha uma opcao:";
+    print "1 - Soma";
+    print "2 - Subtracao";
+    print "3 - Multiplicacao";
+    print "4 - Divisao";
+    print "5 - Fatorial";
+    print "6 - Potencia";
+    print "0 - Sair";
+    read opcao;
+    
+    if (opcao == 1) {
+        print "Digite dois numeros:";
+        read x;
+        read y;
+        valorResultante = @soma(x, y);
+    } else if (opcao == 2) {
+        print "Digite dois numeros:";
+        read x;
+        read y;
+        valorResultante = @subtrai(x, y);
+    } else if (opcao == 3) {
+        print "Digite dois numeros:";
+        read x;
+        read y;
+        valorResultante = @multiplica(x, y);
+    } else if (opcao == 4) {
+        print "Digite dois numeros:";
+        read x;
+        read y;
+        valorResultante = @divide(x, y);
+    } else if (opcao == 5) {
+        print "Digite um numero:";
+        read x;
+        valorResultante = @fatorial(x);
+    } else if (opcao == 6) {
+        print "Digite base e expoente:";
+        read x;
+        read y;
+        valorResultante = @potencia(x, y);
+    } else if (opcao == 0) {
+        print "Encerrando...";
+    } else {
+        print "Opcao invalida.";
+    }
+
+    return;
+}
+
+def @main() {
+    int chamaMenu;
+    chamaMenu = @menu();
+    return;
+}
