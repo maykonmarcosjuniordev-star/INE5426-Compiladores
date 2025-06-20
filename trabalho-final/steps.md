@@ -27,7 +27,7 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 ## Requisitos
 - [x] Gerar árvore sintática
 - [x] Gramática da linguagem em LL1
-  - [ ] Adicionar comentário: A gramática foi modificada para que os identificadores de função possuam uma regex própria, de forma a simplificar a remoção de não determinismo para o valor do ATRIBSTATE; LVALUE = (id | id()) -> LVALUE = (id | func_id())
+  - [x] Adicionar comentário: A gramática foi modificada para que os identificadores de função possuam uma regex própria, de forma a simplificar a remoção de não determinismo para o valor do ATRIBSTATE; LVALUE = (id | id()) -> LVALUE = (id | func_id())
 - [ ] Demonstrar que a gramática está em LL1 (Criar arquivo com first e follow)
 - [x] Tabela de parsing LL1
 ## Adicionais
@@ -35,11 +35,20 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 
 # Analisador Semântico
 ## Requisitos
+* "A tabela de símbolos" não faz sentido, visto que diferentes escopos podem usar o mesmo símbolo de formas diferentes. Dessa forma, sempre que "a" tabela de símbolos for mencionada, refere-se à tabela adequada na pilha de escopos.
+- [ ] Pilha de escopos
+ - [ ] Abrir um novo escopo
+ - [ ] Fechar o escopo atual
+ - [ ] Inserir um novo símbolo e seu tipo
+  - [ ] Verificar se o símbolo já foi inserido no escopo atual (e retornar erro caso positivo)
+ - [ ] Verificar o típo de um símbolo
+  - [ ] Buscar o escopo mais ao topo da pilha, retornar erro caso símbolo não tenha sido definido
+
 - [ ] Gerar a árvore de expressão com operadores e operandos
   - [ ] Perguntar pro Álvaro que porra é essa
 - [ ] Inserção de tipos das variáveis (e funções) na tabela de símbolos
-- [ ] Verificação de tipos em expressões numericas. (Talvez em funções)
 - [ ] Verificação de identificadores por escopo
+- [ ] Verificação de tipos em expressões numericas. (Talvez em funções)
 - [ ] Verificar se kw_break está no escopo de um FORSTAT
 
 # Geração de Código Intermediário
