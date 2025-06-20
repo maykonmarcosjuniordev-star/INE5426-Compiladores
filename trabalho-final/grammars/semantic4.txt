@@ -55,7 +55,6 @@ TERM_1 -> ''
     TERM_1.val = TERM_1.inh
 
 
-
 UNARYEXPRESSION -> FACTOR
     UNARYEXPRESSION.tipo = FACTOR.tipo
 
