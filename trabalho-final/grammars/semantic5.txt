@@ -1,0 +1,8 @@
+PROGRAM -> COISA
+ coisa.for = falso
+COISA -> OUTRA
+OUTRA.for = COISA.for
+FORSTAT -> for(atrib;expression;atrib) { STATELIST }
+ STATELIST.for = true
+STATEMENT -> kw_break semicolon
+ if not STATEMENT.for: return ERRO

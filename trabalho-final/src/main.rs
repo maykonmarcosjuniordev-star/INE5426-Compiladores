@@ -12,6 +12,7 @@ mod fda;
 mod lexer;
 mod syntax;
 mod grammar;
+mod scope_stack;
 
 use lexer::Lexer;
 use syntax::SyntaxTree;

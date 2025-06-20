@@ -19,25 +19,6 @@ pub struct Lexer {
 
 pub type TokenList = Vec<Token>;
 pub type TokenTable = HashMap<String, TokenEntry>;
-// TODO: Desenvolver o tipo TokenEntry para armazenar todas as informações relevantes do token
-// - posições onde o token aparece no código
-// - se é id ou func_id
-// - tipagem
-// - etc.
-// struct VarType {
-//   var_type: VarTypeType,
-//   dimesions: Vec<u32>
-// }
-// enum VarTypeType {
-//   String,
-//   Int,
-//   Float
-// }
-
-// pub enum TokenEntryType {
-//   Id(VarType),
-//   FuncId(Vec<VarType>)
-// }
 pub type TokenEntry = Vec<(u32, u32)>;
 
 impl Lexer {
@@ -57,14 +38,13 @@ impl Lexer {
 
   /// Retorna um erro léxico com a linha, coluna e o token inválido.
   fn lexical_error(&self) -> Result<(), Box<dyn Error>> {
-    return Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'",
-      self.line_count, self.column_count, self.token_value).into());
+    Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into())
   }
 
   /// Verifica se o token construído até agora é válido.
   /// Se for, cria um token com o tipo e valor do token encontrado até agora,
   /// além da linha e coluna onde o token foi encontrado.
-  fn is_valid_token(&mut self, must_stop:bool) -> Result<(), Box<dyn Error>> {
+  fn is_valid_token(&mut self) -> Result<(), Box<dyn Error>> {
     match self.fda.token_table.get(&self.current_state) {
       // Se o estado atual for um estado final, significa que um token válido foi encontrado
       // -> e que o caractere atual é o início de um novo token possível
@@ -98,9 +78,9 @@ impl Lexer {
         // Armazena o token encontrado na lista de tokens
         self.token_list.push(token);
       },
-    // Se não for, isso significa que o token construído até agora é inválido e deve ser descartado
+      // Se não for, isso significa que o token construído até agora é inválido e deve ser descartado
       None => {
-        if must_stop {
+        if !self.token_value.is_empty() {
           return self.lexical_error();
         }
       }
@@ -111,20 +91,15 @@ impl Lexer {
   /// Transita pelo autômato finito determinístico (AFD) com o estado atual e o caractere fornecido.
   /// Atualisa o estado atual e o valor do token (se must_push for true), se a transição for válida.
   /// Retorna true se a transição for válida, false caso contrário.
-  fn transtion(&mut self, state: State, character: char, must_push: bool) -> bool {
-    match self.fda.transtion(state, character) {
-      Some(next_state) => {
-        // Se a transição for válida, atualiza o estado atual e adiciona o caractere ao valor do token
-        self.current_state = *next_state;
-        if must_push {
-          self.token_value.push(character);
-        }
-        return true;
-      },
-      None => {
-          return false;
-      }
+  fn transition(&mut self, state: State, character: char) -> bool {
+    let Some(next_state) = self.fda.transition(state, character) else { return false; };
+    // Se a transição for válida, atualiza o estado atual e adiciona o caractere ao valor do token
+    self.current_state = *next_state;
+    // Ignora caracteres em branco fora de strings
+    if !character.is_whitespace() || self.current_state != self.fda.initial_state { 
+      self.token_value.push(character);
     }
+    return true;
   }
 
   /// Realiza a análise léxica do input fornecido.
@@ -158,13 +133,13 @@ impl Lexer {
         char
       };
       
-      if !self.transtion(self.current_state, character, true) {
+      if !self.transition(self.current_state, character) {
         // Se a transição não for válida, verifica se o estado atual é um estado final
-        self.is_valid_token(true)?;
+        self.is_valid_token()?;
         // Reseta o token encontrado até agora
         self.token_value.clear();
         // Verifica se o caractere atual é um possível início de token
-        if !self.transtion(self.fda.initial_state, character, !character.is_whitespace()) {
+        if !self.transition(self.fda.initial_state, character) {
           // Se não for, retorna um erro léxico
           // Já que a compilação para no primeiro erro, não precisa resetar o estado atual
           return self.lexical_error();
@@ -176,7 +151,7 @@ impl Lexer {
       }
     }
     // Depois de ler todo o input, verifica se o último token lido é válido
-    self.is_valid_token(!self.token_value.is_empty())?;
+    self.is_valid_token()?;
     // Adiciona um token de fim de arquivo (EOF) à lista de tokens
     self.token_list.push(Token{
       token_type: TokenType::Eof,

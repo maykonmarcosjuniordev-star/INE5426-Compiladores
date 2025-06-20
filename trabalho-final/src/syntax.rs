@@ -4,6 +4,7 @@ use crate::grammar::non_terminals::NonTerminal;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::io::Write;
+use crate::scope_stack::ScopeStack;
 
 #[derive(Clone, Copy)] 
 pub enum Symbol {
@@ -28,50 +29,54 @@ struct Node {
   children: Vec<Box<Node>>,
   parse_table: Rc<ParseTable>,
   rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
+  scopes: Rc<ScopeStack>,
 }
 
 impl Node {
   fn new(
     value: Symbol,
     parse_table: Rc<HashMap<(NonTerminal, TokenType), u32>>,
-    rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>
-  ) -> Box<Self> {
-    Box::new(Node {
+    rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
+    scopes: Rc<ScopeStack>,
+  ) -> Self {
+    Node {
       value,
       children: vec![],
       parse_table,
-      rules
-    })
+      rules,
+      scopes
+    }
   }
 
   fn parse(&mut self, tokens: &Vec<Token>, index: &mut usize) -> Result<(), Box<dyn std::error::Error>> {
     let current_token = &tokens[*index];
     match self.value {
       Symbol::Terminal(token) => {
-        // If the token type matches the current token, move to the next token
-        if token == current_token.token_type { 
-          *index += 1;
-          return Ok(());
+        // Se o token lido for diferente do esperado, retorna um erro sintático
+        if token != current_token.token_type { 
+          return Err(format!("Erro sintático: esperava {:?}, mas encontrou {:?} na linha {}, coluna {}", token, current_token.token_type, current_token.line, current_token.column).into());
         }
-        else { return Err(format!("Erro sintático: esperava {:?}, mas encontrou {:?} na linha {}, coluna {}", token, current_token.token_type, current_token.line, current_token.column).into()); }
+        // Caso contrário, avança para o próximo token
+        *index += 1;
+        Ok(())
       }
       Symbol::NonTerminal(non_terminal) => {
-        match self.parse_table.get(&(non_terminal, current_token.token_type)) {
-          Some(&rule_index) => {
-            match &self.rules[rule_index as usize].1 {
-              Some(body) => {
-                for symbol in body {
-                  let mut child = Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules));
-                  child.parse(tokens, index)?;
-                  self.children.push(child);
-                }
-                Ok(())
-              },
-              None => Ok(())
-            }
-          }
-          None => return Err(format!("Erro sintático: não há regra para {:?} com o token {:?} na linha {}, coluna {}", non_terminal, current_token.token_type, current_token.line, current_token.column).into()),
+        // Se a tabela LL1 não contiver uma entrada para o não terminal e o token atual, retorna um erro sintático
+        let Some(rule_index) = self.parse_table.get(&(non_terminal, current_token.token_type)) else {
+          return Err(format!("Erro sintático: não há regra para {:?} com o token {:?} na linha {}, coluna {}", non_terminal, current_token.token_type, current_token.line, current_token.column).into());
+        };
+        let rule_index = *rule_index;
+        // Se a produção for vazia, não precisa fazer nada
+        let Some(body) = &self.rules[rule_index as usize].1 else {
+          return Ok(());
+        };
+        // Se a produção não for vazia, cria os nós da produção
+        for symbol in body {
+          let mut child = Box::new(Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules), Rc::clone(&self.scopes)));
+          child.parse(tokens, index)?;
+          self.children.push(child);
         }
+        Ok(())
       }
     }
   }
@@ -110,7 +115,8 @@ impl Node {
 }
 
 pub struct SyntaxTree {
-  root: Node
+  root: Node,
+  scopes: Rc<ScopeStack>
 }
 
 impl SyntaxTree {
@@ -149,13 +155,14 @@ impl SyntaxTree {
     // Create the root node
     let rules = Rc::new(rules);
     let parse_table = Rc::new(parse_table);
-    let root = Node { 
-      value: Symbol::NonTerminal(NonTerminal::Program),
-      children: vec![],
-      parse_table: Rc::clone(&parse_table),
-      rules: Rc::clone(&rules)
-    };
-    Ok(SyntaxTree { root })
+    let root = Node::new( 
+      Symbol::NonTerminal(NonTerminal::Program),
+      Rc::clone(&parse_table),
+      Rc::clone(&rules),
+      Rc::new(ScopeStack::new()),
+    );
+    let scopes = Rc::new(ScopeStack::new());
+    Ok(SyntaxTree { root, scopes })
   }
 
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn std::error::Error>> {

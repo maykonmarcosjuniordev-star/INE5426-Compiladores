@@ -40,17 +40,13 @@ impl FDA {
     // (estado, símbolo, próximo_estado). Cada símbolo é um único byte
     let mut i = 1;
     while i < raw_bytes.len() {
-      match raw_bytes.get(i..i+2*state_size+1) {
-        Some(transition) => {
-          let state = byte_vec_into_u32(&transition[..state_size]);
-          let symbol = transition[state_size] as char;
-          let next_state = byte_vec_into_u32(&transition[state_size+1..2*state_size+1]);
-          let transition = next_state;
-          transitions.insert((state, symbol), transition);
-          i += 2*state_size + 1;
-        },
-        None => break,
-      }
+      let Some(transition) = raw_bytes.get(i..i+2*state_size+1) else { break; };
+      let state = byte_vec_into_u32(&transition[..state_size]);
+      let symbol = transition[state_size] as char;
+      let next_state = byte_vec_into_u32(&transition[state_size+1..2*state_size+1]);
+      let transition = next_state;
+      transitions.insert((state, symbol), transition);
+      i += 2*state_size + 1;
     }
     
     // Read the token table
@@ -78,7 +74,7 @@ impl FDA {
   /// Após verificar todos os níveis, se nenhuma transição for encontrada então a transição é inválida.
   /// Inicialmente essa função foi pensada para utilizar várias camadas, por exemplo: letra específica, conjunto de letras/números, wildcard.
   /// Porém, isso seria incompatível com o algoritmo de determinização existente, que não identificaria uma transição por letra genérica e por letra específica como sendo não determinismo.
-  pub fn transtion(&self, state: State, symbol: Symbol) -> Option<&State> {
+  pub fn transition(&self, state: State, symbol: Symbol) -> Option<&State> {
     if self.transitions.contains_key(&(state, symbol)) { self.transitions.get(&(state, symbol)) }
     // Group transitions: If the specific character doesn't have a transition, check if there's a transition for a group in which the character belongs
     // Yeah for now there are no groups and I'm not sure if there'll ever be any.
