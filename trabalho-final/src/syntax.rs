@@ -52,30 +52,31 @@ impl Node {
     let current_token = &tokens[*index];
     match self.value {
       Symbol::Terminal(token) => {
-        // If the token type matches the current token, move to the next token
-        if token == current_token.token_type { 
-          *index += 1;
-          return Ok(());
+        // Se o token lido for diferente do esperado, retorna um erro sintático
+        if token != current_token.token_type { 
+          return Err(format!("Erro sintático: esperava {:?}, mas encontrou {:?} na linha {}, coluna {}", token, current_token.token_type, current_token.line, current_token.column).into());
         }
-        else { return Err(format!("Erro sintático: esperava {:?}, mas encontrou {:?} na linha {}, coluna {}", token, current_token.token_type, current_token.line, current_token.column).into()); }
+        // Caso contrário, avança para o próximo token
+        *index += 1;
+        Ok(())
       }
       Symbol::NonTerminal(non_terminal) => {
-        match self.parse_table.get(&(non_terminal, current_token.token_type)) {
-          Some(&rule_index) => {
-            match &self.rules[rule_index as usize].1 {
-              Some(body) => {
-                for symbol in body {
-                  let mut child = Box::new(Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules), Rc::clone(&self.scopes)));
-                  child.parse(tokens, index)?;
-                  self.children.push(child);
-                }
-                Ok(())
-              },
-              None => Ok(())
-            }
-          }
-          None => return Err(format!("Erro sintático: não há regra para {:?} com o token {:?} na linha {}, coluna {}", non_terminal, current_token.token_type, current_token.line, current_token.column).into()),
+        // Se a tabela LL1 não contiver uma entrada para o não terminal e o token atual, retorna um erro sintático
+        let Some(rule_index) = self.parse_table.get(&(non_terminal, current_token.token_type)) else {
+          return Err(format!("Erro sintático: não há regra para {:?} com o token {:?} na linha {}, coluna {}", non_terminal, current_token.token_type, current_token.line, current_token.column).into());
+        };
+        let rule_index = *rule_index;
+        // Se a produção for vazia, não precisa fazer nada
+        let Some(body) = &self.rules[rule_index as usize].1 else {
+          return Ok(());
+        };
+        // Se a produção não for vazia, cria os nós da produção
+        for symbol in body {
+          let mut child = Box::new(Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules), Rc::clone(&self.scopes)));
+          child.parse(tokens, index)?;
+          self.children.push(child);
         }
+        Ok(())
       }
     }
   }
