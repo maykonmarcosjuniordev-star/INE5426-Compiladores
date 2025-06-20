@@ -4,6 +4,7 @@ use crate::grammar::non_terminals::NonTerminal;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::io::Write;
+use crate::scope_stack::ScopeStack;
 
 #[derive(Clone, Copy)] 
 pub enum Symbol {
@@ -28,20 +29,23 @@ struct Node {
   children: Vec<Box<Node>>,
   parse_table: Rc<ParseTable>,
   rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
+  scopes: Rc<ScopeStack>,
 }
 
 impl Node {
   fn new(
     value: Symbol,
     parse_table: Rc<HashMap<(NonTerminal, TokenType), u32>>,
-    rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>
-  ) -> Box<Self> {
-    Box::new(Node {
+    rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
+    scopes: Rc<ScopeStack>,
+  ) -> Self {
+    Node {
       value,
       children: vec![],
       parse_table,
-      rules
-    })
+      rules,
+      scopes
+    }
   }
 
   fn parse(&mut self, tokens: &Vec<Token>, index: &mut usize) -> Result<(), Box<dyn std::error::Error>> {
@@ -61,7 +65,7 @@ impl Node {
             match &self.rules[rule_index as usize].1 {
               Some(body) => {
                 for symbol in body {
-                  let mut child = Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules));
+                  let mut child = Box::new(Node::new(symbol.clone(), Rc::clone(&self.parse_table), Rc::clone(&self.rules), Rc::clone(&self.scopes)));
                   child.parse(tokens, index)?;
                   self.children.push(child);
                 }
@@ -110,7 +114,8 @@ impl Node {
 }
 
 pub struct SyntaxTree {
-  root: Node
+  root: Node,
+  scopes: Rc<ScopeStack>
 }
 
 impl SyntaxTree {
@@ -149,13 +154,14 @@ impl SyntaxTree {
     // Create the root node
     let rules = Rc::new(rules);
     let parse_table = Rc::new(parse_table);
-    let root = Node { 
-      value: Symbol::NonTerminal(NonTerminal::Program),
-      children: vec![],
-      parse_table: Rc::clone(&parse_table),
-      rules: Rc::clone(&rules)
-    };
-    Ok(SyntaxTree { root })
+    let root = Node::new( 
+      Symbol::NonTerminal(NonTerminal::Program),
+      Rc::clone(&parse_table),
+      Rc::clone(&rules),
+      Rc::new(ScopeStack::new()),
+    );
+    let scopes = Rc::new(ScopeStack::new());
+    Ok(SyntaxTree { root, scopes })
   }
 
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn std::error::Error>> {
