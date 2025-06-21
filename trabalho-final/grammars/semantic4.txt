@@ -1,87 +1,28 @@
-EXPRESSION -> NUMEXPRESSION EXPRESSION_1
-    EXPRESSION_1.inh = NUMEXPRESSION.tipo
+# Start global scope
+PROGRAM -> FUNCLIST
+ PROGRAM.scopes.push(ScopeType::ANY)
+PROGRAM -> STATEMENT
+ PROGRAM.scopes.push(ScopeType::ANY)
 
-EXPRESSION_1 -> OP_EXPRESSION NUMEXPRESSION
-    EXPRESSION_1.val = NUMEXPRESSION.tipo == EXPRESSION_1.inh
+# Pop global scope
+EOF
+ EOF.scopes.pop()
 
-OP_EXPRESSION -> ==
-    OP_EXPRESSION.funcao = equal
-OP_EXPRESSION -> !=
-    OP_EXPRESSION.funcao = not_equal
-OP_EXPRESSION -> >=
-    OP_EXPRESSION.funcao = great_equal
-OP_EXPRESSION -> >
-    OP_EXPRESSION.funcao = great_than
-OP_EXPRESSION -> <=
-    OP_EXPRESSION.funcao = less_equal
-OP_EXPRESSION -> <
-    OP_EXPRESSION.funcao = less_than
+FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
+ STATELIST.scopes.push(ScopeType::Function)
 
-EXPRESSION_1 -> ''
-    EXPRESSION_1.val = EXPRESSION_1.inh
+IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
+ STATELIST.scopes.push(ScopeType::Any)
 
+ELSESTAT_1 -> lbrace STATELIST rbrace
+ STATELIST.scopes.push(ScopeType::Any)
 
+FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
+ STATELIST.scopes.push(ScopeType::Loop)
 
-NUMEXPRESSION -> TERM NUMEXPRESSION_1
-    NUMEXPRESSION_1.inh = TERM.tipo
+STATEMENT -> lbrace STATELIST rbrace
+ STATELIST.scopes.push(ScopeType::Any)
 
-NUMEXPRESSION_1 -> OP_NUMEXPRESSION TERM NUMEXPRESSION_1
-    NUMEXPRESSION_1.val = TERM.tipo == NUMEXPRESSION_1.inh
-
-OP_NUMEXPRESSION -> +
-    OP_NUMEXPRESSION.funcao = sum
-OP_NUMEXPRESSION -> -
-    OP_NUMEXPRESSION.funcao = sub
-
-NUMEXPRESSION_1 -> ''
-    NUMEXPRESSION_1.val = NUMEXPRESSION_1.inh
-
-
-
-TERM -> UNARYEXPRESSION TERM_1
-    TERM_1.inh = UNARYEXPRESSION.tipo
-    
-TERM_1 -> OP_TERM UNARYEXPRESSION TERM_1
-    TERM_1.val = UNARYEXPRESSION.tipo == TERM_1.inh
-
-OP_TERM -> *
-    OP_TERM.funcao = mult
-OP_TERM -> /
-    OP_TERM.funcao = division
-OP_TERM -> %
-    OP_TERM.funcao = modular
-
-TERM_1 -> ''
-    TERM_1.val = TERM_1.inh
-
-
-UNARYEXPRESSION -> FACTOR
-    UNARYEXPRESSION.tipo = FACTOR.tipo
-
-UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
-    UNARYEXPRESSION.tipo = FACTOR.tipo
-
-FACTOR -> CONSTANT
-    FACTOR.tipo = CONSTANT.tipo
-
-FACTOR -> LVALUE
-    FACTOR.tipo = LVALUE.tipo
-
-FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
-    FACTOR.tipo = EXPRESSION.tipo
-
-
-LVALUE -> id VAR_INDEX
-    LVALUE.tipo = getTipo(id.nome)
-
-CONSTANT -> const_int
-    CONSTANT.tipo = int
-
-CONSTANT -> const_float
-    CONSTANT.tipo = float
-
-CONSTANT -> const_string
-    CONSTANT.tipo = string
-
-CONSTANT -> const_null
-    CONSTANT.tipo = null
+# Whenever vising a "}" node, close the previous scope
+rbrace
+ rbrace.scopes.pop()

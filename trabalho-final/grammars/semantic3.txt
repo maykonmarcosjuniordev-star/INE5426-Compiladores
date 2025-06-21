@@ -1,0 +1,47 @@
+# Essas regras vão ser usadas na AST
+
+EXPRESSION.children {
+  [NUMEXPRESSION] => Ok,
+  [NUMEXPRESSION, _, NUMEXPRESSION] => children[0].tipo == children[2].tipo
+  _ => panic!()
+}
+EXPRESSION.tipo = children[0].tipo
+
+NUMEXPRESSION.children { 
+  [TERM] => Ok,
+  [TERM, _, TERM] => children[0].tipo == children[2].tipo,
+  _ => panic!()
+}
+NUMEXPRESSION.tipo = children[0].tipo
+
+TERM.children {
+    [UNARYEXPRESSION] => Ok,
+    [UNARYEXPRESSION, _, UNARYEXPRESSION] => children[0].tipo == children[2].tipo,
+    _ => panic!()
+}
+TERM.tipo = children[0].tipo
+
+UNARYEXPRESSION.children {
+  [FACTOR] => Ok,
+  [_, Factor] => Ok,
+  _ => panic!()
+}
+UNARYEXPRESSION.tipo = children[-1].tipo
+
+FACTOR -> CONSTANT
+ FACTOR.tipo = CONSTANT.tipo
+
+FACTOR -> LVALUE
+ FACTOR.tipo = LVALUE.tipo
+
+FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
+ FACTOR.tipo = NUMEXPRESSION.tipo
+
+CONSTANT -> const_int
+ CONSTANT.tipo = "int"
+
+LVALUE -> id VAR_INDEX
+ LVALUE.tipo = LVALUE.scopes.get(id)
+
+
+

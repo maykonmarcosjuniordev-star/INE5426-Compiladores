@@ -1,0 +1,34 @@
+Node {
+  scopes: ScopeStack,
+}
+
+
+# Rust structures
+enum ScopeType {
+  Function,
+  Loop,
+  Any
+}
+
+struct Scope {
+  symbols: HashMap<String, Enum(type, Vec<type>)>,
+  type: ScopeType
+}
+
+struct ScopeStack {
+  scopes: Vec<Scope>,
+  
+  fn insert(self, id: String, type: type | vec<type>) {
+    match self.scopes.last().symbols.get(id) {
+      Some(type) => { ERRO("Redefinição da variável {id}"); }
+      None => self.scopes.last().symbols.insert(id, type)
+    }
+  }
+
+  fn contains(scope_type: ScopeType) {
+    for scope in self.scopes.reverse() -> bool {
+      if scope.type == scope_type { return true; }
+    }
+    false
+  }
+}

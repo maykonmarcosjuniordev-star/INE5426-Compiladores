@@ -1,37 +1,6 @@
-PROGRAM -> STATEMENT
- STATEMENT.is_inside_loop = false
+# Definição de STATEMENT.scopes em semantic0.txt
 
-FUNCLIST -> FUNCDEF FUNCLIST
- FUNCDEF.is_inside_loop = FUNCLIST.is_inside_loop
-
-FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
- STATELIST.is_inside_loop = FUNCDEF.is_inside_loop
-
-STATEMENT -> IFSTAT
- IFSTAT.is_inside_loop = STATEMENT.is_inside_loop
-
-IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
-
-STATEMENT -> lbrace STATELIST 
- STATELIST.is_inside_loop = STATEMENT.is_inside_loop
-
-STATELIST -> STATEMENT STATELIST_1
- STATEMENT.is_inside_loop = STATELIST.is_inside_loop
-
-ELSESTAT -> kw_else ELSESTAT_1
- ELSESTAT_1.is_inside_loop = ELSESTAT.is_inside_loop
-
-ELSESTAT_1 -> lbrace STATELIST rbrace
- STATELIST.is_inside_loop = ELSESTAT_1.is_inside_loop
-
-FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
- ATRIBSTAT.is_inside_loop = false
- EXPRESSION.is_inside_loop = false
- STATELIST.is_inside_loop = true
-
-STATELIST_1 -> STATEMENT STATELIST_1
- STATEMENT.is_inside_loop = STATELIST_1_1.is_inside_loop
- STATELIST_1.is_inside_loop = STATELIST_1_1.is_inside_loop
-
+STATEMENT -> RETURNSTAT semicolon
+ if !STATEMENT.scopes.contains(ScopeType::Function) { ERRO("Return keyword usada fora de uma função"); }
 STATEMENT -> kw_break semicolon
- if not STATEMENT.for: return ERRO
+ if !STATEMENT.scopes.contains(ScopeType::Loop) { ERRO("Break keyword usada fora de um laço de repetição"); }

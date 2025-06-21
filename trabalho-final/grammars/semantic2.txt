@@ -1,23 +1,22 @@
 VARDECL -> vartype id
- INSERE(ESCOPO, id.val, vartype.val)
+ VARDECL.scopes.insert(id.val, vartype.val)
 
 FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
- PARAMLIST.nome = func_id
+ PARAMLIST.nome = func_id.val
  PARAMLIST.values = []
 
 PARAMLIST -> ''
- INSERE(ESCOPO, PARAMLIST.nome, PARAMLIST.values)
+ PARAMLIST.scopes.insert(PARAMLIST.nome, PARAMLIST.values)
 
 PARAMLIST -> vartype id PARAMLIST_1
- PARAMLIST_1.nome = PARAMLIST.nome (Passa o nome da função adiante)
- PARAMLIST.values.append(vartype.val)
- PARAMLIST_1.values = PARAMLIST.values
+ PARAMLIST_1.nome = PARAMLIST.nome
+ PARAMLIST_1.values = PARAMLIST.values + [vartype.val]
 
 PARAMLIST_1 -> comma vartype id PARAMLIST_1
- PARAMLIST_12.nome = PARAMLIST_11.nome (Passa o nome da função adiante)
- PARAMLIST_11.values.append(vartype.val)
- PARAMLIST_12.values = PARAMLIST_11.values
+ PARAMLIST_1_1.nome = PARAMLIST_1.nome
+ PARAMLIST_1_1.values = PARAMLIST_1.values + [vartype.val]
 
 
 PARAMLIST_1 -> ''
- INSERE(ESCOPO, PARAMLIST_1.nome, PARAMLIST_1.values)
+ PARAMLIST_1.scopes.insert(PARAMLIST_1.nome, PARAMLIST_1.values)
+ 

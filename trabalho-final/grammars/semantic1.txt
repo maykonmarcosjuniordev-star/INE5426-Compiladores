@@ -1,87 +1,105 @@
+# Rust structures to be used by the rules
+enum NodeType {
+  EXPRESSION,
+  NUMEXPRESSION,
+  TERM,
+  FACTOR,
+  (all of the terminals envolved)
+}
+
+struct Node {
+  node_type: NodeType,
+  children: Option<Vec<Node>>
+}
+
+# Semantic rules
+# TODO: Provar que essa SDD é L-atribuída
 EXPRESSION -> NUMEXPRESSION EXPRESSION_1
-    EXPRESSION_1.inh = NUMEXPRESSION.val
-    EXPRESSION.val = EXPRESSION_1.val
+ EXPRESSION_1.inh = NUMEXPRESSION.ptr
+ EXPRESSION.ptr = EXPRESSION_1.ptr
 
 EXPRESSION_1 -> OP_EXPRESSION NUMEXPRESSION
-    OPERACAO = OP_EXPRESSION.funcao
-    EXPRESSION_1_1.inh = OPERACAO(EXPRESSION_1.inh, NUMEXPRESSION.val)
-    EXPRESSION_1.val = EXPRESSION_1_1.val
-
-OP_EXPRESSION -> ==
-    OP_EXPRESSION.funcao = equal
-OP_EXPRESSION -> !=
-    OP_EXPRESSION.funcao = not_equal
-OP_EXPRESSION -> >=
-    OP_EXPRESSION.funcao = great_equal
-OP_EXPRESSION -> >
-    OP_EXPRESSION.funcao = great_than
-OP_EXPRESSION -> <=
-    OP_EXPRESSION.funcao = less_equal
-OP_EXPRESSION -> <
-    OP_EXPRESSION.funcao = less_than
+ EXPRESSION_1.ptr = Node(EXPRESSION, Some(vec![EXPRESSION_1.inh, OP_EXPRESSION.ptr, NUMEXPRESSION.ptr]))
 
 EXPRESSION_1 -> ''
-    EXPRESSION_1.val = EXPRESSION_1.inh
-
+ EXPRESSION_1.ptr = Node(EXPRESSION, Some(vec![EXPRESSION_1.inh]))
 
 NUMEXPRESSION -> TERM NUMEXPRESSION_1
-    NUMEXPRESSION_1.inh = TERM.val
-    NUMEXPRESSION.val = NUMEXPRESSION_1.val
+ NUMEXPRESSION_1.inh = Node(NUMEXPRESSION, vec![TERM.ptr])
+ NUMEXPRESSION.ptr = NUMEXPRESSION_1.ptr
 
 NUMEXPRESSION_1 -> OP_NUMEXPRESSION TERM NUMEXPRESSION_1
-    OPERACAO = OP_NUMEXPRESSION.funcao
-    NUMEXPRESSION_1_1.inh = OPERACAO(NUMEXPRESSION_1.inh, TERM.val)
-    NUMEXPRESSION_1.val = NUMEXPRESSION_1_1.val
-
-OP_NUMEXPRESSION -> +
-    OP_NUMEXPRESSION.funcao = sum
-OP_NUMEXPRESSION -> -
-    OP_NUMEXPRESSION.funcao = sub
+ NUMEXPRESSION_1_1.inh = Node(NUMEXPRESSION, vec![NUMEXPRESSION_1.inh.children[0], OP_NUMEXPRESSION.ptr, TERM.ptr])
+ NUMEXPRESSION_1.ptr = NUMEXPRESSION_1_1.ptr
 
 NUMEXPRESSION_1 -> ''
-    NUMEXPRESSION_1.val = NUMEXPRESSION_1.inh
-
+ NUMEXPRESSION_1.ptr = NUMEXPRESSION_1.inh
 
 TERM -> UNARYEXPRESSION TERM_1
-    TERM_1.inh = UNARYEXPRESSION.val
-    TERM.val = TERM_1.val
-    
+ TERM_1.inh = Node(TERM, vec![UNARYEXPRESSION.ptr])
+ TERM.ptr = TERM_1.ptr
+ 
 TERM_1 -> OP_TERM UNARYEXPRESSION TERM_1
-    OPERACAO =  OP_TERM.funcao
-    TERM_1_1.inh = OPERACAO(TERM_1.inh, UNARYEXPRESSION.val)
-    TERM_1.val = TERM_1_1.val
-
-OP_TERM -> *
-    OP_TERM.funcao = mult
-OP_TERM -> /
-    OP_TERM.funcao = division
-OP_TERM -> %
-    OP_TERM.funcao = modular
+ TERM_1_1.inh = Node(TERM, vec![TERM_1.inh.children[0], OP_TERM.ptr, UNARYEXPRESSION.ptr])
+ TERM_1.ptr = TERM_1_1.ptr
 
 TERM_1 -> ''
-    TERM_1.val = TERM_1.inh
-
+ TERM_1.ptr = TERM_1.inh
 
 UNARYEXPRESSION -> FACTOR
+ UNARYEXPRESSION.ptr = Node(UNARYEXPRESSION, vec![FACTOR.ptr])
 UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
-FACTOR -> CONSTANT
-FACTOR -> LVALUE
-FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
-    FACTOR.val = EXPRESSION.val
+ UNARYEXPRESSION.ptr = Node(UNARYEXPRESSION, vec![OP_NUMEXPRESSION.ptr, FACTOR.ptr])
 
-LVALUE -> id VAR_INDEX
-CONSTANT -> const_int
-CONSTANT -> const_float
-CONSTANT -> const_string
-CONSTANT -> const_null
 OP_EXPRESSION -> op_eq
+ OP_EXPRESSION.ptr = Node(op_eq, None)
 OP_EXPRESSION -> op_ne
+ OPERACAO.ptr = Node(op_ne, None)
 OP_EXPRESSION -> op_ge
+ OP_EXPRESSION.ptr = Node(op_ge, None)
 OP_EXPRESSION -> op_gt
+ OP_EXPRESSION.ptr = Node(op_gt, None)
 OP_EXPRESSION -> op_le
+ OP_EXPRESSION.ptr = Node(op_le, None)
 OP_EXPRESSION -> op_lt
+ OP_EXPRESSION.ptr = Node(op_lt)
+
 OP_NUMEXPRESSION -> op_plus
+ OP_NUMEXPRESSION.ptr = Node(op_plus, None)
 OP_NUMEXPRESSION -> op_minus
-OP_TERM -> op_mult
+ OP_NUMEXPRESSION.ptr = Node(op_minus, None)
+
+OP_TERM -> op_mutl
+ OP_TERM.ptr = Node(op_mult, None)
 OP_TERM -> op_division
+ OP_TERM.ptr = Node(op_division, None)
 OP_TERM -> op_modular
+ OP_TERM.ptr = Node(op_modular, None)
+
+FACTOR -> CONSTANT
+ FACTOR.ptr = Node(FACTOR, vec![CONSTANT.ptr])
+FACTOR -> LVALUE
+ FACTOR.ptr = Node(FACTOR, vec![LVALUE.ptr])
+FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
+ FACTOR.ptr = Node(FACTOR, vec![NUMEXPRESSION.ptr])
+
+CONSTANT -> const_int
+ CONSTANT.ptr = Node(CONSTANT, const_int.val)
+CONSTANT -> const_float
+ CONSTANT.ptr = Node(CONSTANT, const_float.val)
+CONSTANT -> const_string
+ CONSTANT.ptr = Node(CONSTANT, const_string.val)
+CONSTANT -> const_null
+ CONSTANT.ptr = Node(CONSTANT, 0)
+
+# TODO: calcular o valor de id baseado nas informações da dimensão da variável vindas da tabela de símbolos
+LVALUE -> id VAR_INDEX
+ VAR_INDEX.inh = id.val
+ LVALUE.ptr = Node(LVALUE, vec![VAR_INDEX.ptr])
+
+VAR_INDEX -> lbracket NUMEXPRESSION rbracket VAR_INDEX
+
+VAR_INDEX -> ''
+ VAR_INDEX.ptr = Node(LVALUE, vec![VAR_INDEX.inh])
+
+
