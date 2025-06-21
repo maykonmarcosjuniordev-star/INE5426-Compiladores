@@ -1,0 +1,268 @@
+PROGRAM -> FUNCLIST
+PROGRAM -> STATEMENT
+- FIRST(PROGRAM) = {'', kw_def, lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+- FOLLOW(PROGRAM) = {$}
+-> FIRST(FUNCLIST) ^ FIRST(STATEMENT) ^ FOLLOW(PROGRAM) = Ø
+
+FUNCLIST -> FUNCDEF FUNCLIST
+FUNCLIST -> ''
+- FIRST(FUNCLIST) = {'', kw_def}
+- FOLLOW(FUNCLIST) = {$}
+-> FIRST(FUNCDEF FUNCLIST) ^ FIRST('') ^ FOLLOW(FUNCLIST) = Ø
+
+FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
+- FIRST(FUNCDEF) = {kw_def}
+- FOLLOW(FUNCDEF) = {$, kw_def}{}
+-> Só 1 operação não anulável
+
+PARAMLIST -> var_type id PARAMLIST_1
+PARAMLIST -> ''
+- FIRST(PARAMLIST) = {'', var_type}
+- FOLLOW(PARAMLIST) = {rparenthesis}
+-- FIRST(var_type id PARAMLIST_1) = {var_type}
+-> FIRST('') ^ FIRST(var_type id PARAMLIST_1) ^ FOLLOW(PARAMLIST) = Ø
+
+PARAMLIST_1 -> comma var_type id PARAMLIST_1
+PARAMLIST_1 -> ''
+- FIRST(PARAMLIST_1) = {'', comma}
+- FOLLOW(PARAMLIST_1) = {rparenthesis}
+-- FIRST(comma var_type id PARAMLIST_1) = 
+-> FIRST('') ^ {comma} ^ FOLLOW(PARAMLIST_1) = Ø
+
+STATELIST -> STATEMENT STATELIST_1
+- FIRST(STATELIST) = {'', lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+- FOLLOW(STATELIST) = {rbrace}
+-> Só 1 operação não anulável
+
+STATELIST_1 -> STATEMENT STATELIST_1
+STATELIST_1 -> ''
+- FIRST(STATELIST_1) = {'', lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+- FOLLOW(STATELIST_1) = {rbrace}
+-- FIRST(STATEMENT STATELIST_1) = FIRST(STATEMENT)
+-> FIRST(STATEMENT STATELIST_1) ^ FIRST('') ^ FOLLOW(STATELIST_1) = Ø
+
+STATEMENT -> VARDECL semicolon
+STATEMENT -> ATRIBSTAT semicolon
+STATEMENT -> PRINTSTAT semicolon
+STATEMENT -> READSTAT semicolon
+STATEMENT -> RETURNSTAT semicolon
+STATEMENT -> IFSTAT
+STATEMENT -> FORSTAT
+STATEMENT -> lbrace STATELIST rbrace
+STATEMENT -> kw_break semicolon
+STATEMENT -> semicolon
+- FIRST(STATEMENT) = {lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+- FOLLOW(STATEMENT) = {$, rbrace, lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+-- FIRST(VARDECL semicolon) = {var_type}
+-- FIRST(ATRIBSTAT semicolon) = {id}
+-- FIRST(PRINTSTAT semicolon) = {kw_print}
+-- FIRST(READSTAT semicolon) = {kw_read}
+-- FIRST(RETURNSTAT semicolon) = {kw_return}
+-- FIRST(lbrace STATELIST rbrace) = {lbrace}
+-- FIRST(kw_break semicolon) = {kw_break}
+-- FIRST(semicolon) = {semicolon}
+-> {var_type} ^ {id} ^ {kw_print} ^ {kw_read} ^ {kw_return} ^ {lbrace} ^ {kw_break} ^ {semicolon} = Ø
+-> Não é anulável
+
+VARDECL -> var_type id CONST_INDEX
+- FIRST(VARDECL) = {var_type}
+- FOLLOW(VARDECL) = {semicolon}
+-> Só 1 operação não anulável
+
+CONST_INDEX -> lbracket const_int rbracket CONST_INDEX
+CONST_INDEX -> ''
+- FIRST(CONST_INDEX) = {'', lbracket}
+- FOLLOW(CONST_INDEX) = {semicolon}
+-- FIRST(lbracket const_int rbracket CONST_INDEX) = {lbracket}
+-> {lbracket} ^ FOLLOW(CONST_INDEX) = Ø
+
+VAR_INDEX -> lbracket NUMEXPRESSION rbracket VAR_INDEX
+VAR_INDEX -> ''
+- FIRST(VAR_INDEX) = {'', lbracket}
+- FOLLOW(VAR_INDEX) = {semicolon, rparenthesis, op_assign, semicolon, op_plus, op_minus, op_mult, op_division, op_modular}
+-- FIRST(lbracket) = {lbracket}
+-> FIRST('') ^ {lbracket} ^ FOLLOW(VAR_INDEX) = Ø
+
+ATRIBSTAT -> LVALUE op_assign ATRIBSTATEVALUE
+- FIRST(ATRIBSTAT) = {id}
+- FOLLOW(ATRIBSTAT) = {semicolon, rparenthesis}
+-> Só 1 operação não anulável
+
+ATRIBSTATEVALUE -> EXPRESSION
+ATRIBSTATEVALUE -> ALLOCEXPRESSION
+ATRIBSTATEVALUE -> FUNCCALL
+- FIRST(ATRIBSTATEVALUE) = {kw_new, func_id, op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
+- FOLLOW(ATRIBSTATEVALUE) = {semicolon, rparenthesis}
+-> FIRST(EXPRESSION) ^ FIRST(ALLOCEXPRESSION) ^ FIRST(FUNCCALL) = Ø
+
+FUNCCALL -> func_id lparenthesis PARAMLISTCALL rparenthesis
+- FIRST(FUNCCALL) = {func_id}
+- FOLLOW(FUNCCALL) = {semicolon, rparenthesis}
+-> Só 1 operação não anulável
+
+PARAMLISTCALL -> id PARAMLISTCALL_1
+PARAMLISTCALL -> ''
+- FIRST(PARAMLISTCALL) = {'', id}
+- FOLLOW(PARAMLISTCALL) = {rparenthesis}
+-- FIRST(id PARAMLISTCALL_1) = {id}
+-> FIRST('') ^ {id} ^ FOLLOW(PARAMLISTCALL) = Ø
+
+PARAMLISTCALL_1 -> comma id PARAMLIST_1
+PARAMLISTCALL_1 -> ''
+- FIRST(PARAMLISTCALL_1) = {'', comma}
+- FOLLOW(PARAMLISTCALL_1) = {rparenthesis}
+-- FIRST(comma id PARAMLIST_1) = {comma}
+-> FIRST('') ^ {comma} ^ FOLLOW(PARAMLISTCALL_1) = Ø
+
+PRINTSTAT -> kw_print EXPRESSION
+- FIRST(PRINTSTAT) = {kw_print}
+- FOLLOW(PRINTSTAT) = {semicolon}
+-> Só 1 operação não anulável
+
+READSTAT -> kw_read LVALUE
+- FIRST(READSTAT) = {kw_read}
+- FOLLOW(READSTAT) = {semicolon}
+-> Só 1 operação não anulável
+
+RETURNSTAT -> kw_return
+- FIRST(RETURNSTAT) = {kw_return}
+- FOLLOW(RETURNSTAT) = {semicolon}
+-> Só 1 operação não anulável
+
+IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
+- FIRST(IFSTAT) = {kw_if}
+- FOLLOW(IFSTAT) = {$, lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+-> Só 1 operação não anulável
+
+ELSESTAT -> kw_else ELSESTAT_1
+ELSESTAT -> ''
+- FIRST(ELSESTAT) = {'', kw_else}
+- FOLLOW(ELSESTAT) = {$, lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+-- FIRST(kw_else ELSESTAT_1) = {kw_else}
+-> FIRST('') ^ {kw_else} ^ FOLLOW(ELSESTAT) = Ø
+
+ELSESTAT_1 -> IFSTAT
+ELSESTAT_1 -> lbrace STATELIST rbrace
+- FIRST(ELSESTAT_1) = {lbrace, kw_if}
+- FOLLOW(ELSESTAT_1) = {$, lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+-- FIRST(lbrace STATELIST rbrace) = {lbrace}
+-> FIRST(IFSTAT) ^ {lbrace} = Ø
+-> não anulável
+
+FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
+- FIRST(FORSTAT) = {kw_for}
+- FOLLOW(FORSTAT) = {$, lbrace, kw_break, semicolon, var_type, id, kw_print, kw_read, kw_return, kw_if, kw_for}
+-> Só 1 operação não anulável
+
+ALLOCEXPRESSION -> kw_new var_type VAR_INDEX
+- FIRST(ALLOCEXPRESSION) = {kw_new}
+- FOLLOW(ALLOCEXPRESSION) = {semicolon, rparenthesis}
+-> Só 1 operação não anulável
+
+EXPRESSION -> NUMEXPRESSION EXPRESSION_1
+- FIRST(EXPRESSION) = {op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
+- FOLLOW(EXPRESSION) = {semicolon, rparenthesis}
+-> Só 1 operação não anulável
+
+EXPRESSION_1 -> OP_EXPRESSION NUMEXPRESSION
+EXPRESSION_1 -> ''
+- FIRST(EXPRESSION_1) = {'', op_eq, op_ne, op_ge, op_gt, op_le, op_lt}
+- FOLLOW(EXPRESSION_1) = {semicolon, rparenthesis}
+-- FIRST(OP_EXPRESSION NUMEXPRESSION) = FIRST(OP_EXPRESSION)
+-> FIRST('') ^ FIRST(OP_EXPRESSION) ^ FOLLOW(EXPRESSION_1) = Ø
+
+NUMEXPRESSION -> TERM NUMEXPRESSION_1
+- FIRST(NUMEXPRESSION) = {op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
+- FOLLOW(NUMEXPRESSION) = {rbracket, semicolon, rparenthesis, op_eq, op_ne, op_ge, op_gt, op_le, op_lt}
+-> Só 1 operação não anulável
+
+NUMEXPRESSION_1 -> OP_NUMEXPRESSION TERM NUMEXPRESSION_1
+NUMEXPRESSION_1 -> ''
+- FIRST(NUMEXPRESSION_1) = {'', op_plus, op_minus}
+- FOLLOW(NUMEXPRESSION_1) = {rbracket, semicolon, rparenthesis, op_eq, op_ne, op_ge, op_gt, op_le, op_lt}
+-- FIRST(OP_NUMEXPRESSION TERM NUMEXPRESSION_1) = FIRST(OP_NUMEXPRESSION)
+-> FIRST('') ^ FIRST(OP_NUMEXPRESSION) ^ FOLLOW(NUMEXPRESSION_1) = Ø
+
+TERM -> UNARYEXPRESSION TERM_1
+- FIRST(TERM) = {op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
+- FOLLOW(TERM) = {op_plus, op_minus}
+-> Só 1 operação não anulável
+
+TERM_1 -> OP_TERM UNARYEXPRESSION TERM_1
+TERM_1 -> ''
+- FIRST(TERM_1) = {'', op_mult, op_division, op_modular}
+- FOLLOW(TERM_1) = {op_plus, op_minus}
+-- FIRST(OP_TERM UNARYEXPRESSION TERM_1) = FIRST(OP_TERM)
+-> FIRST('') ^ FIRST(OP_TERM) ^ FOLLOW(TERM_1) = Ø
+
+UNARYEXPRESSION -> FACTOR
+UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
+- FIRST(UNARYEXPRESSION) = {op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
+- FOLLOW(UNARYEXPRESSION) = {op_plus, op_minus, op_mult, op_division, op_modular}
+-- FIRST(OP_NUMEXPRESSION FACTOR) = FIRST(OP_NUMEXPRESSION)
+-> FIRST(FACTOR) ^ FIRST(OP_NUMEXPRESSION) = Ø
+-> não anulável
+
+FACTOR -> CONSTANT
+FACTOR -> LVALUE
+FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
+- FIRST(FACTOR) = {lparenthesis, id, const_int, const_float, const_string, const_null}
+- FOLLOW(FACTOR) = {op_plus, op_minus, op_mult, op_division, op_modular}
+-- FIRST(lparenthesis NUMEXPRESSION rparenthesis) = {lparenthesis}
+-> FIRST(CONSTANT) ^ FIRST(LVALUE) ^ {lparenthesis} = Ø
+-> não anulável
+
+LVALUE -> id VAR_INDEX
+- FIRST(LVALUE) = {id}
+- FOLLOW(LVALUE) = {op_assign, semicolon, op_plus, op_minus, op_mult, op_division, op_modular}
+-> Só 1 operação não anulável
+
+CONSTANT -> const_int
+CONSTANT -> const_float
+CONSTANT -> const_string
+CONSTANT -> const_null
+- FIRST(CONSTANT) = {const_int, const_float, const_string, const_null}
+- FOLLOW(CONSTANT) = {op_plus, op_minus, op_mult, op_division, op_modular}
+-- FIRST(const_int) = {const_int}
+-- FIRST(const_float) = {const_float}
+-- FIRST(const_string) = {const_string}
+-- FIRST(const_null) = {const_null}
+-> {const_int} ^ {const_float} ^ {const_string} ^ {const_null} = Ø
+-> não anulável
+
+OP_EXPRESSION -> op_eq
+OP_EXPRESSION -> op_ne
+OP_EXPRESSION -> op_ge
+OP_EXPRESSION -> op_gt
+OP_EXPRESSION -> op_le
+OP_EXPRESSION -> op_lt
+- FIRST(OP_EXPRESSION) = {op_eq, op_ne, op_ge, op_gt, op_le, op_lt}
+- FOLLOW(OP_EXPRESSION) = {op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
+-- FIRST(op_eq) = {op_eq}
+-- FIRST(op_ne) = {op_ne}
+-- FIRST(op_ge) = {op_ge}
+-- FIRST(op_gt) = {op_gt}
+-- FIRST(op_le) = {op_le}
+-- FIRST(op_lt) = {op_lt}
+-> {op_eq} ^ {op_ne} ^ {op_ge} ^ {op_gt} ^ {op_le} ^ {op_lt} = Ø
+-> não anulável
+
+OP_NUMEXPRESSION -> op_plus
+OP_NUMEXPRESSION -> op_minus
+- FIRST(OP_NUMEXPRESSION) = {op_plus, op_minus}
+- FOLLOW(OP_NUMEXPRESSION) = {op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
+FIRST(op_plus) = {op_plus}
+FIRST(op_minus) = {op_minus}
+-> {op_plus} ^ {op_minus} = Ø
+-> não anulável
+
+OP_TERM -> op_mult
+OP_TERM -> op_division
+OP_TERM -> op_modular
+- FIRST(OP_TERM) = {op_mult, op_division, op_modular}
+- FOLLOW(OP_TERM) = {}
+FIRST(op_mult) = {op_mult}
+FIRST(op_division) = {op_division}
+FIRST(op_modular) = {op_modular}
+-> {op_mult} ^ {op_division} ^ {op_modular} = Ø
+-> não anulável
