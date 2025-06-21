@@ -28,10 +28,10 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 - [x] Gerar árvore sintática
 - [x] Gramática da linguagem em LL1
   - [x] Adicionar comentário: A gramática foi modificada para que os identificadores de função possuam uma regex própria, de forma a simplificar a remoção de não determinismo para o valor do ATRIBSTATE; LVALUE = (id | id()) -> LVALUE = (id | func_id())
-- [ ] Demonstrar que a gramática está em LL1 (Criar arquivo com first e follow)
+- [x] Demonstrar que a gramática está em LL1 (Criar arquivo com first e follow)
 - [x] Tabela de parsing LL1
 ## Adicionais
-- [ ] Usar a posição do token para notificar em que parte do código erros sintáticos acontecem
+- [x] Usar a posição do token para notificar em que parte do código erros sintáticos acontecem
 
 # Analisador Semântico
 ## Requisitos
@@ -45,7 +45,7 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
   - [ ] Buscar o escopo mais ao topo da pilha, retornar erro caso símbolo não tenha sido definido
 
 - [ ] Gerar a árvore de expressão com operadores e operandos
-  - [ ] Perguntar pro Álvaro que porra é essa
+  - [x] Perguntar pro Álvaro que porra é essa
 - [ ] Inserção de tipos das variáveis (e funções) na tabela de símbolos
 - [ ] Verificação de identificadores por escopo
 - [ ] Verificação de tipos em expressões numericas. (Talvez em funções)
@@ -56,14 +56,14 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 
 # Entrega
 - [ ] Programa com todas as fases
-- [ ] 3 Programas escritos na linguagem. +100 linhas. (Clara)
+- [x] 3 Programas escritos na linguagem. +100 linhas. (Clara)
 - [ ] Makefile (Maykon)
  - [ ] Geração dos arquivos do autômato antes da compilação
  - [ ] Geração dos arquivos de enumeradores antes da compilação
 - [ ] Documentação (Mateus)
- - [ ] Documento com prova de que a gramática está em LL1
+ - [x] Documento com prova de que a gramática está em LL1
  - [ ] 
-- [ ] Readme (Sartori)
+- [x] Readme (Sartori)
 - [ ] Saída do programa no terminal
  - [ ] Árvores de expressão
   - [ ] Pergutar pro Álvaro se pode ser em um arquivo
@@ -75,4 +75,4 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
  - [ ] Código intermediário
   - [ ] Perguntar se pode ser num arquivo de saída
  - [ ] Mensagem detalhada de erro caso haja erro no código fonte. Lembrando que o processo de compilação encerra no momento em que o primeiro erro for encontrado, independentemente da etapa de compilação.
-- [ ] Cabeçalho com nomes dos integrantes
+- [x] Cabeçalho com nomes dos integrantes
