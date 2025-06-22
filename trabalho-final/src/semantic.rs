@@ -1,21 +1,14 @@
 use std::error::Error;
+use std::rc::Rc;
+use std::io::Write;
 
 use crate::scope_stack::ScopeStack;
+use crate::grammar::semantic_node::SemanticNodeData;
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct SemanticNode {
-  scopes: ScopeStack,
-  node: SemanticNodeData
-}
-
-pub enum SemanticNodeData {
-  Program {
-    FUNCLIST: Option<Box<SemanticNodeData>>,
-    STATEMENT: Option<Box<SemanticNodeData>>,
-  },
-  FUNCLIST {
-    FUNDEF_FUNCLIST: Option<(Box<SemanticNodeData>, Box<SemanticNodeData>)>,
-  },
-
+  pub scopes: Rc<ScopeStack>,
+  pub children: SemanticNodeData
 }
 
 impl SemanticNode {
@@ -25,9 +18,8 @@ impl SemanticNode {
   }
 }
 
-
 pub struct SemanticTree {
-  root: SemanticNode,
+  pub root: SemanticNode,
 }
 
 impl SemanticTree {
@@ -40,8 +32,8 @@ impl SemanticTree {
   }
 
   pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
-    // TODO
-
+    let mut file = std::fs::File::create(path)?;
+    writeln!(file, "{:?}", self.root)?;
     Ok(())
   }
 

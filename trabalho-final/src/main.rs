@@ -40,9 +40,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
   // Semantic analysis
   let mut semantic_tree = syntax_tree.semantic_tree()?;
+  semantic_tree.save("output/ast.txt")?;
   semantic_tree.semantic_analysis()?;
 
-  semantic_tree.save("output/")?;
 
   // Should run without errors, except of course if the output file can't be created
   semantic_tree.generate_code("output/intermediate_code.txt")?;

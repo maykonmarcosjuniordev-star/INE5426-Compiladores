@@ -12,8 +12,31 @@ struct Node {
   children: Option<Vec<Node>>
 }
 
+PARAMLIST -> var_type id PARAMLIST_1
+ PARAMLIST_1.inh = vec![var_type, id]
+ PARAMLIST.ptr = PARAMLIST_1.ptr
+PARAMLIST -> ''
+ PARAMLIST.ptr = vec![]
+
+PARAMLIST_1 -> comma var_type id PARAMLIST_1
+ PARAMLIST_1_1.inh = PARAMLIST_1.inh + vec![var_type, id]
+ PARAMLIST_1.ptr = PARAMLIST_1_1.ptr
+PARAMLIST_1 -> ''
+ PARAMLIST_1.ptr = Node(PARAMLIST, PARAMLIST_1.inh)
+
+STATELIST -> STATEMENT STATELIST_1
+ STATELIST_1.inh = vec![STATEMENT.ptr]
+ STATELIST.ptr = STATELIST_1.ptr
+
+STATELIST_1 -> STATEMENT STATELIST_1
+ STATELIST_1_1.inh = STATELIST_1.inh + vec![STATEMENT.ptr]
+ STATELIST_1.ptr = STATELIST_1_1.ptr
+STATELIST_1 -> ''
+ STATELIST_1.ptr = Node(STATELIST, STATELIST_1.inh)
+
 # Semantic rules
 # TODO: Provar que essa SDD é L-atribuída
+# TODO: Substituir vetores por (esquerda, operação, direita)
 EXPRESSION -> NUMEXPRESSION EXPRESSION_1
  EXPRESSION_1.inh = NUMEXPRESSION.ptr
  EXPRESSION.ptr = EXPRESSION_1.ptr

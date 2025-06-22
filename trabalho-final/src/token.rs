@@ -1,7 +1,7 @@
 use crate::grammar::token_type::TokenType;
 #[allow(dead_code)]
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ConstType {
   Int(i64),
   Float(f64),
@@ -16,7 +16,7 @@ impl ConstType {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Token {
   pub token_type: TokenType,
   pub value: Option<ConstType>,

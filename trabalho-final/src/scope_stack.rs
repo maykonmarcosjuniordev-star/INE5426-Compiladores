@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 use std::error::Error;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct SymbolEntry {
   appearances: Vec<usize>,
 }
 
 type Scope = HashMap<String, SymbolEntry>;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScopeStack {
   stack: Vec<Scope>,
 }
