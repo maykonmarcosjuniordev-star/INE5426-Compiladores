@@ -12,12 +12,15 @@ mod fda;
 mod lexer;
 mod syntax;
 mod grammar;
+mod semantic;
 mod scope_stack;
 
 use lexer::Lexer;
 use syntax::SyntaxTree;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+use std::error::Error;
+
+fn main() -> Result<(), Box<dyn Error>> {
   // Read the file to be compiled from command line arguments
   let args: Vec<String> = std::env::args().collect();
   if args.len() < 2 { return Err("Usage: <input_file>".into()); }
@@ -31,8 +34,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   lexer.save_token_table("output/token_table.txt")?;
 
   // Syntax analysis
-  let mut tree = SyntaxTree::new()?;
-  tree.parse(&lexer.token_list)?;
-  tree.save("output/parse_tree.txt")?;
+  let mut syntax_tree = SyntaxTree::new()?;
+  syntax_tree.parse(&lexer.token_list)?;
+  syntax_tree.save("output/parse_tree.txt")?;
+
+  // Semantic analysis
+  let mut semantic_tree = syntax_tree.semantic_tree()?;
+  semantic_tree.semantic_analysis()?;
+
+  semantic_tree.save("output/")?;
+
+  // Should run without errors, except of course if the output file can't be created
+  semantic_tree.generate_code("output/intermediate_code.txt")?;
+
   Ok(())
 }

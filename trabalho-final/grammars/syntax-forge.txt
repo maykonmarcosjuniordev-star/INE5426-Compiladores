@@ -8,8 +8,10 @@
 
 PROGRAM -> FUNCLIST
 PROGRAM -> STATEMENT
+
 FUNCLIST -> FUNCDEF FUNCLIST
 FUNCLIST -> ''
+
 FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
 PARAMLIST -> ''
 PARAMLIST -> var_type id PARAMLIST_1

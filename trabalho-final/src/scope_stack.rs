@@ -27,7 +27,7 @@ impl ScopeStack {
 
   pub fn insert_symbol(&mut self, name: String, entry: SymbolEntry) -> Result<(), Box<dyn Error>> {
     // A pilha de escopo sempre deve ter pelo menos um escopo, então stack.last_mut() nunca deve retornar None.
-    let Some(current_scope) = self.stack.last_mut() else { return Err("No current scope to insert symbol".into()); };
+    let Some(current_scope) = self.stack.last_mut() else { panic!("No current scope to insert symbol"); };
     // Se o escopo atual já contém o símbolo, retorna erro semântico de redefinição de símbolo.
     if current_scope.contains_key(&name) {
       return Err(format!("Erro semântico: Redefinição do símbolo '{}' ", name).into());

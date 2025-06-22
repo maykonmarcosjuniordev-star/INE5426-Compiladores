@@ -1,3 +1,5 @@
+use std::error::Error; 
+use crate::semantic::SemanticTree;
 use crate::token::Token;
 use crate::grammar::token_type::TokenType;
 use crate::grammar::non_terminals::NonTerminal;
@@ -48,7 +50,7 @@ impl Node {
     }
   }
 
-  fn parse(&mut self, tokens: &Vec<Token>, index: &mut usize) -> Result<(), Box<dyn std::error::Error>> {
+  fn parse(&mut self, tokens: &Vec<Token>, index: &mut usize) -> Result<(), Box<dyn Error>> {
     let current_token = &tokens[*index];
     match self.value {
       Symbol::Terminal(token) => {
@@ -120,7 +122,7 @@ pub struct SyntaxTree {
 }
 
 impl SyntaxTree {
-  pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+  pub fn new() -> Result<Self, Box<dyn Error>> {
     // Load Grammar rules
     let rule_content = include_str!("../grammars/syntax.txt");
     let mut rules = vec![];
@@ -165,17 +167,22 @@ impl SyntaxTree {
     Ok(SyntaxTree { root, scopes })
   }
 
-  pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn std::error::Error>> {
+  pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn Error>> {
     self.root.parse(tokens, &mut 0)?;
     Ok(())
   }
 
-  pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+  pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     writeln!(file, "// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot")?;
     writeln!(file, "digraph G {{")?;
     writeln!(file, "{}", self.root.to_string(&mut 0))?;
     writeln!(file, "}}")?;
     Ok(())
+  }
+
+  pub fn semantic_tree(&self) -> Result<SemanticTree, Box<dyn Error>> {
+    // TODO
+    Err("Not implemented".into())
   }
 }

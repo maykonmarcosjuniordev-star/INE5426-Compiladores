@@ -1,4 +1,6 @@
 // Esse arquivo foi gerado automaticamente pelo script scripts/consistency.py
+use std::error::Error;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NonTerminal {
   Allocexpression,
@@ -41,7 +43,7 @@ pub enum NonTerminal {
 }
 
 impl NonTerminal {
-  pub fn from_str(s: &str) -> Result<Self, Box<dyn std::error::Error>> {
+  pub fn from_str(s: &str) -> Result<Self, Box<dyn Error>> {
     match s {
       "ALLOCEXPRESSION" => Ok(NonTerminal::Allocexpression),
       "ATRIBSTAT" => Ok(NonTerminal::Atribstat),
