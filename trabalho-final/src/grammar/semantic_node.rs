@@ -47,6 +47,7 @@ pub enum SemanticNodeData {
     paramlistcall: Option<Box<SemanticNode>>,
   },
   Funcdef {
+    func_id: Box<SemanticNode>,
     paramlist: Option<Box<SemanticNode>>,
     statelist: Box<SemanticNode>,
   },

@@ -61,6 +61,7 @@ impl Node {
           return Err(format!("Erro sintático: esperava {:?}, mas encontrou {:?} na linha {}, coluna {}", token_type, current_token.token_type, current_token.line, current_token.column).into());
         }
         // Caso contrário, avança para o próximo token
+        self.value = Symbol::Terminal(*token_type, Some(current_token.clone()));
         *index += 1;
         Ok(())
       }
@@ -78,7 +79,7 @@ impl Node {
         for symbol in body {
           let new_symbol = match symbol {
             Symbol::NonTerminal(nt) => Symbol::NonTerminal(nt.clone()),
-            Symbol::Terminal(tt, _) => Symbol::Terminal(tt.clone(), Some(current_token.clone())),
+            Symbol::Terminal(tt, _) => Symbol::Terminal(tt.clone(), None),
           };
           let mut child = Box::new(Node::new(new_symbol, Rc::clone(&self.parse_table), Rc::clone(&self.rules), Rc::clone(&self.scopes)));
           child.parse(tokens, index)?;
@@ -155,6 +156,7 @@ impl Node {
         SemanticNode {
           scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Funcdef {
+            func_id: Box::new(self.children[1].visit(None)),
             paramlist: if self.children[3].children.len() > 0 {
               Some(Box::new(self.children[3].visit(None)))
             } else {
