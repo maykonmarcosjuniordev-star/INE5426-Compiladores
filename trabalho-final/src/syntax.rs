@@ -351,8 +351,7 @@ impl Node {
             const_index
           }
         }
-      }, 
-      // TODO: this one is probably wrong, I should just leave the syntax tree as is instead of trying to condense it here
+      },
       Symbol::NonTerminal(NonTerminal::ConstIndex) => {
         match self.children.len() {
           // CONST_INDEX -> lbracket const_int rbracket CONST_INDEX

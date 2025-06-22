@@ -10,6 +10,7 @@ EOF
 
 FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
  STATELIST.scopes.push(ScopeType::Function)
+ PARAMLIST.scopes.insert(PARAMLIST.values)
 
 IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
  STATELIST.scopes.push(ScopeType::Any)

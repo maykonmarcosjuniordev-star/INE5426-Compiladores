@@ -2,6 +2,7 @@ use std::error::Error;
 use std::rc::Rc;
 use std::io::Write;
 
+use crate::grammar::var_type::VarType;
 use crate::scope_stack::ScopeStack;
 use crate::grammar::semantic_node::SemanticNodeData;
 
