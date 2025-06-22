@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
+use crate::grammar::const_type::ConstType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum ScopeType {
@@ -11,6 +12,8 @@ enum ScopeType {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct SymbolEntry {
   appearances: Vec<usize>,
+  var_type: ConstType,
+  const_index: Vec<u32>,
 }
 
 type Scope = (ScopeType, HashMap<String, SymbolEntry>);
@@ -31,6 +34,11 @@ impl ScopeStack {
 
   pub fn pop_scope(&mut self) -> Option<Scope> {
     self.stack.pop()
+  }
+
+  pub fn current_scope_type(&self) -> ScopeType {
+    // Retorna o tipo do escopo atual, que é o topo da pilha de escopo.
+    self.stack.last().map_or(ScopeType::Any, |(st, _)| st.clone())
   }
 
   pub fn insert_symbol(&mut self, name: String, entry: SymbolEntry) -> Result<(), Box<dyn Error>> {
