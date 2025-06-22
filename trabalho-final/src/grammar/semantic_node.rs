@@ -87,7 +87,7 @@ pub enum SemanticNodeData {
   },
   Program {
     funclist: Option<Box<SemanticNode>>,
-    statelist: Option<Box<SemanticNode>>,
+    statement: Option<Box<SemanticNode>>,
   },
   Readstat {
     lvalue: Box<SemanticNode>,

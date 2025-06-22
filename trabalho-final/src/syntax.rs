@@ -111,16 +111,16 @@ impl Node {
               scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Program {
                 funclist: Some(Box::new(child.visit(None))),
-                statelist: None,
+                statement: None,
               },
             }
           },
-          Symbol::NonTerminal(NonTerminal::Statelist) => {
+          Symbol::NonTerminal(NonTerminal::Statement) => {
             SemanticNode {
               scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Program {
                 funclist: None,
-                statelist: Some(Box::new(child.visit(None))),
+                statement: Some(Box::new(child.visit(None))),
               },
             }
           },
@@ -191,7 +191,7 @@ impl Node {
             }
           },
           // PARAMLIST1 -> comma var_type id PARAMLIST1
-          3 => {
+          4 => {
             let mut new_params = match inh {
               None => vec![],
               Some(inh) => inh.clone(),
@@ -495,7 +495,7 @@ impl Node {
       },
       // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT 
       Symbol::NonTerminal(NonTerminal::Ifstat) => {
-        if self.children.len() != 7 { panic!() }
+        if self.children.len() != 8 { panic!() }
         SemanticNode {
           scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Ifstat {
