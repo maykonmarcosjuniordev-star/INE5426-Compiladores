@@ -1,6 +1,6 @@
 use crate::fda::FDA;
-use crate::token::{ConstType, Token};
-use crate::grammar::token_type::TokenType;
+use crate::token::Token;
+use crate::grammar::{token_type::TokenType, const_type::ConstType};
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::Write;

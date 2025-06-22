@@ -837,8 +837,7 @@ impl Node {
 }
 
 pub struct SyntaxTree {
-  root: Node,
-  scopes: Rc<ScopeStack>
+  root: Node
 }
 
 impl SyntaxTree {
@@ -883,8 +882,7 @@ impl SyntaxTree {
       Rc::clone(&rules),
       Rc::new(ScopeStack::new()),
     );
-    let scopes = Rc::new(ScopeStack::new());
-    Ok(SyntaxTree { root, scopes })
+    Ok(SyntaxTree { root })
   }
 
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn Error>> {

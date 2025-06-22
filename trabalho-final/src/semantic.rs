@@ -2,7 +2,7 @@ use std::error::Error;
 use std::rc::Rc;
 use std::io::Write;
 
-use crate::grammar::var_type::VarType;
+use crate::code_attrs::CodeAttrs;
 use crate::scope_stack::ScopeStack;
 use crate::grammar::semantic_node::SemanticNodeData;
 
@@ -16,6 +16,19 @@ impl SemanticNode {
   fn semantic_analysis(&self) -> Result<(), Box<dyn Error>> {
     // TODO
     Ok(())
+  }
+
+  fn generate_code(&self, inh: &mut CodeAttrs) {
+    match &self.children {
+      SemanticNodeData::Program { funclist, statement } => {
+        if let Some(funclist) = funclist {
+          funclist.generate_code(inh);
+        } else if let Some(statement) = statement {
+          statement.generate_code(inh);
+        }
+      },
+      _ => panic!()
+    }
   }
 }
 
@@ -39,7 +52,14 @@ impl SemanticTree {
   }
 
   pub fn generate_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
-    // TODO
+    let mut file = std::fs::File::create(path)?;
+    let mut code_attrs = CodeAttrs {
+      register_counter: 0,
+      label_counter: 0,
+      code: String::new(),
+    };
+    self.root.generate_code(&mut code_attrs);
+    writeln!(file, "{}", code_attrs.code)?;
     Ok(())
   }
 }

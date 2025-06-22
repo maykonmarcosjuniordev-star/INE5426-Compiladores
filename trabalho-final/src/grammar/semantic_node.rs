@@ -1,5 +1,5 @@
-use crate::grammar::token_type::TokenType;
-use crate::token::{ConstType, Token};
+use crate::grammar::{token_type::TokenType, const_type::ConstType};
+use crate::token::Token;
 use crate::semantic::SemanticNode;
 
 #[derive(Debug, Clone, PartialEq)]

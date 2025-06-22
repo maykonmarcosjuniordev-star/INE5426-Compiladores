@@ -14,6 +14,7 @@ mod syntax;
 mod grammar;
 mod semantic;
 mod scope_stack;
+mod code_attrs;
 
 use lexer::Lexer;
 use syntax::SyntaxTree;
