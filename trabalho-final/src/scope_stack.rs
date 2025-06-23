@@ -3,24 +3,24 @@ use std::error::Error;
 use crate::grammar::const_type::ConstType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum ScopeType {
+pub enum ScopeType {
   Function,
   Loop,
   Any
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct SymbolEntry {
-  appearances: Vec<usize>,
-  var_type: ConstType,
-  const_index: Vec<u32>,
+#[derive(Debug, Clone, PartialEq)]
+pub struct SymbolEntry {
+  pub appearances: Vec<(usize, usize)>, // (line, column)
+  pub var_type: Option<ConstType>,
+  pub const_index: Vec<u32>,
 }
 
 type Scope = (ScopeType, HashMap<String, SymbolEntry>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ScopeStack {
-  stack: Vec<Scope>,
+  pub stack: Vec<Scope>,
 }
 
 impl ScopeStack {
