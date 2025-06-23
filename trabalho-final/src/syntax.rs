@@ -9,13 +9,11 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::io::Write;
 use crate::scope_stack::ScopeStack;
-
 #[derive(Clone)] 
 pub enum Symbol {
   NonTerminal(NonTerminal),
   Terminal(TokenType, Option<Token>),
 }
-
 impl std::fmt::Debug for Symbol {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
@@ -24,9 +22,7 @@ impl std::fmt::Debug for Symbol {
     }
   }
 }
-
 pub type ParseTable = HashMap<(NonTerminal, TokenType), u32>;
-
 #[derive(Clone)]
 struct Node {
   value: Symbol,
@@ -35,7 +31,6 @@ struct Node {
   rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
   scopes: Rc<ScopeStack>,
 }
-
 impl Node {
   fn new(
     value: Symbol,
@@ -51,7 +46,6 @@ impl Node {
       scopes
     }
   }
-
   fn parse(&mut self, tokens: &Vec<Token>, index: &mut usize) -> Result<(), Box<dyn Error>> {
     let current_token = &tokens[*index];
     match &self.value {
@@ -90,7 +84,6 @@ impl Node {
     }
   }
 
-
   /// Regras semânticas para criação da AST,
   /// Nessa etapa, todos os outros nós serão apenas transformados em nós semânticos.
   /// Já para os nós relacionados a expressões, serão aplicadas as regras semânticas específicas para condensar a AST.
@@ -99,7 +92,6 @@ impl Node {
       Symbol::Terminal(_, token) => {
         // Cria um nó semântico terminal com o tipo do token
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Terminal { value: token.clone().unwrap() },
         }
       },
@@ -109,7 +101,6 @@ impl Node {
         match child.value {
           Symbol::NonTerminal(NonTerminal::Funclist) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Program {
                 funclist: Some(Box::new(child.visit(None))),
                 statement: None,
@@ -118,7 +109,6 @@ impl Node {
           },
           Symbol::NonTerminal(NonTerminal::Statement) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Program {
                 funclist: None,
                 statement: Some(Box::new(child.visit(None))),
@@ -133,7 +123,6 @@ impl Node {
           // FUNCLIST -> ''
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Funclist { funclist: inh.unwrap().clone() },
             }
           },
@@ -154,7 +143,6 @@ impl Node {
         // FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
         // TODO: funcdef node must store function_id
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Funcdef {
             func_id: Box::new(self.children[1].visit(None)),
             paramlist: if self.children[3].children.len() > 0 {
@@ -171,7 +159,6 @@ impl Node {
           // PARAMLIST -> ''
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Paramlist { paramlist: vec![] },
             }
           },
@@ -188,7 +175,6 @@ impl Node {
           // PARAMLIST1 -> ''
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Paramlist { paramlist: inh.unwrap().clone() },
             }
           },
@@ -215,7 +201,6 @@ impl Node {
           // STATELIST1 -> ''
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statelist { statelist: inh.unwrap().clone() },
             }
           },
@@ -236,7 +221,6 @@ impl Node {
           // STATEMENT -> Vardecl semicolon
           Symbol::NonTerminal(NonTerminal::Vardecl) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statement {
                 vardecl: Some(Box::new(self.children[0].visit(None))),
                 atribstat: None,
@@ -250,7 +234,6 @@ impl Node {
           // STATEMENT -> ATRIBSTAT semicolon
           Symbol::NonTerminal(NonTerminal::Atribstat) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statement {
                 vardecl: None,
                 atribstat: Some(Box::new(self.children[0].visit(None))),
@@ -265,7 +248,6 @@ impl Node {
           Symbol::NonTerminal(NonTerminal::Printstat) | Symbol::NonTerminal(NonTerminal::Readstat) | Symbol::NonTerminal(NonTerminal::Returnstat) | Symbol::Terminal(TokenType::KwBreak, _) => {
             let commandstat = self.children[0].visit(None);
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statement {
                 vardecl: None,
                 atribstat: None,
@@ -279,7 +261,6 @@ impl Node {
           // STATEMENT -> IFSTAT
           Symbol::NonTerminal(NonTerminal::Ifstat) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statement {
                 vardecl: None,
                 atribstat: None,
@@ -293,7 +274,6 @@ impl Node {
           // STATEMENT -> FORSTAT
           Symbol::NonTerminal(NonTerminal::Forstat) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statement {
                 vardecl: None,
                 atribstat: None,
@@ -308,7 +288,6 @@ impl Node {
           Symbol::Terminal(TokenType::Lbrace, _) => {
             let statelist = self.children[1].visit(None);
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statement {
                 vardecl: None,
                 atribstat: None,
@@ -322,7 +301,6 @@ impl Node {
           // STATEMENT -> semicolon
           Symbol::Terminal(TokenType::Semicolon, _) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Statement {
                 vardecl: None,
                 atribstat: None,
@@ -344,7 +322,6 @@ impl Node {
           Some(Box::new(self.children[2].visit(None)))
         };
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Vardecl {
             var_type: Box::new(self.children[0].visit(None)),
             id: Box::new(self.children[1].visit(None)),
@@ -366,7 +343,6 @@ impl Node {
           // CONST_INDEX -> ''
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::ConstIndex { index: inh.unwrap().clone() },
             }
           },
@@ -378,7 +354,6 @@ impl Node {
           // VAR_INDEX -> ''
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::VarIndex { index: inh.unwrap().clone() }
             }
           },
@@ -397,7 +372,6 @@ impl Node {
       // ATRIBSTAT -> LVALUE op_assign ATRIBSTATEVALUE
       Symbol::NonTerminal(NonTerminal::Atribstat) => {
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Atribstat {
             lvalue: Box::new(self.children[0].visit(None)),
             value: Box::new(self.children[2].visit(None))
@@ -408,19 +382,16 @@ impl Node {
         match self.children[0].value {
           Symbol::NonTerminal(NonTerminal::Expression) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Atribstatevalue { expression: Some(Box::new(self.children[0].visit(None))), allocexpression: None, funccall: None }
             }
           },
           Symbol::NonTerminal(NonTerminal::Allocexpression) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: Some(Box::new(self.children[0].visit(None))), funccall: None }
             }
           },
           Symbol::NonTerminal(NonTerminal::Funccall) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: None, funccall: Some(Box::new(self.children[0].visit(None))) }
             }
           },
@@ -430,7 +401,6 @@ impl Node {
       // FUNCCALL -> func_id lparenthesis PARAMLISTCALL rparenthesis
       Symbol::NonTerminal(NonTerminal::Funccall) => {
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Funccall {
             id: Box::new(self.children[0].visit(None)),
             paramlistcall: if self.children[1].children.len() > 0 {
@@ -456,7 +426,6 @@ impl Node {
           // PARAMLISTCALL_1 -> ''
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Paramlistcall { paramlist: inh.unwrap().clone() },
             }
           },
@@ -476,7 +445,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Printstat) => {
         if self.children.len() != 2 { panic!() }
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Printstat { expression: Box::new(self.children[0].visit(None)) },
         }
       },
@@ -484,13 +452,11 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Readstat) => {
         if self.children.len() != 2 { panic!() }
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Readstat { lvalue: Box::new(self.children[0].visit(None)) },
         }
       }, 
       Symbol::NonTerminal(NonTerminal::Returnstat) => {
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Returnstat{},
         }
       },
@@ -498,7 +464,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Ifstat) => {
         if self.children.len() != 8 { panic!() }
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Ifstat {
             condition: Box::new(self.children[2].visit(None)),
             then_branch: Box::new(self.children[5].visit(None)),
@@ -514,7 +479,6 @@ impl Node {
         // ELSESTAT -> kw_else ELSESTAT_1
         if self.children.len() != 2 { panic!() }
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Elsestat {
             statement: Box::new(self.children[1].visit(None)),
           }
@@ -533,7 +497,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Forstat) => {
         if self.children.len() != 11 { panic!() }
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Forstat {
             init: Box::new(self.children[2].visit(None)),
             condition: Box::new(self.children[4].visit(None)),
@@ -545,7 +508,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Allocexpression) => {
         if self.children.len() != 3 { panic!() }
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Allocexpression {
             var_type: Box::new(self.children[1].visit(None)),
             dimensions: Box::new(self.children[2].visit(None)),
@@ -569,7 +531,6 @@ impl Node {
           //  EXPRESSION_1.ptr = Node(EXPRESSION, Some(vec![EXPRESSION_1.inh, OP_EXPRESSION.ptr, NUMEXPRESSION.ptr]))
           2 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Expression { 
                 numexpression: Box::new(inh.unwrap()[0].clone()),
                 op_expression: Some(Box::new(self.children[0].visit(None))),
@@ -581,7 +542,6 @@ impl Node {
           // EXPRESSION_1.ptr = EXPRESSION_1.inh
           0 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Expression { 
                 numexpression: Box::new(inh.unwrap()[0].clone()),
                 op_expression: None,
@@ -606,7 +566,6 @@ impl Node {
         //  NUMEXPRESSION_1.ptr = NUMEXPRESSION_1_1.ptr
           3 => {
             let left_size = SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Numexpression { 
                 term: Box::new(inh.unwrap()[0].clone()),
                 op_numexpression: Some(Box::new(self.children[0].visit(None))),
@@ -625,7 +584,6 @@ impl Node {
               // Se for do tipo Term, retorna um novo nodo Numexpression com o termo herdado
               SemanticNodeData::Term { .. } => {
                 SemanticNode {
-                  scopes: Rc::clone(&self.scopes),
                   children: SemanticNodeData::Numexpression { 
                     term: Box::new(inh.unwrap()[0].clone()),
                     op_numexpression: None,
@@ -653,7 +611,6 @@ impl Node {
           //  TERM_1.ptr = TERM_1_1.ptr
           3 => {
             let left_size = SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Term { 
                 factor: Box::new(inh.unwrap()[0].clone()),
                 op_term: Some(Box::new(self.children[0].visit(None))),
@@ -672,7 +629,6 @@ impl Node {
               // Se for do tipo Unaryexpression, retorna um novo nodo Term com o fator herdado
               SemanticNodeData::Unaryexpression { .. } => {
                 SemanticNode {
-                  scopes: Rc::clone(&self.scopes),
                   children: SemanticNodeData::Term { 
                     factor: Box::new(inh.unwrap()[0].clone()),
                     op_term: None,
@@ -692,7 +648,6 @@ impl Node {
           //  UNARYEXPRESSION.ptr = FACTOR.ptr
           1 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Unaryexpression { 
                 op: None,
                 factor: Box::new(self.children[0].visit(None))
@@ -702,7 +657,6 @@ impl Node {
           // UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
           2 => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Unaryexpression { 
                 op: Some(Box::new(self.children[0].visit(None))),
                 factor: Box::new(self.children[1].visit(None))
@@ -717,7 +671,6 @@ impl Node {
           // FACTOR -> lparenthesis EXPRESSION rparenthesis
           Symbol::Terminal(TokenType::Lparenthesis, _) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Factor { 
                 expression: Some(Box::new(self.children[1].visit(None))),
                 lvalue: None,
@@ -728,7 +681,6 @@ impl Node {
           // FACTOR -> LVALUE
           Symbol::NonTerminal(NonTerminal::Lvalue) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Factor { 
                 expression: None,
                 lvalue: Some(Box::new(self.children[0].visit(None))),
@@ -739,7 +691,6 @@ impl Node {
           // FACTOR -> CONSTANT
           Symbol::NonTerminal(NonTerminal::Constant) => {
             SemanticNode {
-              scopes: Rc::clone(&self.scopes),
               children: SemanticNodeData::Factor { 
                 expression: None,
                 lvalue: None,
@@ -753,7 +704,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Lvalue) => {
         if self.children.len() != 2 { panic!() }
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Lvalue { 
             id: Box::new(self.children[0].visit(None)),
             var_index: if self.children[1].children.len() > 0 {
@@ -767,7 +717,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Constant) => {
         let Symbol::Terminal(_token_type, token ) = self.children[0].clone().value else { panic!(); };
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::Constant { 
             value: token.unwrap().value.unwrap(),
           },
@@ -776,7 +725,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::OpExpression) => {
         let Symbol::Terminal(token_type, _) = self.children[0].value else { panic!(); };
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::OpExpression {
             op: token_type,
           }
@@ -785,7 +733,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::OpNumexpression) => {
         let Symbol::Terminal(token_type, _) = self.children[0].value else { panic!(); };
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::OpNumexpression {
             op: token_type,
           }
@@ -794,7 +741,6 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::OpTerm) => {
         let Symbol::Terminal(token_type, _) = self.children[0].value else { panic!(); };
         SemanticNode {
-          scopes: Rc::clone(&self.scopes),
           children: SemanticNodeData::OpTerm {
             op: token_type,
           }
@@ -802,7 +748,6 @@ impl Node {
       }, 
     }
   }
-
   fn to_string(&self, count: &mut u32) -> String {
     let mut result = String::new();
     let node_name = format!("{:?}_{}", self.value, count);
@@ -835,11 +780,9 @@ impl Node {
     result
   }
 }
-
 pub struct SyntaxTree {
   root: Node
 }
-
 impl SyntaxTree {
   pub fn new() -> Result<Self, Box<dyn Error>> {
     // Load Grammar rules
@@ -884,12 +827,10 @@ impl SyntaxTree {
     );
     Ok(SyntaxTree { root })
   }
-
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn Error>> {
     self.root.parse(tokens, &mut 0)?;
     Ok(())
   }
-
   pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     writeln!(file, "// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot")?;
@@ -898,11 +839,11 @@ impl SyntaxTree {
     writeln!(file, "}}")?;
     Ok(())
   }
-
   pub fn semantic_tree(&mut self) -> Result<SemanticTree, Box<dyn Error>> {
     // TODO
     let semantic_tree = SemanticTree {
       root: self.root.visit(None),
+      scopes: ScopeStack::new(),
     };
     Ok(semantic_tree)
   }
