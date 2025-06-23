@@ -54,11 +54,11 @@ impl ScopeStack {
     Ok(())
   }
 
-  pub fn get_symbol(&self, name: &str) -> Option<&SymbolEntry> {
+  pub fn get_symbol(&self, name: &str) -> Option<SymbolEntry> {
     // Procura o símbolo nos escopos, começando do mais interno (topo da pilha).
     for scope in self.stack.iter().rev() {
       if let Some(entry) = scope.1.get(name) {
-        return Some(entry);
+        return Some(entry.clone());
       }
     }
     None
