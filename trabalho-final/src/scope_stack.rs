@@ -12,7 +12,7 @@ pub enum ScopeType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SymbolEntry {
   pub appearances: Vec<(usize, usize)>, // (line, column)
-  pub var_type: Option<ConstType>,
+  pub var_type: Vec<ConstType>,
   pub const_index: Vec<u32>,
 }
 
@@ -62,6 +62,18 @@ impl ScopeStack {
       }
     }
     None
+  }
+
+  pub fn count_appearance(&mut self, name: &str, line: usize, column: usize) -> Result<(), Box<dyn Error>> {
+    // Conta as aparições do símbolo e adiciona a posição atual.
+    if let Some(entry) = self.get_symbol(name) {
+      let mut entry = entry.clone();
+      entry.appearances.push((line, column));
+      self.insert_symbol(name.to_string(), entry)?;
+      Ok(())
+    } else {
+      Err(format!("Erro semântico: símbolo '{}' não encontrado na linha {} coluna {}", name, line, column).into())
+    }
   }
 
   pub fn contains(&self, scope_type: ScopeType) -> bool {

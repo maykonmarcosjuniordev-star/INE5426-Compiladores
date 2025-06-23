@@ -93,7 +93,9 @@ pub enum SemanticNodeData {
   Readstat {
     lvalue: Box<SemanticNode>,
   },
-  Returnstat,
+  Returnstat {
+    token: Token,
+  },
   Statelist {
     statelist: Vec<SemanticNode>,
   },

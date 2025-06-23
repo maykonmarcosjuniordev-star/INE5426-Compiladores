@@ -456,8 +456,11 @@ impl Node {
         }
       }, 
       Symbol::NonTerminal(NonTerminal::Returnstat) => {
+        let Symbol::Terminal(_, token) = &self.children[0].value else { panic!("Expected terminal token for return statement"); };
         SemanticNode {
-          children: SemanticNodeData::Returnstat{},
+          children: SemanticNodeData::Returnstat {
+            token: token.clone().unwrap()
+          },
         }
       },
       // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT 
