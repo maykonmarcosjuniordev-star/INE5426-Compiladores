@@ -526,6 +526,362 @@ impl SemanticNode {
       _ => panic!()
     }
   }
+
+  fn save(&self, output: &mut String, count: &mut u32) {
+    match &self.children {
+      SemanticNodeData::Allocexpression { var_type, dimensions } => {        
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"AllocExpression\"]\n", name,));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        var_type.save(output, count);
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        dimensions.save(output, count);
+      },
+      SemanticNodeData::Atribstat { lvalue, value } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"AtribStatement\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        lvalue.save(output, count);
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        value.save(output, count);
+      },
+      SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"AtribStatementValue\"]\n", count));
+        if let Some(expression) = expression {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          expression.save(output, count);
+        }
+        if let Some(allocexpression) = allocexpression {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          allocexpression.save(output, count);
+        }
+        if let Some(funccall) = funccall {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          funccall.save(output, count);
+        }
+      },
+      SemanticNodeData::Constant { value } => {
+        output.push_str(&format!("  {} [label=\"{:?}\"]\n", count, value));
+      },
+      SemanticNodeData::ConstIndex { index } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"ConstIndex\"]\n", count));
+        for i in index.iter() {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          i.save(output, count);
+        }
+      },
+      SemanticNodeData::Elsestat { statement } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"ElseStatement\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        statement.save(output, count);
+      },
+      SemanticNodeData::Expression { numexpression, numexpression2, op_expression } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Expression\"]\n", count,));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        numexpression.save(output, count);
+        if let Some(op_expression) = op_expression {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          op_expression.save(output, count);
+        }
+        if let Some(numexpression2) = numexpression2 {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          numexpression2.save(output, count);
+        }
+      },
+      SemanticNodeData::Factor { expression, lvalue, constant } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Factor\"]\n", count));
+        if let Some(expression) = expression {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          expression.save(output, count);
+        }
+        if let Some(lvalue) = lvalue {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          lvalue.save(output, count);
+        }
+        if let Some(constant) = constant {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          constant.save(output, count);
+        }
+      },
+      SemanticNodeData::Forstat { init, condition, increment, body } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"ForStatement\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        init.save(output, count);
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        condition.save(output, count);
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        increment.save(output, count);
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        body.save(output, count);
+      },
+      SemanticNodeData::Funccall { id, paramlistcall } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"FuncCall\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        id.save(output, count);
+        if let Some(paramlistcall) = paramlistcall {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          paramlistcall.save(output, count);
+        }
+      },
+      SemanticNodeData::Funcdef { func_id, paramlist, statelist } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"FuncDef\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        func_id.save(output, count);
+        if let Some(paramlist) = paramlist {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          paramlist.save(output, count);
+        }
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        statelist.save(output, count);
+      },
+      SemanticNodeData::Funclist { funclist } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"FuncList\"]\n", count));
+        for func in funclist.iter() {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          func.save(output, count);
+        }
+      },
+      SemanticNodeData::Ifstat { condition, then_branch, else_branch } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"IfStatement\"]\n", name));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        condition.save(output, count);
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        then_branch.save(output, count);
+        if let Some(else_branch) = else_branch {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          else_branch.save(output, count);
+        }
+      },
+      SemanticNodeData::Lvalue { id, var_index } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"LValue\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        id.save(output, count);
+        if let Some(var_index) = var_index {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          var_index.save(output, count);
+        }
+      },
+      SemanticNodeData::Numexpression { term, op_numexpression, term2 } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Numexpression\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        term.save(output, count);
+
+        if let Some(op_numexpression) = op_numexpression {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          op_numexpression.save(output, count);
+        }
+        if let Some(term2) = term2 {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          term2.save(output, count);
+        }
+      },
+      SemanticNodeData::OpExpression { op } => {
+        output.push_str(&format!("  {} [label=\"{:?}\"]\n", count, op));
+      },
+      SemanticNodeData::OpNumexpression { op } => {
+        output.push_str(&format!("  {} [label=\"{:?}\"]\n", count, op));
+      },
+      SemanticNodeData::OpTerm { op } => {
+        output.push_str(&format!("  {} [label=\"{:?}\"]\n", count, op));
+      },
+      SemanticNodeData::Paramlist { paramlist } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"ParamList\"]\n", count));
+        for param in paramlist.iter() {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          param.save(output, count);
+        }
+      },
+      SemanticNodeData::Paramlistcall { paramlist } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"ParamListCall\"]\n", count));
+        for param in paramlist.iter() {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          param.save(output, count);
+        }
+      },
+      SemanticNodeData::Printstat { expression } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"PrintStatement\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        expression.save(output, count);
+      },
+      SemanticNodeData::Program { funclist, statement } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Program\"]\n", count));
+        if let Some(funclist) = funclist {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          funclist.save(output, count);
+        }
+        if let Some(statement) = statement {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          statement.save(output, count);
+        }
+      },
+      SemanticNodeData::Readstat { lvalue } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"ReadStatement\"]\n", name));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        lvalue.save(output, count);
+      },
+      SemanticNodeData::Returnstat { .. } => {
+        output.push_str(&format!("  {} [label=\"ReturnStatement\"]\n", count));
+      },
+      SemanticNodeData::Statelist { statelist } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"StateList\"]\n", count));
+        for statement in statelist.iter() {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          statement.save(output, count);
+        }
+      },
+      SemanticNodeData::Statement { vardecl, atribstat, ifstat, forstat, statelist, commandstat } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Statement\"]\n", count));
+        if let Some(vardecl) = vardecl {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          vardecl.save(output, count);
+        }
+        if let Some(atribstat) = atribstat {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          atribstat.save(output, count);
+        }
+        if let Some(ifstat) = ifstat {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          ifstat.save(output, count);
+        }
+        if let Some(forstat) = forstat {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          forstat.save(output, count);
+        }
+        if let Some(statelist) = statelist {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          statelist.save(output, count);
+        }
+        if let Some(commandstat) = commandstat {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          commandstat.save(output, count);
+        }
+      },
+      SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Term\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        unaryexpression.save(output, count);
+        if let Some(op_term) = op_term {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          op_term.save(output, count);
+        }
+        if let Some(unaryexpression2) = unaryexpression2 {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          unaryexpression2.save(output, count);
+        }
+      },
+      SemanticNodeData::Unaryexpression { op, factor } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Unaryexpression\"]\n", count));
+        if let Some(op) = op {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          op.save(output, count);
+        }
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        factor.save(output, count);
+      },
+      SemanticNodeData::Vardecl { var_type, id, const_index } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"Vardecl\"]\n", count));
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        var_type.save(output, count);
+        output.push_str(&format!("  {} -> {}\n", name, *count+1));
+        *count += 1;
+        id.save(output, count);
+        if let Some(const_index) = const_index {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          const_index.save(output, count);
+        }
+      },
+      SemanticNodeData::VarIndex { index } => {
+        let name = format!("{}", count);
+        output.push_str(&format!("  {} [label=\"VarIndex\"]\n", count));
+        for i in index.iter() {
+          output.push_str(&format!("  {} -> {}\n", name, *count+1));
+          *count += 1;
+          i.save(output, count);
+        }
+      },
+      SemanticNodeData::Terminal { value: token } => {
+        if let Some(value) = &token.value {
+          let nome = format!("{:?}", value).replace("\"", "\\\"");
+          output.push_str(&format!("  {} [label=\"{}\"]\n", count, nome));
+        } 
+      }
+    }
+  }
 }
 
 pub struct SemanticTree {
@@ -544,7 +900,10 @@ impl SemanticTree {
 
   pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
-    writeln!(file, "{:?}", self.root)?;
+    let mut output = "digraph G {\n".to_string();
+    self.root.save(&mut output, &mut 0);
+    output.push_str("}\n");
+    writeln!(file, "{}", output)?;
     Ok(())
   }
 
