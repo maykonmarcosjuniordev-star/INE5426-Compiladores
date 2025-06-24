@@ -211,7 +211,7 @@ impl SemanticNode {
             match token.token_type {
               TokenType::VarType => {
                 // Get the type of the parameter
-                let var_type = token.value.as_ref().unwrap().get_type();
+                let var_type = token.value.as_ref().unwrap().get_keyword_type();
                 func_params_types.push(var_type.clone());
                 prev_param = Some(var_type);
               },
