@@ -140,8 +140,6 @@ impl Node {
       }, 
       Symbol::NonTerminal(NonTerminal::Funcdef) => {
         if self.children.len() != 8 { panic!() }
-        // FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
-        // TODO: funcdef node must store function_id
         SemanticNode {
           children: SemanticNodeData::Funcdef {
             func_id: Box::new(self.children[1].visit(None)),
@@ -156,16 +154,16 @@ impl Node {
       }, 
       Symbol::NonTerminal(NonTerminal::Paramlist) => {
         match self.children.len() {
-          // PARAMLIST -> ''
-          0 => {
-            SemanticNode {
-              children: SemanticNodeData::Paramlist { paramlist: vec![] },
-            }
-          },
           // PARAMLIST -> var_type id PARAMLIST1
           3 => {
-            let inh = vec![self.children[0].visit(None), self.children[1].visit(None)];
-            self.children[2].visit(Some(&inh))
+            let mut new_params = match inh {
+              None => vec![],
+              Some(inh) => inh.clone(),
+            };
+            new_params.push(self.children[0].visit(None));
+            new_params.push(self.children[1].visit(None));
+
+            self.children[2].visit(Some(&new_params))
           }
           _ => panic!()
         }
@@ -186,7 +184,7 @@ impl Node {
             };
             new_params.push(self.children[1].visit(None));
             new_params.push(self.children[2].visit(None));
-            self.children[2].visit(Some(&new_params))
+            self.children[3].visit(Some(&new_params))
           },
           _ => panic!()
         }
