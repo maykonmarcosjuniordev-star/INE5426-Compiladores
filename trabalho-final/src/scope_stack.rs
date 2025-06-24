@@ -66,10 +66,8 @@ impl ScopeStack {
 
   pub fn count_appearance(&mut self, name: &str, line: usize, column: usize) -> Result<(), Box<dyn Error>> {
     // Conta as aparições do símbolo e adiciona a posição atual.
-    if let Some(entry) = self.get_symbol(name) {
-      let mut entry = entry.clone();
+    if let Some(mut entry) = self.get_symbol(name) {
       entry.appearances.push((line, column));
-      self.insert_symbol(name.to_string(), entry)?;
       Ok(())
     } else {
       Err(format!("Erro semântico: símbolo '{}' não encontrado na linha {} coluna {}", name, line, column).into())
