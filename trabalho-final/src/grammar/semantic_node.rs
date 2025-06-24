@@ -108,9 +108,9 @@ pub enum SemanticNodeData {
     commandstat: Option<Box<SemanticNode>>,
   },
   Term {
-    factor: Box<SemanticNode>,
+    unaryexpression: Box<SemanticNode>,
     op_term: Option<Box<SemanticNode>>,
-    factor2: Option<Box<SemanticNode>>,
+    unaryexpression2: Option<Box<SemanticNode>>,
   },
   Unaryexpression {
     op: Option<Box<SemanticNode>>,

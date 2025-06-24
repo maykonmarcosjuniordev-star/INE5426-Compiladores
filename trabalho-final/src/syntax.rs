@@ -615,9 +615,9 @@ impl Node {
           3 => {
             let left_size = SemanticNode {
               children: SemanticNodeData::Term { 
-                factor: Box::new(inh.unwrap()[0].clone()),
+                unaryexpression: Box::new(inh.unwrap()[0].clone()),
                 op_term: Some(Box::new(self.children[0].visit(None))),
-                factor2: Some(Box::new(self.children[1].visit(None))),
+                unaryexpression2: Some(Box::new(self.children[1].visit(None))),
               },
             };
             self.children[2].visit(Some(&vec![left_size]))
@@ -633,9 +633,9 @@ impl Node {
               SemanticNodeData::Unaryexpression { .. } => {
                 SemanticNode {
                   children: SemanticNodeData::Term { 
-                    factor: Box::new(inh.unwrap()[0].clone()),
+                    unaryexpression: Box::new(inh.unwrap()[0].clone()),
                     op_term: None,
-                    factor2: None,
+                    unaryexpression2: None,
                   },
                 }
               }

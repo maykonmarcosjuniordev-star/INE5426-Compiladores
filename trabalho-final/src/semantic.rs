@@ -374,12 +374,12 @@ impl SemanticNode {
         panic!();
       },
       // TODO
-      SemanticNodeData::Term { factor, op_term, factor2 } => {
-        factor.semantic_analysis(arg, scopes)?;
+      SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
+        unaryexpression.semantic_analysis(arg, scopes)?;
         if let Some(op_term) = op_term {
           op_term.semantic_analysis(arg, scopes)?;
         }
-        if let Some(factor2) = factor2 {
+        if let Some(factor2) = unaryexpression2 {
           factor2.semantic_analysis(arg, scopes)?;
         }
         // TERM.children {
