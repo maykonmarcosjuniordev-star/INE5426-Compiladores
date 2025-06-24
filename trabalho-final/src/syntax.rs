@@ -831,7 +831,15 @@ impl SyntaxTree {
     Ok(SyntaxTree { root })
   }
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn Error>> {
-    self.root.parse(tokens, &mut 0)?;
+    let mut counter = 0;
+    self.root.parse(tokens, &mut counter)?;
+    let last_token = &tokens[counter];
+    // Como a regra sintática explicita a criação do token de fim de arquivo,
+    // não é possível que o parser encerre sem consumir o token de fim de arquivo, que só é inserido no final da lista de tokens.
+    // Logo, essa verificação é desnecessária. :D
+    if counter != tokens.len() {
+      return Err(format!("Erro sintático: Parsing terminou, mas ainda há tokens após a linha {} coluna {}", last_token.line, last_token.column).into());
+    }
     Ok(())
   }
   pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
