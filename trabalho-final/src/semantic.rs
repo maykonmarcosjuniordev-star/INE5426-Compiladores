@@ -2,12 +2,11 @@ use std::error::Error;
 use std::io::Write;
 
 use crate::code_attrs::CodeAttrs;
-use crate::grammar::token_type;
 use crate::scope_stack::ScopeStack;
 use crate::scope_stack::ScopeType;
 use crate::scope_stack::SymbolEntry;
 use crate::grammar::semantic_node::SemanticNodeData;
-use crate::grammar::const_type::ConstType;
+use crate::grammar::const_type::{ConstType, VarType};
 use crate::grammar::token_type::TokenType;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +16,7 @@ pub struct SemanticNode {
 
 #[derive(Debug, Clone, PartialEq)]
 enum ReturnSem {
-  Tipo(ConstType),
+  Tipo(VarType),
   Values(SemanticNode),
   TT(TokenType),
 }
@@ -94,7 +93,7 @@ impl SemanticNode {
       SemanticNodeData::Constant {value} => {
         // CONSTANT -> const_int
         //  CONSTANT.tipo = "int"
-        return Ok(ReturnSem::Tipo(value.clone()).into());
+        return Ok(Some(ReturnSem::Tipo(value.get_type())));
       },
       SemanticNodeData::ConstIndex { index } => {
         for i in index.iter() {
@@ -162,7 +161,7 @@ impl SemanticNode {
         let ConstType::String(func_id) = value.value.clone().unwrap() else { panic!() };
         let Some(func_types) = scopes.get_symbol(&func_id) else { return Err("Erro Semântico: função não definida nesse escopo".into()); };
         
-        let mut called_types: Vec<ConstType> = vec![];
+        let mut called_types: Vec<VarType> = vec![];
         match paramlistcall {
           None => {},
           Some(paramlistcall) => {
@@ -202,8 +201,8 @@ impl SemanticNode {
         let ConstType::String(func_id) = value.value.clone().unwrap() else { panic!(); };
         
         // Read function parameters
-        let mut func_params_types: Vec<ConstType> = vec![];
-        let mut func_params: Vec<(ConstType, String)> = vec![];
+        let mut func_params_types: Vec<VarType> = vec![];
+        let mut func_params: Vec<(VarType, String)> = vec![];
         let mut prev_param = None;
         if let Some(paramlist) = &paramlist {
           let SemanticNodeData::Paramlist { paramlist } = &paramlist.children else { panic!(); };
@@ -212,7 +211,7 @@ impl SemanticNode {
             match token.token_type {
               TokenType::VarType => {
                 // Get the type of the parameter
-                let var_type = token.value.clone().unwrap();
+                let var_type = token.value.as_ref().unwrap().get_type();
                 func_params_types.push(var_type.clone());
                 prev_param = Some(var_type);
               },
@@ -398,7 +397,7 @@ impl SemanticNode {
       SemanticNodeData::Vardecl {var_type, id, const_index} => {
         // Declared variable type
         let SemanticNodeData::Terminal { value: var_type_node } = var_type.children else { panic!() };
-        let var_type = var_type_node.value.clone().unwrap();
+        let var_type = var_type_node.value.unwrap().get_type();
 
         // Declared variable name
         let SemanticNodeData::Terminal { value: id_node } = id.children else { panic!() };
@@ -458,7 +457,7 @@ impl SemanticNode {
             // #  CONSTANT.tipo = "int"
             if let Some(value) = &token.value {
               if let ConstType::Int(_) = value {
-                Ok(Some(ReturnSem::Tipo(ConstType::Int(0))))
+                Ok(Some(ReturnSem::Tipo(VarType::Int)))
               } else {
                 Err("Expected integer constant".into())
               }
@@ -471,7 +470,7 @@ impl SemanticNode {
             // #  CONSTANT.tipo = "float"
             if let Some(value) = &token.value {
               if let ConstType::Float(_) = value {
-                Ok(Some(ReturnSem::Tipo(ConstType::Float(0.0))))
+                Ok(Some(ReturnSem::Tipo(VarType::Float)))
               } else {
                 Err("Expected float constant".into())
               }
@@ -484,7 +483,7 @@ impl SemanticNode {
             // #  CONSTANT.tipo = "string"
             if let Some(value) = &token.value {
               if let ConstType::String(_) = value {
-                Ok(Some(ReturnSem::Tipo(ConstType::String("".into()))))
+                Ok(Some(ReturnSem::Tipo(VarType::String)))
               } else {
                 Err("Expected string constant".into())
               }

@@ -11,4 +11,19 @@ impl ConstType {
     if let Ok(f) = s.parse::<f64>() { return ConstType::Float(f); }
     ConstType::String(s.to_string())
   }
+
+  pub fn get_type(&self) -> VarType {
+    match self {
+      ConstType::Int(_) => VarType::Int,
+      ConstType::Float(_) => VarType::Float,
+      ConstType::String(_) => VarType::String,
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum VarType {
+  Int,
+  Float,
+  String
 }

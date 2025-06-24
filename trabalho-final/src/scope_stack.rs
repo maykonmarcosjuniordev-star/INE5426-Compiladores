@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
-use crate::grammar::const_type::ConstType;
+use crate::grammar::const_type::VarType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ScopeType {
@@ -12,7 +12,7 @@ pub enum ScopeType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SymbolEntry {
   pub appearances: Vec<(usize, usize)>, // (line, column)
-  pub var_type: Vec<ConstType>,
+  pub var_type: Vec<VarType>,
   pub const_index: Vec<u32>,
 }
 
