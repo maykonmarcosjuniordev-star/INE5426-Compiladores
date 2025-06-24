@@ -491,6 +491,18 @@ impl SemanticNode {
               Err("Expected value for const_string".into())
             }
           },
+          TokenType::Id => {
+            // # LVALUE -> id VAR_INDEX
+            // #  LVALUE.tipo = LVALUE.scopes.get(id)
+            let ConstType::String(id_name) = token.value.clone().unwrap() else { panic!(); };
+            // Count the appearance of the variable
+            scopes.count_appearance(&id_name, token.line, token.column)?;
+            let Some(symbol_entry) = scopes.get_symbol(&id_name) else {
+              return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
+            };
+            let tipo = symbol_entry.var_type[0].clone();
+            Ok(Some(ReturnSem::Tipo(tipo)))
+          },
           // Comma | ConstNull | FuncId | Id
           //   | KwBreak | KwDef | KwElse | KwFor | KwIf | KwNew | KwPrint | KwRead
           //   | KwReturn | Lbrace | Lbracket | Lparenthesis | OpAssign | OpDivision
