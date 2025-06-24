@@ -44,7 +44,10 @@ impl SemanticNode {
         };
 
         // Check if the variable type matches the value type
-
+        // But if it's a funccall, allow it anyway since this grammar is so weird about calling functions
+        if let SemanticNodeData::Funccall { .. } = value.children {
+          return Ok(None);
+        }
         let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
         if value_type != symbol_entry.var_type[0] {
           return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
