@@ -43,12 +43,10 @@ impl SemanticNode {
           return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
         };
 
-        // Check if the variable type matches the value type
-        // But if it's a funccall, allow it anyway since this grammar is so weird about calling functions
-        if let SemanticNodeData::Funccall { .. } = value.children {
-          return Ok(None);
-        }
-        let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
+        let x = value.semantic_analysis(scopes)?;
+        let Some(ReturnSem::Tipo(value_type)) = x else { 
+          println!("{:?}", x);
+          panic!(); };
         if value_type != symbol_entry.var_type[0] {
           return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
         }
@@ -190,7 +188,7 @@ impl SemanticNode {
         }
         // Count the appearance of the function
         scopes.count_appearance(&func_id, value.line, value.column)?;
-        Ok(None)
+        Ok(Some(ReturnSem::Tipo(VarType::Int))) // Assuming all function calls return an int
       },
       SemanticNodeData::Funcdef {func_id, paramlist, statelist} => {
         // Get function name
