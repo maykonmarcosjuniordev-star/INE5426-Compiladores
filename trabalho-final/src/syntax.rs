@@ -96,7 +96,7 @@ impl Node {
         }
       },
       Symbol::NonTerminal(NonTerminal::Program) => {
-        if self.children.len() != 1 { panic!() }
+        if self.children.len() != 2 { panic!() }
         let child = self.children[0].clone();
         match child.value {
           Symbol::NonTerminal(NonTerminal::Funclist) => {
@@ -833,13 +833,13 @@ impl SyntaxTree {
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn Error>> {
     let mut counter = 0;
     self.root.parse(tokens, &mut counter)?;
-    let last_token = &tokens[counter];
     // Como a regra sintática explicita a criação do token de fim de arquivo,
     // não é possível que o parser encerre sem consumir o token de fim de arquivo, que só é inserido no final da lista de tokens.
     // Logo, essa verificação é desnecessária. :D
-    if counter != tokens.len() {
-      return Err(format!("Erro sintático: Parsing terminou, mas ainda há tokens após a linha {} coluna {}", last_token.line, last_token.column).into());
-    }
+    // let last_token = &tokens[counter];
+    // if counter != tokens.len() {
+    //   return Err(format!("Erro sintático: Parsing terminou, mas ainda há tokens após a linha {} coluna {}", last_token.line, last_token.column).into());
+    // }
     Ok(())
   }
   pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
