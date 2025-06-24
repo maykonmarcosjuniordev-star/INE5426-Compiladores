@@ -401,7 +401,7 @@ impl Node {
         SemanticNode {
           children: SemanticNodeData::Funccall {
             id: Box::new(self.children[0].visit(None)),
-            paramlistcall: if self.children[1].children.len() > 0 {
+            paramlistcall: if self.children[2].children.len() > 0 {
               Some(Box::new(self.children[2].visit(None)))
             } else {
               None
@@ -434,7 +434,7 @@ impl Node {
               Some(inh) => inh.clone(),
             };
             new_params.push(self.children[1].visit(None));
-            self.children[1].visit(Some(&new_params))
+            self.children[2].visit(Some(&new_params))
           },
           _ => panic!()
         }
