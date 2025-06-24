@@ -19,6 +19,16 @@ impl ConstType {
       ConstType::String(_) => VarType::String,
     }
   }
+
+  pub fn get_keyword_type(&self) -> VarType {
+    let ConstType::String(s) = self else { panic!("Expected ConstType::String"); };
+    match s.as_str() {
+      "int" => VarType::Int,
+      "float" => VarType::Float,
+      "string" => VarType::String,
+      _ => panic!("Unknown type keyword: {}", s),
+    }
+  }
 }
 
 #[derive(Debug, Clone, PartialEq)]

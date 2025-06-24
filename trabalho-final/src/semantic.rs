@@ -397,7 +397,7 @@ impl SemanticNode {
       SemanticNodeData::Vardecl {var_type, id, const_index} => {
         // Declared variable type
         let SemanticNodeData::Terminal { value: var_type_node } = var_type.children else { panic!() };
-        let var_type = var_type_node.value.unwrap().get_type();
+        let var_type = var_type_node.value.unwrap().get_keyword_type();
 
         // Declared variable name
         let SemanticNodeData::Terminal { value: id_node } = id.children else { panic!() };
