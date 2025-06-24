@@ -81,13 +81,13 @@ impl SemanticNode {
       },
       SemanticNodeData::Atribstatevalue {expression, allocexpression, funccall} => {
         if let Some(expression) = expression {
-          expression.semantic_analysis(arg, scopes)?;
+          return Ok(expression.semantic_analysis(arg, scopes)?);
         }
         if let Some(allocexpression) = allocexpression {
-          allocexpression.semantic_analysis(arg, scopes)?;
+          return Ok(allocexpression.semantic_analysis(arg, scopes)?);
         }
         if let Some(funccall) = funccall {
-          funccall.semantic_analysis(arg, scopes)?;
+          return Ok(funccall.semantic_analysis(arg, scopes)?);
         }
         Ok(None)
       },
@@ -267,26 +267,28 @@ impl SemanticNode {
         scopes.push_scope(ScopeType::Any);
         Ok(None)
       },
-      // TODO (alinhar com factor)
+      // TODO: Checar se varindex é válido para o tipo de lvalue
       // FACTOR -> LVALUE
       //  FACTOR.tipo = LVALUE.tipo
       SemanticNodeData::Lvalue {id, var_index} => {
-        id.semantic_analysis(arg, scopes)?;
+        let tipo = id.semantic_analysis(arg, scopes)?.unwrap();
         if let Some(var_index) = var_index {
           var_index.semantic_analysis(arg, scopes)?;
         }
         // LVALUE -> id VAR_INDEX
         //  LVALUE.tipo = LVALUE.scopes.get(id)
-        return Ok(None);
+        return Ok(Some(tipo));
       },
-      // TODO (alinhar com expression)
       SemanticNodeData::Numexpression {term, op_numexpression, term2} => {
-        term.semantic_analysis(arg, scopes)?;
+        let tipo1 = term.semantic_analysis(arg, scopes)?.unwrap();
         if let Some(op_numexpression) = op_numexpression {
           op_numexpression.semantic_analysis(arg, scopes)?;
         }
         if let Some(term2) = term2 {
-          term2.semantic_analysis(arg, scopes)?;
+          let tipo2 = term2.semantic_analysis(arg, scopes)?.unwrap();
+          if tipo1 != tipo2 {
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna " ).into());
+          }
         }
         // NUMEXPRESSION.children { 
         //   [TERM] => Ok,
@@ -294,7 +296,7 @@ impl SemanticNode {
         //   _ => panic!()
         // }
         // NUMEXPRESSION.tipo = children[0].tipo
-        return Ok(None);
+        return Ok(Some(tipo1));
       },
       SemanticNodeData::OpExpression {op} => {
         Ok(Some(ReturnSem::TT(op.clone())))
@@ -373,36 +375,25 @@ impl SemanticNode {
         }
         panic!();
       },
-      // TODO
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
-        unaryexpression.semantic_analysis(arg, scopes)?;
+        let tipo1 = unaryexpression.semantic_analysis(arg, scopes)?.unwrap();
         if let Some(op_term) = op_term {
           op_term.semantic_analysis(arg, scopes)?;
         }
         if let Some(factor2) = unaryexpression2 {
-          factor2.semantic_analysis(arg, scopes)?;
+          let tipo2 = factor2.semantic_analysis(arg, scopes)?.unwrap();
+          if tipo1 != tipo2 {
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna " ).into());
+          }
         }
-        // TERM.children {
-        //     [UNARYEXPRESSION] => Ok,
-        //     [UNARYEXPRESSION, _, UNARYEXPRESSION] => children[0].tipo == children[2].tipo,
-        //     _ => panic!()
-        // }
-        // TERM.tipo = children[0].tipo
-        return Ok(None);
+        return Ok(Some(tipo1));
       },
-      // TODO
       SemanticNodeData::Unaryexpression { op, factor } => {
         if let Some(op) = op {
           op.semantic_analysis(arg, scopes)?;
         }
-        factor.semantic_analysis(arg, scopes)?;
-        // UNARYEXPRESSION.children {
-        //   [FACTOR] => Ok,
-        //   [_, Factor] => Ok,
-        //   _ => panic!()
-        // }
-        // UNARYEXPRESSION.tipo = children[-1].tipo
-        return Ok(None);
+        let tipo = factor.semantic_analysis(arg, scopes)?.unwrap();
+        return Ok(Some(tipo));
       },
       SemanticNodeData::Vardecl {var_type, id, const_index} => {
         // Declared variable type
