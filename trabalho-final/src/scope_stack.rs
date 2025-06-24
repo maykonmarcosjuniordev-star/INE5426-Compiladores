@@ -36,11 +36,6 @@ impl ScopeStack {
     self.stack.pop()
   }
 
-  pub fn current_scope_type(&self) -> ScopeType {
-    // Retorna o tipo do escopo atual, que é o topo da pilha de escopo.
-    self.stack.last().map_or(ScopeType::Any, |(st, _)| st.clone())
-  }
-
   pub fn insert_symbol(&mut self, name: String, entry: SymbolEntry) -> Result<(), Box<dyn Error>> {
     // A pilha de escopo sempre deve ter pelo menos um escopo, então stack.last_mut() nunca deve retornar None.
     let Some(current_scope) = self.stack.last_mut() else { panic!("No current scope to insert symbol"); };

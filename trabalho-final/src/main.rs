@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
   // Should run without errors, except of course if the output file can't be created
-  semantic_tree.generate_code("output/intermediate_code.txt")?;
+  // semantic_tree.generate_code("output/intermediate_code.txt")?;
 
   Ok(())
 }

@@ -17,22 +17,16 @@ pub struct SemanticNode {
 #[derive(Debug, Clone, PartialEq)]
 enum ReturnSem {
   Tipo(VarType),
-  Values(SemanticNode),
   TT(TokenType),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum ArgSem {
-  Nome(String),
-}
-
 impl SemanticNode {
-  fn semantic_analysis(&self, arg: Option<&ArgSem>, scopes: &mut ScopeStack) -> Result<Option<ReturnSem>, Box<dyn Error>> {
+  fn semantic_analysis(&self, scopes: &mut ScopeStack) -> Result<Option<ReturnSem>, Box<dyn Error>> {
     // Perform semantic analysis on the node
     match self.children.clone() {
       SemanticNodeData::Allocexpression {var_type, dimensions} => {
-        var_type.semantic_analysis(arg, scopes)?;
-        dimensions.semantic_analysis(arg, scopes)?;
+        var_type.semantic_analysis(scopes)?;
+        dimensions.semantic_analysis(scopes)?;
         Ok(None)
       },
       SemanticNodeData::Atribstat {lvalue, value} => {
@@ -51,7 +45,7 @@ impl SemanticNode {
 
         // Check if the variable type matches the value type
 
-        let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(arg, scopes)? else { panic!(); };
+        let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
         if value_type != symbol_entry.var_type[0] {
           return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
         }
@@ -80,13 +74,13 @@ impl SemanticNode {
       },
       SemanticNodeData::Atribstatevalue {expression, allocexpression, funccall} => {
         if let Some(expression) = expression {
-          return Ok(expression.semantic_analysis(arg, scopes)?);
+          return Ok(expression.semantic_analysis(scopes)?);
         }
         if let Some(allocexpression) = allocexpression {
-          return Ok(allocexpression.semantic_analysis(arg, scopes)?);
+          return Ok(allocexpression.semantic_analysis(scopes)?);
         }
         if let Some(funccall) = funccall {
-          return Ok(funccall.semantic_analysis(arg, scopes)?);
+          return Ok(funccall.semantic_analysis(scopes)?);
         }
         Ok(None)
       },
@@ -97,7 +91,7 @@ impl SemanticNode {
       },
       SemanticNodeData::ConstIndex { index } => {
         for i in index.iter() {
-          i.semantic_analysis(arg, scopes)?;
+          i.semantic_analysis(scopes)?;
         }
         Ok(None)
       },
@@ -105,7 +99,7 @@ impl SemanticNode {
         // ELSESTAT_1 -> lbrace STATELIST rbrace
         //  STATELIST.scopes.push(ScopeType::Any)
         scopes.push_scope(ScopeType::Any);
-        let result = statement.semantic_analysis(arg, scopes);
+        let result = statement.semantic_analysis(scopes);
         scopes.pop_scope();
         result
       },
@@ -116,9 +110,9 @@ impl SemanticNode {
         //   _ => panic!()
         // }
         // EXPRESSION.tipo = children[0].tipo
-        let tipo1 = numexpression.semantic_analysis(arg, scopes).unwrap().unwrap();
+        let tipo1 = numexpression.semantic_analysis(scopes).unwrap().unwrap();
         if let Some(numexpression2) = numexpression2 {
-          let tipo2 = numexpression2.semantic_analysis(arg, scopes).unwrap().unwrap();
+          let tipo2 = numexpression2.semantic_analysis(scopes).unwrap().unwrap();
           if tipo1 != tipo2 {
             return Err("Type mismatch in expression".into());
           }
@@ -135,9 +129,9 @@ impl SemanticNode {
 
         // FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
         //  FACTOR.tipo = NUMEXPRESSION.tipo
-        if let Some(expression) = expression { return expression.semantic_analysis(arg, scopes); }
-        if let Some(lvalue) = lvalue { return lvalue.semantic_analysis(arg, scopes); }
-        if let Some(constant) = constant { return constant.semantic_analysis(arg, scopes); }
+        if let Some(expression) = expression { return expression.semantic_analysis(scopes); }
+        if let Some(lvalue) = lvalue { return lvalue.semantic_analysis(scopes); }
+        if let Some(constant) = constant { return constant.semantic_analysis(scopes); }
         panic!();
       },
       SemanticNodeData::Forstat {init, condition, increment, body} => {
@@ -145,13 +139,13 @@ impl SemanticNode {
         //  STATELIST.scopes.push(ScopeType::Loop)
         // Escopo das operações do laço (atribstat, expression, atribstat)
         scopes.push_scope(ScopeType::Any);
-        init.semantic_analysis(arg, scopes)?;
-        condition.semantic_analysis(arg, scopes)?;
-        increment.semantic_analysis(arg, scopes)?;
+        init.semantic_analysis(scopes)?;
+        condition.semantic_analysis(scopes)?;
+        increment.semantic_analysis(scopes)?;
 
         // Escopo do corpo de execução do laço
         scopes.push_scope(ScopeType::Loop);
-        body.semantic_analysis(arg, scopes)?;
+        body.semantic_analysis(scopes)?;
         scopes.pop_scope(); // Corpo
         scopes.pop_scope(); // Operações do laço
         Ok(None)
@@ -245,21 +239,21 @@ impl SemanticNode {
         }
 
         // Analyze the function body
-        statelist.semantic_analysis(arg, scopes)?;
+        statelist.semantic_analysis(scopes)?;
         scopes.pop_scope(); // Pop the function scope
         Ok(None)
       },
       SemanticNodeData::Funclist {funclist} => {
         for func in funclist.iter() {
-          func.semantic_analysis(arg, scopes)?;
+          func.semantic_analysis(scopes)?;
         }
         Ok(None)
       },
       SemanticNodeData::Ifstat {condition, then_branch, else_branch} => {
-        condition.semantic_analysis(arg, scopes)?;
-        then_branch.semantic_analysis(arg, scopes)?;
+        condition.semantic_analysis(scopes)?;
+        then_branch.semantic_analysis(scopes)?;
         if let Some(else_branch) = else_branch {
-          else_branch.semantic_analysis(arg, scopes)?;
+          else_branch.semantic_analysis(scopes)?;
         }
         // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
         // STATELIST.scopes.push(ScopeType::Any)
@@ -270,21 +264,21 @@ impl SemanticNode {
       // FACTOR -> LVALUE
       //  FACTOR.tipo = LVALUE.tipo
       SemanticNodeData::Lvalue {id, var_index} => {
-        let tipo = id.semantic_analysis(arg, scopes)?.unwrap();
+        let tipo = id.semantic_analysis(scopes)?.unwrap();
         if let Some(var_index) = var_index {
-          var_index.semantic_analysis(arg, scopes)?;
+          var_index.semantic_analysis(scopes)?;
         }
         // LVALUE -> id VAR_INDEX
         //  LVALUE.tipo = LVALUE.scopes.get(id)
         return Ok(Some(tipo));
       },
       SemanticNodeData::Numexpression {term, op_numexpression, term2} => {
-        let tipo1 = term.semantic_analysis(arg, scopes)?.unwrap();
+        let tipo1 = term.semantic_analysis(scopes)?.unwrap();
         if let Some(op_numexpression) = op_numexpression {
-          op_numexpression.semantic_analysis(arg, scopes)?;
+          op_numexpression.semantic_analysis(scopes)?;
         }
         if let Some(term2) = term2 {
-          let tipo2 = term2.semantic_analysis(arg, scopes)?.unwrap();
+          let tipo2 = term2.semantic_analysis(scopes)?.unwrap();
           if tipo1 != tipo2 {
             return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna " ).into());
           }
@@ -311,46 +305,38 @@ impl SemanticNode {
       },
       SemanticNodeData::Paramlistcall { paramlist } => {
         for i in paramlist.iter() {
-          i.semantic_analysis(arg, scopes)?;
+          i.semantic_analysis(scopes)?;
         }
         Ok(None)
       },
       SemanticNodeData::Printstat { expression } => {
-        expression.semantic_analysis(arg, scopes)
+        expression.semantic_analysis(scopes)
       },
       SemanticNodeData::Program { funclist, statement } => {
-        if let Some(funclist) = funclist { return funclist.semantic_analysis(arg, scopes); }
-        if let Some(statement) = statement { return statement.semantic_analysis(arg, scopes); }
+        if let Some(funclist) = funclist { return funclist.semantic_analysis(scopes); }
+        if let Some(statement) = statement { return statement.semantic_analysis(scopes); }
         panic!();
       },
       SemanticNodeData::Readstat { lvalue } => {
-        lvalue.semantic_analysis(arg, scopes)
+        lvalue.semantic_analysis(scopes)
       },
       SemanticNodeData::Returnstat { .. } => {
         Ok(None)
       },
       SemanticNodeData::Statelist { statelist } => {
         for statement in statelist.iter() {
-          statement.semantic_analysis(arg, scopes)?;
+          statement.semantic_analysis(scopes)?;
         }
         Ok(None)
       },
-      SemanticNodeData::Statement {
-        vardecl, 
-        atribstat,
-        ifstat,
-        forstat,
-        statelist,
-        commandstat
-      }
-      => {
-        if let Some(vardecl) = vardecl { return vardecl.semantic_analysis(arg, scopes); }
-        if let Some(atribstat) = atribstat { return atribstat.semantic_analysis(arg, scopes); }
-        if let Some(ifstat) = ifstat { return ifstat.semantic_analysis(arg, scopes); }
-        if let Some(forstat) = forstat { return forstat.semantic_analysis(arg, scopes); }
+      SemanticNodeData::Statement { vardecl,  atribstat, ifstat, forstat, statelist, commandstat } => {
+        if let Some(vardecl) = vardecl { return vardecl.semantic_analysis(scopes); }
+        if let Some(atribstat) = atribstat { return atribstat.semantic_analysis(scopes); }
+        if let Some(ifstat) = ifstat { return ifstat.semantic_analysis(scopes); }
+        if let Some(forstat) = forstat { return forstat.semantic_analysis(scopes); }
         if let Some(statelist) = statelist {
           scopes.push_scope(ScopeType::Any);
-          statelist.semantic_analysis(arg, scopes)?;
+          statelist.semantic_analysis(scopes)?;
           scopes.pop_scope();
           return Ok(None);
         }
@@ -370,17 +356,17 @@ impl SemanticNode {
             },
             _ => {},
           }
-          return commandstat.semantic_analysis(arg, scopes);
+          return commandstat.semantic_analysis(scopes);
         }
         panic!();
       },
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
-        let tipo1 = unaryexpression.semantic_analysis(arg, scopes)?.unwrap();
+        let tipo1 = unaryexpression.semantic_analysis(scopes)?.unwrap();
         if let Some(op_term) = op_term {
-          op_term.semantic_analysis(arg, scopes)?;
+          op_term.semantic_analysis(scopes)?;
         }
         if let Some(factor2) = unaryexpression2 {
-          let tipo2 = factor2.semantic_analysis(arg, scopes)?.unwrap();
+          let tipo2 = factor2.semantic_analysis(scopes)?.unwrap();
           if tipo1 != tipo2 {
             return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna " ).into());
           }
@@ -389,9 +375,9 @@ impl SemanticNode {
       },
       SemanticNodeData::Unaryexpression { op, factor } => {
         if let Some(op) = op {
-          op.semantic_analysis(arg, scopes)?;
+          op.semantic_analysis(scopes)?;
         }
-        let tipo = factor.semantic_analysis(arg, scopes)?.unwrap();
+        let tipo = factor.semantic_analysis(scopes)?.unwrap();
         return Ok(Some(tipo));
       },
       SemanticNodeData::Vardecl {var_type, id, const_index} => {
@@ -426,10 +412,10 @@ impl SemanticNode {
       },
       SemanticNodeData::VarIndex {index} => {
         for i in index.iter() {
-          i.semantic_analysis(arg, scopes)?;
+          i.semantic_analysis(scopes)?;
         }
         Ok(None)
-      }
+      }, 
       SemanticNodeData::Terminal { value: token } => {
         match token.token_type {
           TokenType::Rbrace => {
@@ -516,6 +502,7 @@ impl SemanticNode {
     }
   }
 
+  #[allow(dead_code)]
   fn generate_code(&self, inh: &mut CodeAttrs) {
     match &self.children {
       SemanticNodeData::Program { funclist, statement } => {
@@ -896,7 +883,7 @@ impl SemanticTree {
     // Perform semantic analysis on the syntax tree
     // This is where we would check for variable declarations, types, etc.
     // For now, we will just print the structure of the semantic tree
-    self.root.semantic_analysis(None, &mut self.scopes)?;
+    self.root.semantic_analysis(&mut self.scopes)?;
     Ok(())
   }
 
@@ -909,7 +896,7 @@ impl SemanticTree {
     Ok(())
   }
 
-  pub fn generate_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
+  pub fn _generate_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     let mut code_attrs = CodeAttrs {
       register_counter: 0,
