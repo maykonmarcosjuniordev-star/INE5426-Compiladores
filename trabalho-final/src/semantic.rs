@@ -354,7 +354,8 @@ impl SemanticNode {
           }
           return commandstat.semantic_analysis(scopes);
         }
-        panic!();
+        // Statement -> ;
+        Ok(None)
       },
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
         let tipo1 = unaryexpression.semantic_analysis(scopes)?.unwrap();
