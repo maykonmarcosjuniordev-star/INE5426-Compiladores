@@ -117,7 +117,6 @@ impl SemanticNode {
         }
         Ok(Some(tipo1))
       },
-      // TODO (em lvalue e constant)
       SemanticNodeData::Factor {expression, lvalue, constant} => {
         // FACTOR -> CONSTANT
         //  FACTOR.tipo = CONSTANT.tipo

@@ -50,7 +50,6 @@ impl FDA {
     }
     
     // Read the token table
-    // TODO: Replace this with the include_bytes! macro
     let token_table_content = include_str!("../machines/lexer_table.automata");
     let mut token_table = HashMap::new();
     for line in token_table_content.lines() {

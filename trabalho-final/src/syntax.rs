@@ -849,7 +849,6 @@ impl SyntaxTree {
     Ok(())
   }
   pub fn semantic_tree(&mut self) -> Result<SemanticTree, Box<dyn Error>> {
-    // TODO
     let semantic_tree = SemanticTree {
       root: self.root.visit(None),
       scopes: ScopeStack::new(),

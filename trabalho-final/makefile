@@ -9,6 +9,7 @@ all:
 	clear
 	@echo "Compilação concluída com sucesso!"
 	@echo "Para executar o analisador léxico, use o comando 'make run'"
+	@echo "Ou, para rodar diretamente, use './target/release/compiler <caminho_para_o_arquivo>'"
 
 
 run:

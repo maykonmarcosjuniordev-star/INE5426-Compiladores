@@ -67,7 +67,6 @@ impl Lexer {
             },
             None => {
             // Caso contrário, insere o identificador na tabela de símbolos
-            // TODO: Isso poderia ser feito com uma função auxiliar token.parse()?
               self.token_table.insert(
                 self.token_value.clone(),
                 vec![(token.line as u32, token.column as u32)]

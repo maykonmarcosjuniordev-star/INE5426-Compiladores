@@ -52,23 +52,31 @@ A tabela LL1 foi gerada pelo site [LL(1) parser generator](https://jsmachines.so
 O resultado da análise sintática é uma árvore sintática. Essa estrutura possui uma forma de exportação compatível com o site [GraphVizOnline](https://dreampuf.github.io/GraphvizOnline/?engine=dot), que permite a visualização da árvore na forma de grafo.
 
 ## Análise semântica
-<!-- TODO: fazer essa bomba né kk -->
 As regras de cada ponto estão descritas nos arquivos `grammars/semantic\d.txt`. Porém eu ainda não faço ideia de onde elas serão implementadas no código de fato.
 
 De qualquer forma, a implementação das regras será diretamente no código e não haverá necessidade de carregar os arquivos previamente mencionados.
 
+O resultado da análise semântica consiste de 5 arquivos, sendo eles:
+- arvore_de_expressao.txt: que também pode ser visualizado no site acima
+- verificacao_de_tipos.txt: que será retornado no terminal
+- verificacao_de_escopos.txt: conterá o estado final de cada escopo na ordem em que são fechados no código fonte
+    - Onde também estará, implicitamente, a inserção de tipos nos escopos.
+- verificacao_de_comandos.txt: também retornado terminal
+
 ## Geração de Código Intermediário
-<!-- TODO: ¯\_(ツ)_/¯ -->
+<!-- TODO: Descrever como isso afeta o programa (depois de implementar) -->
 Senta e chora paizão
 
 # Execução do compilador e programas escritos na linguagem
-<!-- TODO: Colocar isso tudo no makefile -->
-Uma vez compilado, basta executar o binário com o caminho para o arquivo a ser compilado como argumento:
-```
-$ compiler <path_to_file>
-```
-Alternativamente, na raiz do projeto, execute caso o projeto ainda não tenha sido compilado:
+Os arquivos para testar o funcionamento do compilador estão na pasta `inputs`.
+
+Na raiz do projeto, execute caso o projeto ainda não tenha sido compilado:
 ```
 $ make
 ```
-Os arquivos para testar o funcionamento do compilador estão na pasta `inputs`.
+
+Uma vez compilado, basta usar o comando para rodar o projeto
+```
+$ make run
+```
+Ele produz uma CLI, onde é possível selecionar o arquivo a ser testado iterativamente
