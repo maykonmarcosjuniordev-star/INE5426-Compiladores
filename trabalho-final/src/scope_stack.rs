@@ -87,12 +87,17 @@ impl ScopeStack {
 
   pub fn count_appearance(&mut self, name: &str, line: usize, column: usize) -> Result<(), Box<dyn Error>> {
     // Conta as aparições do símbolo e adiciona a posição atual.
-    if let Some(mut entry) = self.get_symbol(name) {
-      entry.appearances.push((line, column));
-      Ok(())
-    } else {
-      Err(format!("Erro semântico: símbolo '{}' não encontrado na linha {} coluna {}", name, line, column).into())
-    }
+    for scope in self.stack.iter_mut().rev() {
+      if scope.1.contains_key(name) {
+        scope.1.get_mut(name)
+          .ok_or_else(|| format!("Erro semântico: Símbolo '{}' não encontrado", name))?
+          .appearances.push((line, column));
+        
+        return Ok(());
+      }
+    }    
+    
+    Err(format!("Erro semântico: Símbolo '{}' não encontrado", name).into())
   }
 
   pub fn contains(&self, scope_type: ScopeType) -> bool {
