@@ -8,6 +8,9 @@ use std::io::Write; // Import Write trait for writeln! macro
 pub enum ScopeType {
   Function,
   Loop,
+  LoopInit,
+  If,
+  Else,
   Any
 }
 
@@ -44,7 +47,18 @@ impl ScopeStack {
 
   pub fn pop_scope(&mut self) -> Option<Scope> {
     let x = self.stack.pop();
-    writeln!(self.file, "{:?}\n", x).unwrap();
+    let mut scope_display = String::new();
+    if let Some((scope_type, table)) = &x {
+      scope_display.push_str(&format!("Escopo: {:?}", scope_type));
+      for (name, entry) in table {
+        if entry.var_type.len() == 1 {
+          scope_display.push_str(&format!("\n  Símbolo: {}, Tipo: {:?}, Índices: {:?}, Aparições: {:?}", name, entry.var_type[0], entry.const_index, entry.appearances));
+        } else {
+          scope_display.push_str(&format!("\n  Símbolo: {}, Tipo: {:?}, Índices: {:?}, Aparições: {:?}", name, entry.var_type, entry.const_index, entry.appearances));
+        }
+      }
+    }
+    writeln!(self.file, "{}\n", scope_display).unwrap();
     x
   }
 

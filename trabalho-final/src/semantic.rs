@@ -91,7 +91,7 @@ impl SemanticNode {
       SemanticNodeData::Elsestat {statement} => {
         // ELSESTAT_1 -> lbrace STATELIST rbrace
         //  STATELIST.scopes.push(ScopeType::Any)
-        scopes.push_scope(ScopeType::Any);
+        scopes.push_scope(ScopeType::Else);
         let result = statement.semantic_analysis(scopes);
         scopes.pop_scope();
         result
@@ -136,7 +136,7 @@ impl SemanticNode {
         // FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
         //  STATELIST.scopes.push(ScopeType::Loop)
         // Escopo das operações do laço (atribstat, expression, atribstat)
-        scopes.push_scope(ScopeType::Any);
+        scopes.push_scope(ScopeType::LoopInit);
         init.semantic_analysis(scopes)?;
         condition.semantic_analysis(scopes)?;
         increment.semantic_analysis(scopes)?;
@@ -249,13 +249,14 @@ impl SemanticNode {
       },
       SemanticNodeData::Ifstat {condition, then_branch, else_branch} => {
         condition.semantic_analysis(scopes)?;
+        scopes.push_scope(ScopeType::If);
         then_branch.semantic_analysis(scopes)?;
+        scopes.pop_scope();
         if let Some(else_branch) = else_branch {
           else_branch.semantic_analysis(scopes)?;
         }
         // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
         // STATELIST.scopes.push(ScopeType::Any)
-        scopes.push_scope(ScopeType::Any);
         Ok(None)
       },
       SemanticNodeData::Lvalue {id, var_index} => {
@@ -413,15 +414,6 @@ impl SemanticNode {
       }, 
       SemanticNodeData::Terminal { value: token } => {
         match token.token_type {
-          TokenType::Rbrace => {
-            // # Whenever vising a "}" node, close the previous scope
-            // rbrace
-            // rbrace.scopes.pop()
-            let Some(_) = scopes.pop_scope() else {
-              return Err("Unexpected '}' without matching '{'".into());
-            };
-            return Ok(Some(ReturnSem::TT(TokenType::Rbrace)));
-          },
           TokenType::Eof => {
             // # Pop global scope
             // EOF
