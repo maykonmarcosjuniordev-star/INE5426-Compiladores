@@ -362,7 +362,7 @@ impl Node {
               Some(inh) => inh.clone()
             };
             new_params.push(self.children[1].visit(None));
-            self.children[1].visit(Some(&new_params))
+            self.children[3].visit(Some(&new_params))
           },
           _ => panic!()
         }
@@ -380,17 +380,17 @@ impl Node {
         match self.children[0].value {
           Symbol::NonTerminal(NonTerminal::Expression) => {
             SemanticNode {
-              children: SemanticNodeData::Atribstatevalue { expression: Some(Box::new(self.children[0].visit(None))), allocexpression: None, funccall: None }
+              children: SemanticNodeData::Atribstatevalue { numexpression: Some(Box::new(self.children[0].visit(None))), allocexpression: None, funccall: None }
             }
           },
           Symbol::NonTerminal(NonTerminal::Allocexpression) => {
             SemanticNode {
-              children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: Some(Box::new(self.children[0].visit(None))), funccall: None }
+              children: SemanticNodeData::Atribstatevalue { numexpression: None, allocexpression: Some(Box::new(self.children[0].visit(None))), funccall: None }
             }
           },
           Symbol::NonTerminal(NonTerminal::Funccall) => {
             SemanticNode {
-              children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: None, funccall: Some(Box::new(self.children[0].visit(None))) }
+              children: SemanticNodeData::Atribstatevalue { numexpression: None, allocexpression: None, funccall: Some(Box::new(self.children[0].visit(None))) }
             }
           },
           _ => panic!()
@@ -443,14 +443,14 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Printstat) => {
         if self.children.len() != 2 { panic!() }
         SemanticNode {
-          children: SemanticNodeData::Printstat { expression: Box::new(self.children[0].visit(None)) },
+          children: SemanticNodeData::Printstat { expression: Box::new(self.children[1].visit(None)) },
         }
       },
       // READSTAT -> kw_read LVALUE
       Symbol::NonTerminal(NonTerminal::Readstat) => {
         if self.children.len() != 2 { panic!() }
         SemanticNode {
-          children: SemanticNodeData::Readstat { lvalue: Box::new(self.children[0].visit(None)) },
+          children: SemanticNodeData::Readstat { lvalue: Box::new(self.children[1].visit(None)) },
         }
       }, 
       Symbol::NonTerminal(NonTerminal::Returnstat) => {

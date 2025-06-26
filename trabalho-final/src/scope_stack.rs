@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::error::Error;
 use crate::grammar::const_type::VarType;
+use std::fs::OpenOptions; // Import Write trait for writeln! macro
+use std::io::Write; // Import Write trait for writeln! macro
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ScopeType {
@@ -33,7 +35,13 @@ impl ScopeStack {
   }
 
   pub fn pop_scope(&mut self) -> Option<Scope> {
-    self.stack.pop()
+    let mut file = OpenOptions::new()
+      .append(true)
+      .open("output/scope_stack.log")
+      .expect("Unable to open file");
+    let x = self.stack.pop();
+    writeln!(file, "{:?}\n", x).unwrap();
+    x
   }
 
   pub fn insert_symbol(&mut self, name: String, entry: SymbolEntry) -> Result<(), Box<dyn Error>> {

@@ -22,7 +22,6 @@ enum ReturnSem {
 
 impl SemanticNode {
   fn semantic_analysis(&self, scopes: &mut ScopeStack) -> Result<Option<ReturnSem>, Box<dyn Error>> {
-    // Perform semantic analysis on the node
     match self.children.clone() {
       SemanticNodeData::Allocexpression {var_type, dimensions} => {
         var_type.semantic_analysis(scopes)?;
@@ -30,6 +29,9 @@ impl SemanticNode {
         Ok(None)
       },
       SemanticNodeData::Atribstat {lvalue, value} => {
+        // ATRIBSTAT -> LVALUE ATRIBSTATVALUE
+        //  if LVALUE.tipo != ATRIBSTATVALUE.tipo: ERRO 
+
         // get lvalue id
         let SemanticNodeData::Lvalue { id, var_index } = lvalue.children else { panic!() };
         let SemanticNodeData::Terminal { value: id_token } = id.children else { panic!() };
@@ -43,39 +45,29 @@ impl SemanticNode {
           return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
         };
 
-        let x = value.semantic_analysis(scopes)?;
-        let Some(ReturnSem::Tipo(value_type)) = x else { 
-          println!("{:?}", x);
-          panic!(); };
+        let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
         if value_type != symbol_entry.var_type[0] {
           return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
         }
         // Check if the variable index is valid
-        let mut index_positions = vec![];
         if let Some(var_index) = var_index {
-          let SemanticNodeData::VarIndex { index } = var_index.children else { panic!() };
+          let SemanticNodeData::VarIndex { index } = var_index.children else { panic!("{:?}", var_index.children) };
           for child in index.iter() {
-            let SemanticNodeData::Terminal { value: token } = &child.children else { panic!(); };
-            let Some(ConstType::Int(index_value)) = &token.value else {
-              return Err(format!("Erro semântico: índice inválido na variável '{}' na linha {} coluna {}", id_name, token.line, token.column).into());
-            };
-            index_positions.push(*index_value as u32);
-          }
-          // Check if the index positions match the variable dimensions
-          if index_positions.len() != symbol_entry.const_index.len() {
-            return Err(format!("Erro semântico: número de índices incompatível com a variável '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
-          }
-          for (i, &index_position) in index_positions.iter().enumerate() {
-            if index_position >= symbol_entry.const_index[i] {
-              return Err(format!("Erro semântico: índice fora dos limites da variável '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
+            let tipo = child.semantic_analysis(scopes)?;
+            if let Some(ReturnSem::Tipo(tipo)) = tipo {
+              if tipo != VarType::Int {
+                return Err(format!("Erro semântico: índice de variável deve ser do tipo 'int', encontrado '{:?}'", tipo).into());
+              }
+            } else {
+              panic!(); 
             }
           }
         }
         Ok(None)
       },
-      SemanticNodeData::Atribstatevalue {expression, allocexpression, funccall} => {
-        if let Some(expression) = expression {
-          return Ok(expression.semantic_analysis(scopes)?);
+      SemanticNodeData::Atribstatevalue {numexpression, allocexpression, funccall} => {
+        if let Some(numexpression) = numexpression {
+          return Ok(numexpression.semantic_analysis(scopes)?);
         }
         if let Some(allocexpression) = allocexpression {
           return Ok(allocexpression.semantic_analysis(scopes)?);
@@ -116,6 +108,11 @@ impl SemanticNode {
           let tipo2 = numexpression2.semantic_analysis(scopes).unwrap().unwrap();
           if tipo1 != tipo2 {
             return Err("Type mismatch in expression".into());
+          } else {
+            // Sempre que uma expressão possui uma operação (de comparação), o valor retornado será uma int
+            // falso: 0
+            // verdadeiro: 1
+            return Ok(Some(ReturnSem::Tipo(VarType::Int)));
           }
         }
         Ok(Some(tipo1))
@@ -197,7 +194,7 @@ impl SemanticNode {
         
         // Read function parameters
         let mut func_params_types: Vec<VarType> = vec![];
-        let mut func_params: Vec<(VarType, String)> = vec![];
+        let mut func_params: Vec<(VarType, String, (usize, usize))> = vec![];
         let mut prev_param = None;
         if let Some(paramlist) = &paramlist {
           let SemanticNodeData::Paramlist { paramlist } = &paramlist.children else { panic!(); };
@@ -213,7 +210,7 @@ impl SemanticNode {
               TokenType::Id => {
                 // Get the name of the parameter
                 let ConstType::String(func_name) = token.clone().value.unwrap().clone() else { panic!(); };
-                func_params.push((prev_param.clone().unwrap(), func_name));
+                func_params.push((prev_param.clone().unwrap(), func_name, (token.line, token.column)));
               },
               _ => panic!(),
             }
@@ -230,9 +227,9 @@ impl SemanticNode {
         // Push a new scope for the function body
         // And insert the function parameters into the scope
         scopes.push_scope(ScopeType::Function);
-        for (param_type, param_name) in func_params {
+        for (param_type, param_name, pos) in func_params {
           let entry = SymbolEntry {
-            appearances: vec![(0, 0)],
+            appearances: vec![pos],
             var_type: vec![param_type],
             const_index: vec![],
           };
@@ -261,9 +258,6 @@ impl SemanticNode {
         scopes.push_scope(ScopeType::Any);
         Ok(None)
       },
-      // TODO: Checar se varindex é válido para o tipo de lvalue
-      // FACTOR -> LVALUE
-      //  FACTOR.tipo = LVALUE.tipo
       SemanticNodeData::Lvalue {id, var_index} => {
         let tipo = id.semantic_analysis(scopes)?.unwrap();
         if let Some(var_index) = var_index {
@@ -539,10 +533,10 @@ impl SemanticNode {
         *count += 1;
         value.save(output, count);
       },
-      SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
+      SemanticNodeData::Atribstatevalue { numexpression, allocexpression, funccall } => {
         let name = format!("{}", count);
         output.push_str(&format!("  {} [label=\"AtribStatementValue\"]\n", count));
-        if let Some(expression) = expression {
+        if let Some(expression) = numexpression {
           output.push_str(&format!("  {} -> {}\n", name, *count+1));
           *count += 1;
           expression.save(output, count);
@@ -868,7 +862,9 @@ impl SemanticNode {
         if let Some(value) = &token.value {
           let nome = format!("{:?}", value).replace("\"", "\\\"");
           output.push_str(&format!("  {} [label=\"{}\"]\n", count, nome));
-        } 
+        } else {
+          println!("Warning: Terminal node {:?}", token);
+        }
       }
     }
   }

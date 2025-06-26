@@ -13,7 +13,7 @@ pub enum SemanticNodeData {
     value: Box<SemanticNode>,
   },
   Atribstatevalue {
-    expression: Option<Box<SemanticNode>>,
+    numexpression: Option<Box<SemanticNode>>,
     allocexpression: Option<Box<SemanticNode>>,
     funccall: Option<Box<SemanticNode>>,
   },
