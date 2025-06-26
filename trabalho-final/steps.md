@@ -39,11 +39,26 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
   - [-] Buscar o escopo mais ao topo da pilha, retornar erro caso símbolo não tenha sido definido
 
 - [-] Gerar a árvore de expressão com operadores e operandos
+  - [ ] Separar as regras sintáticas relacionadas
+  - [ ] Adicionar comentários com as regras semânticas
+  - [ ] Comparar a implementação com as regras semânticas
 - [ ] Inserção de ids na tabela de símbolos
- - [ ] Posição da aparição dos ids está zoada
+  - [ ] Posição da aparição dos ids está zoada
+  - [ ] Separar as regras sintáticas relacionadas
+  - [ ] Adicionar comentários com as regras semânticas
+  - [ ] Comparar a implementação com as regras semânticas
 - [-] Verificação de identificadores por escopo
+  - [ ] Separar as regras sintáticas relacionadas
+  - [ ] Adicionar comentários com as regras semânticas
+  - [ ] Comparar a implementação com as regras semânticas
 - [-] Verificação de tipos em expressões numericas. (Talvez em funções)
+  - [ ] Separar as regras sintáticas relacionadas
+  - [ ] Adicionar comentários com as regras semânticas
+  - [ ] Comparar a implementação com as regras semânticas
 - [-] Verificar se kw_break está no escopo de um FORSTAT
+  - [ ] Separar as regras sintáticas relacionadas
+  - [ ] Adicionar comentários com as regras semânticas
+  - [ ] Comparar a implementação com as regras semânticas
 
 # Geração de Código Intermediário
 - [ ] What the title says
