@@ -890,7 +890,7 @@ impl SemanticTree {
     self.root.save(&mut output, &mut 0);
     output.push_str("}\n");
     writeln!(file, "{}", output)?;
-    println!("Semantic tree saved to {}", path);
+    println!("Árvore de expressão salva em {}", path);
     Ok(())
   }
 

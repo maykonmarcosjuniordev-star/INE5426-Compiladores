@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::error::Error;
 use crate::grammar::const_type::VarType;
-use std::fs::OpenOptions; // Import Write trait for writeln! macro
+use std::fs::{File, OpenOptions}; // Import Write trait for writeln! macro
 use std::io::Write; // Import Write trait for writeln! macro
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -20,14 +20,22 @@ pub struct SymbolEntry {
 
 type Scope = (ScopeType, HashMap<String, SymbolEntry>);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug)]
 pub struct ScopeStack {
   pub stack: Vec<Scope>,
+  file: File,
 }
 
 impl ScopeStack {
   pub fn new() -> Self {
-    ScopeStack { stack: vec![(ScopeType::Any, HashMap::new())] }
+    ScopeStack { 
+      stack: vec![(ScopeType::Any, HashMap::new())],
+      file: OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open("output/scope_stack.log")
+        .expect("Unable to open file"),
+    }
   }
 
   pub fn push_scope(&mut self, scope_type: ScopeType) {
@@ -35,12 +43,8 @@ impl ScopeStack {
   }
 
   pub fn pop_scope(&mut self) -> Option<Scope> {
-    let mut file = OpenOptions::new()
-      .append(true)
-      .open("output/scope_stack.log")
-      .expect("Unable to open file");
     let x = self.stack.pop();
-    writeln!(file, "{:?}\n", x).unwrap();
+    writeln!(self.file, "{:?}\n", x).unwrap();
     x
   }
 
