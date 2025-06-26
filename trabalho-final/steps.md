@@ -60,8 +60,7 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 - [ ] Saída do programa no terminal
  - [ ] Árvores de expressão
   - [ ] Pergutar pro Álvaro se pode ser em um arquivo
- - [ ] Tabela de símbolos com tipo
-  - [ ] Perguntar se precisa das posições do símbolo também
+ - [x] Tabela de símbolos com tipo
  - [ ] Mensagem de sucesso para a análise das expressões
  - [ ] Mensagem de sucesso para a análise das declarações por escopo
  - [ ] Mensagem de sucesso para a análise de comandos por escopo
