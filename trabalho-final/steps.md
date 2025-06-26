@@ -10,13 +10,8 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
   - [x] Tipo do token
   - [x] Valor do token
   - [x] Posição no código (linha, coluna)
-- [ ] Gerar tabela de símbolos para os tokens `id` e `func_id`
+- [x] Gerar tabela de símbolos para os tokens `id` e `func_id`
   - [x] Armazenar cada entrada
-  - [ ] Armazenar dados da entrada
-    - [ ] Valor
-    - [ ] Tipo, Vec<Type>. Para variáveis o tipo será apenas um, para funções será a lista de todos os tipos dos parâmetros
-    - [ ] Dimensão, Vec<u32>. Para dados simples será apenas [1], para arrays e matrizes serão os valores apropriados.
-    - [ ] Lista de aparições no código (Vec<u32, u32>)
 - [x] Perguntar pro Álvaro como serão os erros léxicos (Visto que a maioria dos erros léxicos só são percebidos na análise sintática)
 - [x] O autômato criado automaticamente não está guardando referência para quais estados representam quais tokens, é preciso que essa informação seja atualizada sempre que os estados do autômato forem alterados por operações de união/determinização
 - [ ] id com ~ tá dando problema; Provavelmente não vamos corrigir isso
@@ -36,20 +31,20 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 # Analisador Semântico
 ## Requisitos
 * "A tabela de símbolos" não faz sentido, visto que diferentes escopos podem usar o mesmo símbolo de formas diferentes. Dessa forma, sempre que "a" tabela de símbolos for mencionada, refere-se à tabela adequada na pilha de escopos.
-- [ ] Pilha de escopos
- - [ ] Abrir um novo escopo
- - [ ] Fechar o escopo atual
- - [ ] Inserir um novo símbolo e seu tipo
-  - [ ] Verificar se o símbolo já foi inserido no escopo atual (e retornar erro caso positivo)
- - [ ] Verificar o típo de um símbolo
-  - [ ] Buscar o escopo mais ao topo da pilha, retornar erro caso símbolo não tenha sido definido
+- [x] Pilha de escopos
+ - [x] Abrir um novo escopo
+ - [x] Fechar o escopo atual
+ - [x] Inserir um novo símbolo e seu tipo
+  - [x] Verificar se o símbolo já foi inserido no escopo atual (e retornar erro caso positivo)
+ - [x] Verificar o típo de um símbolo
+  - [x] Buscar o escopo mais ao topo da pilha, retornar erro caso símbolo não tenha sido definido
 
 - [x] Gerar a árvore de expressão com operadores e operandos
-  - [x] Perguntar pro Álvaro que porra é essa
-- [ ] Inserção de tipos das variáveis (e funções) na tabela de símbolos
-- [ ] Verificação de identificadores por escopo
-- [ ] Verificação de tipos em expressões numericas. (Talvez em funções)
-- [ ] Verificar se kw_break está no escopo de um FORSTAT
+- [ ] Inserção de ids na tabela de símbolos
+ - [ ] Posição da aparição dos ids está zoada
+- [x] Verificação de identificadores por escopo
+- [x] Verificação de tipos em expressões numericas. (Talvez em funções)
+- [x] Verificar se kw_break está no escopo de um FORSTAT
 
 # Geração de Código Intermediário
 - [ ] What the title says
@@ -60,7 +55,7 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 - [ ] Makefile: Organizar como o projeto será entregue. Se as dependências já estarão précompiladas ou se os scripts precisarão ser rodados pelo professor.
 - [ ] Documentação (Mateus)
  - [x] Documento com prova de que a gramática está em LL1
- - [ ] 
+ - [ ] Documento com prova de que as SDDs são L-atribuídas
 - [x] Readme (Sartori)
 - [ ] Saída do programa no terminal
  - [ ] Árvores de expressão
