@@ -1,16 +1,3 @@
-int heroHP;
-int heroPotions;
-int enemyHP;
-int turnChoice;
-int damage;
-int bonusDamage;
-int potionEffect;
-int currentTurn;
-int isGameOver;
-int attackCount;
-int lastHit;
-int temp;
-
 def @setupGame() {
     heroHP = 30 + 5;
     heroPotions = 2;
@@ -121,12 +108,12 @@ def @mainLoop() {
             break;
         }
 
-        @playerTurn();
+        i = @playerTurn();
         if (enemyHP > 0) {
-            @enemyTurn();
+            i = @enemyTurn();
         }
 
-        @checkEnd();
+        i = @checkEnd();
         currentTurn = currentTurn + 1;
     }
     return;

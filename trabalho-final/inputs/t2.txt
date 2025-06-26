@@ -1,0 +1,21 @@
+if (1 <= 10) {
+  string i;
+  int x;
+  x = 10;
+  i = new string[10][x+1];
+  print i;
+  read i[x][5];
+
+  return;
+} else if ( 2 < 5) {
+  int i;
+  int x[5];
+  for (i = 0; i <= 10; i = i + 1) {
+    if (i == 5) { break; }
+    x[i] = i;
+    {
+      int i;
+      i = 0;
+    }
+  }
+}

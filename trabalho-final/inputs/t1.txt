@@ -1,0 +1,19 @@
+def @a() {
+  return;
+}
+
+def @b(int a) {
+  a = a + -1;
+  a = @b(a);
+  print a;
+  return;
+}
+
+def @c(int x, int y) {
+  int z;
+  z = x + y*2%x <= x*y;
+}
+
+def @main() {
+  ;
+}

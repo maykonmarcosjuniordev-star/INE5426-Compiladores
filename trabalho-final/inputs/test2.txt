@@ -1,12 +1,3 @@
-int matrixA[2][3];
-int matrixB[3][2];
-int result[2][2];
-
-int rowsA;
-int colsA;
-int rowsB;
-int colsB;
-
 def @initializeMatrixA() {
     matrixA[0][0] = 1;
     matrixA[0][1] = 2;
@@ -76,10 +67,10 @@ def @printMatrixResult() {
 
 def @canMultiply(int aCols, int bRows) {
     if (aCols == bRows) {
-        print 100; // valid
+        print 100;
     }
     else {
-        print 101; // invalid
+        print 101;
     }
     return;
     for (i = 0; i < 2; i = i + 1) {
@@ -116,10 +107,10 @@ def @printMatrixResult() {
 
 def @canMultiply(int aCols, int bRows) {
     if (aCols == bRows) {
-        print 100; // valid
+        print 100;
     }
     else {
-        print 101; // invalid
+        print 101;
     }
     return;
 }

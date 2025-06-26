@@ -125,5 +125,6 @@ def @menu() {
 }
 
 def @main() {
+    int chamaMenu;
     chamaMenu = @menu();
 }
