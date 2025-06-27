@@ -314,7 +314,20 @@ impl SemanticNode {
         panic!();
       },
       SemanticNodeData::Readstat { lvalue } => {
-        lvalue.semantic_analysis(scopes)
+        // get value of lvalue
+        let SemanticNodeData::Lvalue { id, .. } = lvalue.children else { panic!() };
+        let SemanticNodeData::Terminal { value: id_token } = id.children else { panic!() };
+        let ConstType::String(id_name) = id_token.value.clone().unwrap() else { panic!(); };
+        // Count the appearance of the variable
+        scopes.count_appearance(&id_name, id_token.line, id_token.column)?;
+        // Check variable type
+        let Some(symbol_entry) = scopes.get_symbol(&id_name) else {
+          return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
+        };
+        if symbol_entry.var_type[0] != VarType::String {
+          return Err(format!("Erro semântico: comando Read deve atribuir valor a uma variável de tipo string, mas tipo {:?} foi encontrado na linha {} coluna {}", symbol_entry.var_type[0], id_token.column, id_token.line).into());
+        }
+        Ok(None)
       },
       SemanticNodeData::Returnstat { .. } => {
         Ok(None)
