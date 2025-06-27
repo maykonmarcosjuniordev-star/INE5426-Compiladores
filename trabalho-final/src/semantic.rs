@@ -65,9 +65,9 @@ impl SemanticNode {
         }
         Ok(None)
       },
-      SemanticNodeData::Atribstatevalue {numexpression, allocexpression, funccall} => {
-        if let Some(numexpression) = numexpression {
-          return Ok(numexpression.semantic_analysis(scopes)?);
+      SemanticNodeData::Atribstatevalue {expression, allocexpression, funccall} => {
+        if let Some(expression) = expression {
+          return Ok(expression.semantic_analysis(scopes)?);
         }
         if let Some(allocexpression) = allocexpression {
           return Ok(allocexpression.semantic_analysis(scopes)?);
@@ -525,10 +525,10 @@ impl SemanticNode {
         *count += 1;
         value.save(output, count);
       },
-      SemanticNodeData::Atribstatevalue { numexpression, allocexpression, funccall } => {
+      SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
         let name = format!("{}", count);
         output.push_str(&format!("  {} [label=\"AtribStatementValue\"]\n", count));
-        if let Some(expression) = numexpression {
+        if let Some(expression) = expression {
           output.push_str(&format!("  {} -> {}\n", name, *count+1));
           *count += 1;
           expression.save(output, count);
