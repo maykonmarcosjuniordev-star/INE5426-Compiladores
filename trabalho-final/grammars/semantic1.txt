@@ -93,7 +93,7 @@ OP_NUMEXPRESSION -> op_minus
  OP_NUMEXPRESSION.ptr = Node(op_minus, None)
 
 OP_TERM -> op_mutl
- OP_TERM.ptr = Node(op_mult, None)
+ OP_TERM.ptr = Node(op_multiply, None)
 OP_TERM -> op_division
  OP_TERM.ptr = Node(op_division, None)
 OP_TERM -> op_modular

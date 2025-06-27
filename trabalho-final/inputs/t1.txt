@@ -3,7 +3,7 @@ def @a() {
 }
 
 def @b(int a) {
-  a = a + -1;
+  a = a + 1 + 2;
   a = @b(a);
   print a;
   return;

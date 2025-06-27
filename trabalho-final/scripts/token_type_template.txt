@@ -1,5 +1,6 @@
 // Esse arquivo foi gerado automaticamente pelo script {script_name}
 use std::error::Error;
+use crate::expression::Operator;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {{
@@ -25,6 +26,13 @@ impl TokenType {{
     match self {{
       {id_tokens} => true,
       _ => false
+    }}
+  }}
+
+  pub fn get_operator_type(&self) -> Operator {{
+    match self {{
+      {operators}
+      _ => panic!()
     }}
   }}
 }}

@@ -81,6 +81,6 @@ OP_EXPRESSION -> op_le
 OP_EXPRESSION -> op_lt
 OP_NUMEXPRESSION -> op_plus
 OP_NUMEXPRESSION -> op_minus
-OP_TERM -> op_mult
+OP_TERM -> op_multiply
 OP_TERM -> op_division
 OP_TERM -> op_modular

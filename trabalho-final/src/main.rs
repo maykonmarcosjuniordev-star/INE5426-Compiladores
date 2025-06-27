@@ -46,7 +46,6 @@ fn main() -> Result<(), Box<dyn Error>> {
   let expression_trees = semantic_tree.create_expression_trees();
   for (i, tree) in expression_trees.iter().enumerate() {
     tree.save(&format!("expression_trees/tree_{}.dot", i));
-    println!("{:?}", tree.root);
   }
   semantic_tree.semantic_analysis()?;
 

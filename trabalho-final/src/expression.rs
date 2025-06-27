@@ -72,7 +72,7 @@ pub enum Operator {
   Plus,
   Minus,
   Multiply,
-  Divide,
+  Division,
   Modular,
 }
 
@@ -87,7 +87,7 @@ impl std::fmt::Display for Operator {
       Operator::Plus => "+",
       Operator::Minus => "-",
       Operator::Multiply => "*",
-      Operator::Divide => "/",
+      Operator::Division => "/",
       Operator::Modular => "%",
     };
     write!(f, "{}", symbol)

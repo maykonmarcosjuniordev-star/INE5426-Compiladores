@@ -64,7 +64,7 @@ VAR_INDEX,op_le,26
 VAR_INDEX,op_lt,26
 VAR_INDEX,op_plus,26
 VAR_INDEX,op_minus,26
-VAR_INDEX,op_mult,26
+VAR_INDEX,op_multiply,26
 VAR_INDEX,op_division,26
 VAR_INDEX,op_modular,26
 ATRIBSTAT,id,27
@@ -158,7 +158,7 @@ TERM_1,op_le,54
 TERM_1,op_lt,54
 TERM_1,op_plus,54
 TERM_1,op_minus,54
-TERM_1,op_mult,53
+TERM_1,op_multiply,53
 TERM_1,op_division,53
 TERM_1,op_modular,53
 UNARYEXPRESSION,lparenthesis,55
@@ -188,6 +188,6 @@ OP_EXPRESSION,op_le,69
 OP_EXPRESSION,op_lt,70
 OP_NUMEXPRESSION,op_plus,71
 OP_NUMEXPRESSION,op_minus,72
-OP_TERM,op_mult,73
+OP_TERM,op_multiply,73
 OP_TERM,op_division,74
 OP_TERM,op_modular,75

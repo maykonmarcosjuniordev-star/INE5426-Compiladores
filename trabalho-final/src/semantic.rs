@@ -894,8 +894,9 @@ impl SemanticNode {
           Some(op_expression) => {
             let n1 = numexpression.create_expression_tree(trees).unwrap();
             let n2 = numexpression2.clone().unwrap().create_expression_tree(trees).unwrap();
+            let SemanticNodeData::OpExpression { op } = op_expression.children else { panic!(); }; 
             ExpressionTreeNode::BinaryOperator { 
-              operator: Operator::Eq,
+              operator: op.get_operator_type(),
               left: Box::new(n1),
               right: Box::new(n2)
             }
@@ -958,8 +959,9 @@ impl SemanticNode {
           Some(op_numexpression) => {
             let n1 = term.create_expression_tree(trees).unwrap();
             let n2 = term2.clone().unwrap().create_expression_tree(trees).unwrap();
+            let SemanticNodeData::OpNumexpression { op } = op_numexpression.children else { panic!(); };
             ExpressionTreeNode::BinaryOperator { 
-              operator: Operator::Plus,
+              operator: op.get_operator_type(),
               left: Box::new(n1),
               right: Box::new(n2)
             }
@@ -997,8 +999,9 @@ impl SemanticNode {
           Some(op_term) => {
             let n1 = unaryexpression.create_expression_tree(trees).unwrap();
             let n2 = unaryexpression2.clone().unwrap().create_expression_tree(trees).unwrap();
+            let SemanticNodeData::OpTerm { op } = op_term.children else { panic!(); };
             ExpressionTreeNode::BinaryOperator { 
-              operator: Operator::Multiply,
+              operator: op.get_operator_type(),
               left: Box::new(n1),
               right: Box::new(n2)
             }
@@ -1043,8 +1046,9 @@ impl SemanticNode {
       SemanticNodeData::Unaryexpression { op, factor } => {
         match op {
           Some(op) => {
+            let SemanticNodeData::OpNumexpression { op } = op.children else { panic!(); };
             Some(ExpressionTreeNode::UnaryOperator {
-              operator: Operator::Plus,
+              operator: op.get_operator_type(),
               operand: Box::new(factor.create_expression_tree(trees).unwrap())
             })
           },
