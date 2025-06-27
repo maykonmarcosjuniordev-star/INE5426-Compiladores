@@ -12,7 +12,6 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
   - [-] Posição no código (linha, coluna)
 - [-] Gerar tabela de símbolos para os tokens `id` e `func_id`
   - [-] Armazenar cada entrada
-- [-] Perguntar pro Álvaro como serão os erros léxicos (Visto que a maioria dos erros léxicos só são percebidos na análise sintática)
 - [-] O autômato criado automaticamente não está guardando referência para quais estados representam quais tokens, é preciso que essa informação seja atualizada sempre que os estados do autômato forem alterados por operações de união/determinização
 ## Adicionais
 - [-] Substituir if por comandos retornados pelas transições; Os "comandos" foram substituídos pela classificação do token. A ação é sempre determinada pelo tipo do token que acaba de ser lido, logo a existência de comandos específicos para cada transição é desnecessária. Além disso, o único comando observado até o momento foi o de armazenar o valor do token lido junto do tipo. Acredito que no máximo do máximo será feita a distinção para decodificar constantes numéricas em vez de armazenar seus valores como strings.
@@ -29,7 +28,7 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 
 # Analisador Semântico
 ## Requisitos
-* "A tabela de símbolos" não faz sentido, visto que diferentes escopos podem usar o mesmo símbolo de formas diferentes. Dessa forma, sempre que "a" tabela de símbolos for mencionada, refere-se à tabela adequada na pilha de escopos.
+Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão criadas várias tabelas de símbolo, uma para cada escopo. Dessa forma, sempre que "a" tabela de símbolos for mencionada, refere-se à tabela adequada na pilha de escopos.
 - [-] Pilha de escopos
  - [-] Abrir um novo escopo
  - [-] Fechar o escopo atual
@@ -42,28 +41,36 @@ T5 é ponto extra (0-2) baseado na velocidade do compilador
 - [ ] Inserção de ids na tabela de símbolos
  - [ ] Posição da aparição dos ids está zoada
 - [-] Verificação de identificadores por escopo
-- [-] Verificação de tipos em expressões numericas. (Talvez em funções)
+- [-] Verificação de tipos em expressões numericas.
 - [-] Verificar se kw_break está no escopo de um FORSTAT
+
+## Adicionais
+- [ ] No momento, verificação de tipos é feita utilizando a árvore semântica. Seria mais eficiente realizar essa verificação diretamente na árvore de expressão.
 
 # Geração de Código Intermediário
 - [ ] What the title says
 
 # Entrega
 - [ ] Programa com todas as fases
+  - [-] Análise Léxica
+  - [-] Análise Sintática
+  - [-] Análise Semântica
+  - [ ] Geração de Código Intermediário (Deus)
 - [-] 3 Programas escritos na linguagem. +100 linhas. (Clara)
-- [ ] Makefile: Organizar como o projeto será entregue. Se as dependências já estarão précompiladas ou se os scripts precisarão ser rodados pelo professor.
-- [ ] Documentação (Mateus)
+- [ ] Makefile (Maykon)
+    - [ ] Definir se as dependências já estarão précompiladas ou se os scripts precisarão ser rodados pelo professor.
+    - [ ] Criar função para execução direta do binário com um arquivo de entrada, de forma não interativa.
+    - [ ] Retornar toda a saída necessária do programa no terminal. (cat dos arquivos da pasta output)
+- [ ] Documentação
  - [-] Documento com prova de que a gramática está em LL1
- - [ ] Documento com prova de que as SDDs são L-atribuídas
-- [-] Readme (Sartori)
+ - [ ] Documento com prova de que as SDDs são L-atribuídas (Clara)
+- [-] Readme
 - [ ] Saída do programa no terminal
- - [ ] Árvores de expressão
-  - [ ] Pergutar pro Álvaro se pode ser em um arquivo
+ - [-] Árvores de expressão
  - [-] Tabela de símbolos com tipo
  - [ ] Mensagem de sucesso para a análise das expressões
  - [ ] Mensagem de sucesso para a análise das declarações por escopo
  - [ ] Mensagem de sucesso para a análise de comandos por escopo
  - [ ] Código intermediário
-  - [ ] Perguntar se pode ser num arquivo de saída
  - [ ] Mensagem detalhada de erro caso haja erro no código fonte. Lembrando que o processo de compilação encerra no momento em que o primeiro erro for encontrado, independentemente da etapa de compilação.
 - [-] Cabeçalho com nomes dos integrantes
