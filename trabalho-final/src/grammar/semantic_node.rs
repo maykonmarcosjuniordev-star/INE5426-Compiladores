@@ -4,6 +4,7 @@ use crate::semantic::SemanticNode;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SemanticNodeData {
+  // ALLOCEXPRESSION -> vartype dimensions
   Allocexpression {
     var_type: Box<SemanticNode>,
     dimensions: Box<SemanticNode>,
@@ -12,6 +13,7 @@ pub enum SemanticNodeData {
     lvalue: Box<SemanticNode>,
     value: Box<SemanticNode>,
   },
+  // Atribstatevalue -> expression | allocexpression | funccall
   Atribstatevalue {
     expression: Option<Box<SemanticNode>>,
     allocexpression: Option<Box<SemanticNode>>,
@@ -31,6 +33,8 @@ pub enum SemanticNodeData {
     op_expression: Option<Box<SemanticNode>>,
     numexpression2: Option<Box<SemanticNode>>,
   },
+  // Factor -> expression
+  // 
   Factor {
     expression: Option<Box<SemanticNode>>,
     lvalue: Option<Box<SemanticNode>>,
@@ -46,6 +50,8 @@ pub enum SemanticNodeData {
     id: Box<SemanticNode>,
     paramlistcall: Option<Box<SemanticNode>>,
   },
+  // FUNCDEF -> func_id paramlist statelist
+  // FUNCDEF -> func_id statelist
   Funcdef {
     func_id: Box<SemanticNode>,
     paramlist: Option<Box<SemanticNode>>,
