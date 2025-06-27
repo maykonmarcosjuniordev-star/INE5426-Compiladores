@@ -864,17 +864,15 @@ impl SemanticNode {
 
   fn create_expression_tree(&self, trees: &mut Vec<ExpressionTree>) -> Option<ExpressionTreeNode> {
     match &self.children {
-      SemanticNodeData::Allocexpression { var_type, dimensions } => { None },
-      SemanticNodeData::Atribstat { lvalue, value } => {
+      SemanticNodeData::Atribstat { value, .. } => {
         value.create_expression_tree(trees);
         None
       },
       // AtribStateValue -> Expression
-      SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
+      SemanticNodeData::Atribstatevalue { expression, .. } => {
         if let Some(expression) = expression { expression.create_expression_tree(trees); None }
         else { None }
       },
-      SemanticNodeData::ConstIndex { index } => { None },
       // CONSTANT -> const_int | const_float | const_string 
       SemanticNodeData::Constant { value } => {
         match value {
@@ -930,8 +928,7 @@ impl SemanticNode {
         body.create_expression_tree(trees);
         None
       },
-      SemanticNodeData::Funccall { id, paramlistcall } => { None },
-      SemanticNodeData::Funcdef { func_id, paramlist, statelist } => {
+      SemanticNodeData::Funcdef { statelist, .. } => {
         statelist.create_expression_tree(trees);
         None
       },
@@ -973,11 +970,6 @@ impl SemanticNode {
         };
         Some(root)
       },
-      SemanticNodeData::OpExpression { op } => { None },
-      SemanticNodeData::OpNumexpression { op } => { None },
-      SemanticNodeData::OpTerm { op } => { None },
-      SemanticNodeData::Paramlist { paramlist } => { None },
-      SemanticNodeData::Paramlistcall { paramlist } => { None },
       SemanticNodeData::Printstat { expression } => {
         expression.create_expression_tree(trees);
         None
@@ -987,15 +979,13 @@ impl SemanticNode {
         if let Some(statement) = statement { statement.create_expression_tree(trees); }
         None
       },
-      SemanticNodeData::Readstat { lvalue } => { None },
-      SemanticNodeData::Returnstat { token } => { None },
       SemanticNodeData::Statelist { statelist } => {
         for statement in statelist.iter() {
           statement.create_expression_tree(trees);
         }
         None
       },
-      SemanticNodeData::Statement { vardecl, atribstat, ifstat, forstat, statelist, commandstat } => {
+      SemanticNodeData::Statement { atribstat, ifstat, forstat, statelist, .. } => {
         if let Some(atribstat) = atribstat { atribstat.create_expression_tree(trees); }
         if let Some(ifstat) = ifstat { ifstat.create_expression_tree(trees); }
         if let Some(forstat) = forstat { forstat.create_expression_tree(trees); }
@@ -1065,7 +1055,7 @@ impl SemanticNode {
         for i in index.iter() { i.create_expression_tree(trees); }
         None
       },
-      SemanticNodeData::Vardecl { var_type, id, const_index } => { None },
+      _ => { None }
     }
   }
 }
