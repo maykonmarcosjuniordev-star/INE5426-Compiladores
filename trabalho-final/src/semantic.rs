@@ -973,6 +973,7 @@ impl SemanticNode {
         Some(root)
       },
       SemanticNodeData::Printstat { expression } => {
+        println!("Creating expression tree for PrintStat");
         expression.create_expression_tree(trees);
         None
       },
@@ -987,11 +988,12 @@ impl SemanticNode {
         }
         None
       },
-      SemanticNodeData::Statement { atribstat, ifstat, forstat, statelist, .. } => {
+      SemanticNodeData::Statement { atribstat, ifstat, forstat, statelist, commandstat, .. } => {
         if let Some(atribstat) = atribstat { atribstat.create_expression_tree(trees); }
         if let Some(ifstat) = ifstat { ifstat.create_expression_tree(trees); }
         if let Some(forstat) = forstat { forstat.create_expression_tree(trees); }
         if let Some(statelist) = statelist { statelist.create_expression_tree(trees); }
+        if let Some(commandstat) = commandstat { commandstat.create_expression_tree(trees); }
         None
       },
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
