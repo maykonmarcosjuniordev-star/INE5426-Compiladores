@@ -67,6 +67,7 @@ impl SemanticNode {
         Ok(None)
       },
       SemanticNodeData::Atribstatevalue {expression, allocexpression, funccall} => {
+        
         if let Some(expression) = expression {
           return Ok(expression.semantic_analysis(scopes)?);
         }
