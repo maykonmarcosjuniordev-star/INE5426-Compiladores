@@ -73,7 +73,7 @@ Durante a análise léxica, é criada uma tabela de símbolos, que armazena a li
 Sobre a distinção entre variáveis e funções: como a definição de funções exige um token específico (sempre começando com `@`), é impossível que uma função e uma variável tenham o mesmo nome.
 
 ## Análise sintática
-A análise sintática utiliza os arquivos `grammars/syntax.txt` e `grammars/parse-table.txt` para armazenar a lista de regras de geração e a tabela LL1 respectivamente.
+A análise sintática utiliza os arquivos `grammars/syntax.txt` e `grammars/parse-table.txt` para armazenar a lista de regras de geração e a tabela LL1 respectivamente. A prova de que a gramática está em LL(1) está no arquivo `grammars/ll1-proof.txt`
 
 A tabela LL1 foi gerada pelo site [LL(1) parser generator](https://jsmachines.sourceforge.net/machines/ll1.html). Como formato de entrada para esse site, `syntax.txt` é convertido para `syntax-forge.txt` e a tabela resultante foi manualmente escrita em `grammars/parse_table.txt` de forma que `src/syntax.rs` possa facilmente importar e parsear essas informações.
 

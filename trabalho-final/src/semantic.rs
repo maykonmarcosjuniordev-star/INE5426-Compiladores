@@ -190,13 +190,17 @@ impl SemanticNode {
       },
       SemanticNodeData::Funcdef {func_id, paramlist, statelist} => {
         // Get function name
+        // PARAMLIST.inh = func_id
         let SemanticNodeData::Terminal { value } = func_id.children else { panic!() };
         let ConstType::String(func_id) = value.value.clone().unwrap() else { panic!(); };
         
         // Read function parameters
+        // PARAMLIST
         let mut func_params_types: Vec<VarType> = vec![];
         let mut func_params: Vec<(VarType, String, (usize, usize))> = vec![];
         let mut prev_param = None;
+        // PARAMLIST -> (vartype id)+
+        //   PARAMLIST.tipos = [vartype1, id1, vartype2, id2 ...]
         if let Some(paramlist) = &paramlist {
           let SemanticNodeData::Paramlist { paramlist } = &paramlist.children else { panic!(); };
           for child in paramlist.iter() {
@@ -217,8 +221,12 @@ impl SemanticNode {
             }
           }
         }
-        
-        // Insert function symbol into the current scope
+        else {
+          // PARAMLIST -> ''
+          //  PARAMLIST.tipos = []
+        }
+
+        // insert(PARAMLIST.inh, PARAMLIST.tipos)
         let entry = SymbolEntry {
           appearances: vec![(value.line, value.column)],
           var_type: func_params_types,
@@ -371,15 +379,12 @@ impl SemanticNode {
         // Statement -> ;
         Ok(None)
       },
-      SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
+      SemanticNodeData::Term { unaryexpression, unaryexpression2, .. } => {
         let tipo1 = unaryexpression.semantic_analysis(scopes)?.unwrap();
-        if let Some(op_term) = op_term {
-          op_term.semantic_analysis(scopes)?;
-        }
-        if let Some(factor2) = unaryexpression2 {
-          let tipo2 = factor2.semantic_analysis(scopes)?.unwrap();
+        if let Some(unaryexpression2) = unaryexpression2 {
+          let tipo2 = unaryexpression2.semantic_analysis(scopes)?.unwrap();
           if tipo1 != tipo2 {
-            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna " ).into());
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna").into());
           }
         }
         return Ok(Some(tipo1));
