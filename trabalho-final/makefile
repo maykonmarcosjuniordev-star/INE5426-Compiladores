@@ -2,9 +2,8 @@ all:
 	mkdir -p inputs
 	mkdir -p machines
 	mkdir -p output
-	if [[ ! -f machines/lexer.automata ]]; then \
-		python3 scripts/generate_lexer.py; \
-	fi
+	mkdir -p output/expression_trees
+	python3 scripts/generate_lexer.py
 	cargo --quiet build --release
 	clear
 	@echo "Compilação concluída com sucesso!"
