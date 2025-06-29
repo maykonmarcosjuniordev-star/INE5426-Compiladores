@@ -380,17 +380,17 @@ impl Node {
         match self.children[0].value {
           Symbol::NonTerminal(NonTerminal::Expression) => {
             SemanticNode {
-              children: SemanticNodeData::Atribstatevalue { numexpression: Some(Box::new(self.children[0].visit(None))), allocexpression: None, funccall: None }
+              children: SemanticNodeData::Atribstatevalue { expression: Some(Box::new(self.children[0].visit(None))), allocexpression: None, funccall: None }
             }
           },
           Symbol::NonTerminal(NonTerminal::Allocexpression) => {
             SemanticNode {
-              children: SemanticNodeData::Atribstatevalue { numexpression: None, allocexpression: Some(Box::new(self.children[0].visit(None))), funccall: None }
+              children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: Some(Box::new(self.children[0].visit(None))), funccall: None }
             }
           },
           Symbol::NonTerminal(NonTerminal::Funccall) => {
             SemanticNode {
-              children: SemanticNodeData::Atribstatevalue { numexpression: None, allocexpression: None, funccall: Some(Box::new(self.children[0].visit(None))) }
+              children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: None, funccall: Some(Box::new(self.children[0].visit(None))) }
             }
           },
           _ => panic!()

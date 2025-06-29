@@ -13,6 +13,7 @@ mod lexer;
 mod syntax;
 mod grammar;
 mod semantic;
+mod expression;
 mod scope_stack;
 mod code_attrs;
 
@@ -42,6 +43,10 @@ fn main() -> Result<(), Box<dyn Error>> {
   // Semantic analysis
   let mut semantic_tree = syntax_tree.semantic_tree()?;
   semantic_tree.save("output/ast.txt")?;
+  let expression_trees = semantic_tree.create_expression_trees();
+  for (i, tree) in expression_trees.iter().enumerate() {
+    tree.save(&format!("expression_trees/tree_{}.dot", i));
+  }
   semantic_tree.semantic_analysis()?;
 
 

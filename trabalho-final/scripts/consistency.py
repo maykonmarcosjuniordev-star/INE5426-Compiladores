@@ -27,6 +27,19 @@ ID_TOKENS = [
   "func_id"
 ]
 
+OPERATORS = [
+  "op_eq",
+  "op_gt",
+  "op_ge",
+  "op_lt",
+  "op_le",
+  "op_plus",
+  "op_minus",
+  "op_multiply",
+  "op_division",
+  "op_modular",
+]
+
 SCRIPT_NAME = "/".join(__file__.split("/")[-2:])
 
 # Load syntax.txt
@@ -69,7 +82,8 @@ with open("src/grammar/token_type.rs", "w") as f:
   token_string_list = "      ".join([f"\"{token}\" => Ok(TokenType::{clean_token(token)}),\n" for token in sorted(terminals)])[:-1]
   valued_string = " | ".join([f"TokenType::{clean_token(token)}" for token in VALUED_TOKENS])
   id_tokens = " | ".join([f"TokenType::{clean_token(token)}" for token in ID_TOKENS])
-  f.write(token_type_template.format(token_list=token_list, token_string_list=token_string_list, valued_string=valued_string, id_tokens=id_tokens, script_name=SCRIPT_NAME))
+  operators = "      ".join([f"TokenType::{clean_token(token)} => Operator::{clean_token(token)[2:]},\n" for token in OPERATORS])
+  f.write(token_type_template.format(token_list=token_list, token_string_list=token_string_list, valued_string=valued_string, id_tokens=id_tokens, script_name=SCRIPT_NAME, operators=operators))
 
 # Criar NonTerminal enum
 def clean_variable(var: str) -> str:

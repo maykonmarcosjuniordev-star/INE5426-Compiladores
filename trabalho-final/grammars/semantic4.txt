@@ -1,29 +1,35 @@
 # Start global scope
 PROGRAM -> FUNCLIST
  PROGRAM.scopes.push(ScopeType::ANY)
+ visit(FUNCLIST)
+ PROGRAM.scopes.pop()
 PROGRAM -> STATEMENT
  PROGRAM.scopes.push(ScopeType::ANY)
-
-# Pop global scope
-EOF
- EOF.scopes.pop()
+ visit(STATEMENT)
+ PROGRAM.scopes.pop()
 
 FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
- STATELIST.scopes.push(ScopeType::Function)
- PARAMLIST.scopes.insert(PARAMLIST.values)
+ FUNCDEF.scopes.push(ScopeType::Function)
+ FUNCDEF.scopes.insert(PARAMLIST.values)
+ visit(statelist)
+ FUNCDEF.scopes.pop()
 
 IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
- STATELIST.scopes.push(ScopeType::Any)
+ IFSTAT.scopes.push(ScopeType::Any)
+ vistit(STATELIST)
+ IFSTAT.scopes.pop()
 
 ELSESTAT_1 -> lbrace STATELIST rbrace
- STATELIST.scopes.push(ScopeType::Any)
+ ELSESTAT_1.scopes.push(ScopeType::Any)
+ visit(STATELIST)
+ ELSESTAT_1.scopes.pop()
 
 FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
- STATELIST.scopes.push(ScopeType::Loop)
+ FORSTAT.scopes.push(ScopeType::Loop)
+ visit(STATELIST)
+ FORSTAT.scopes.pop()
 
 STATEMENT -> lbrace STATELIST rbrace
  STATELIST.scopes.push(ScopeType::Any)
-
-# Whenever vising a "}" node, close the previous scope
-rbrace
- rbrace.scopes.pop()
+ vistit(STATELIST_2)
+ STATELIST.scopes.pop()

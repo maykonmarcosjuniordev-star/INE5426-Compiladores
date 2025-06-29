@@ -1,5 +1,3 @@
-# Definição de STATEMENT.scopes em semantic0.txt
-
 STATEMENT -> RETURNSTAT semicolon
  if !STATEMENT.scopes.contains(ScopeType::Function) { ERRO("Return keyword usada fora de uma função"); }
 STATEMENT -> kw_break semicolon

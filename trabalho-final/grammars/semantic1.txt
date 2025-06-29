@@ -1,40 +1,3 @@
-# Rust structures to be used by the rules
-enum NodeType {
-  EXPRESSION,
-  NUMEXPRESSION,
-  TERM,
-  FACTOR,
-  (all of the terminals envolved)
-}
-
-struct Node {
-  node_type: NodeType,
-  children: Option<Vec<Node>>
-}
-
-PARAMLIST -> var_type id PARAMLIST_1
- PARAMLIST_1.inh = vec![var_type, id]
- PARAMLIST.ptr = PARAMLIST_1.ptr
-PARAMLIST -> ''
- PARAMLIST.ptr = vec![]
-
-PARAMLIST_1 -> comma var_type id PARAMLIST_1
- PARAMLIST_1_1.inh = PARAMLIST_1.inh + vec![var_type, id]
- PARAMLIST_1.ptr = PARAMLIST_1_1.ptr
-PARAMLIST_1 -> ''
- PARAMLIST_1.ptr = Node(PARAMLIST, PARAMLIST_1.inh)
-
-STATELIST -> STATEMENT STATELIST_1
- STATELIST_1.inh = vec![STATEMENT.ptr]
- STATELIST.ptr = STATELIST_1.ptr
-
-STATELIST_1 -> STATEMENT STATELIST_1
- STATELIST_1_1.inh = STATELIST_1.inh + vec![STATEMENT.ptr]
- STATELIST_1.ptr = STATELIST_1_1.ptr
-STATELIST_1 -> ''
- STATELIST_1.ptr = Node(STATELIST, STATELIST_1.inh)
-
-# Semantic rules
 # TODO: Provar que essa SDD é L-atribuída
 # TODO: Substituir vetores por (esquerda, operação, direita)
 EXPRESSION -> NUMEXPRESSION EXPRESSION_1
@@ -92,8 +55,8 @@ OP_NUMEXPRESSION -> op_plus
 OP_NUMEXPRESSION -> op_minus
  OP_NUMEXPRESSION.ptr = Node(op_minus, None)
 
-OP_TERM -> op_mutl
- OP_TERM.ptr = Node(op_mult, None)
+OP_TERM -> op_multiply
+ OP_TERM.ptr = Node(op_multiply, None)
 OP_TERM -> op_division
  OP_TERM.ptr = Node(op_division, None)
 OP_TERM -> op_modular
@@ -123,5 +86,3 @@ VAR_INDEX -> lbracket NUMEXPRESSION rbracket VAR_INDEX
 
 VAR_INDEX -> ''
  VAR_INDEX.ptr = Node(LVALUE, vec![VAR_INDEX.inh])
-
-

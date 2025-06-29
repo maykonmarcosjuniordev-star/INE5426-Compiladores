@@ -8,6 +8,7 @@ use crate::scope_stack::SymbolEntry;
 use crate::grammar::semantic_node::SemanticNodeData;
 use crate::grammar::const_type::{ConstType, VarType};
 use crate::grammar::token_type::TokenType;
+use crate::expression::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SemanticNode {
@@ -65,9 +66,10 @@ impl SemanticNode {
         }
         Ok(None)
       },
-      SemanticNodeData::Atribstatevalue {numexpression, allocexpression, funccall} => {
-        if let Some(numexpression) = numexpression {
-          return Ok(numexpression.semantic_analysis(scopes)?);
+      SemanticNodeData::Atribstatevalue {expression, allocexpression, funccall} => {
+        
+        if let Some(expression) = expression {
+          return Ok(expression.semantic_analysis(scopes)?);
         }
         if let Some(allocexpression) = allocexpression {
           return Ok(allocexpression.semantic_analysis(scopes)?);
@@ -188,13 +190,17 @@ impl SemanticNode {
       },
       SemanticNodeData::Funcdef {func_id, paramlist, statelist} => {
         // Get function name
+        // PARAMLIST.inh = func_id
         let SemanticNodeData::Terminal { value } = func_id.children else { panic!() };
         let ConstType::String(func_id) = value.value.clone().unwrap() else { panic!(); };
         
         // Read function parameters
+        // PARAMLIST
         let mut func_params_types: Vec<VarType> = vec![];
         let mut func_params: Vec<(VarType, String, (usize, usize))> = vec![];
         let mut prev_param = None;
+        // PARAMLIST -> (vartype id)+
+        //   PARAMLIST.tipos = [vartype1, id1, vartype2, id2 ...]
         if let Some(paramlist) = &paramlist {
           let SemanticNodeData::Paramlist { paramlist } = &paramlist.children else { panic!(); };
           for child in paramlist.iter() {
@@ -215,8 +221,12 @@ impl SemanticNode {
             }
           }
         }
-        
-        // Insert function symbol into the current scope
+        else {
+          // PARAMLIST -> ''
+          //  PARAMLIST.tipos = []
+        }
+
+        // insert(PARAMLIST.inh, PARAMLIST.tipos)
         let entry = SymbolEntry {
           appearances: vec![(value.line, value.column)],
           var_type: func_params_types,
@@ -313,7 +323,20 @@ impl SemanticNode {
         panic!();
       },
       SemanticNodeData::Readstat { lvalue } => {
-        lvalue.semantic_analysis(scopes)
+        // get value of lvalue
+        let SemanticNodeData::Lvalue { id, .. } = lvalue.children else { panic!() };
+        let SemanticNodeData::Terminal { value: id_token } = id.children else { panic!() };
+        let ConstType::String(id_name) = id_token.value.clone().unwrap() else { panic!(); };
+        // Count the appearance of the variable
+        scopes.count_appearance(&id_name, id_token.line, id_token.column)?;
+        // Check variable type
+        let Some(symbol_entry) = scopes.get_symbol(&id_name) else {
+          return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
+        };
+        if symbol_entry.var_type[0] != VarType::String {
+          return Err(format!("Erro semântico: comando Read deve atribuir valor a uma variável de tipo string, mas tipo {:?} foi encontrado na linha {} coluna {}", symbol_entry.var_type[0], id_token.column, id_token.line).into());
+        }
+        Ok(None)
       },
       SemanticNodeData::Returnstat { .. } => {
         Ok(None)
@@ -356,15 +379,12 @@ impl SemanticNode {
         // Statement -> ;
         Ok(None)
       },
-      SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
+      SemanticNodeData::Term { unaryexpression, unaryexpression2, .. } => {
         let tipo1 = unaryexpression.semantic_analysis(scopes)?.unwrap();
-        if let Some(op_term) = op_term {
-          op_term.semantic_analysis(scopes)?;
-        }
-        if let Some(factor2) = unaryexpression2 {
-          let tipo2 = factor2.semantic_analysis(scopes)?.unwrap();
+        if let Some(unaryexpression2) = unaryexpression2 {
+          let tipo2 = unaryexpression2.semantic_analysis(scopes)?.unwrap();
           if tipo1 != tipo2 {
-            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna " ).into());
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna").into());
           }
         }
         return Ok(Some(tipo1));
@@ -525,10 +545,10 @@ impl SemanticNode {
         *count += 1;
         value.save(output, count);
       },
-      SemanticNodeData::Atribstatevalue { numexpression, allocexpression, funccall } => {
+      SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
         let name = format!("{}", count);
         output.push_str(&format!("  {} [label=\"AtribStatementValue\"]\n", count));
-        if let Some(expression) = numexpression {
+        if let Some(expression) = expression {
           output.push_str(&format!("  {} -> {}\n", name, *count+1));
           *count += 1;
           expression.save(output, count);
@@ -860,6 +880,209 @@ impl SemanticNode {
       }
     }
   }
+
+  fn create_expression_tree(&self, trees: &mut Vec<ExpressionTree>) -> Option<ExpressionTreeNode> {
+    match &self.children {
+      SemanticNodeData::Atribstat { value, .. } => {
+        value.create_expression_tree(trees);
+        None
+      },
+      // AtribStateValue -> Expression
+      SemanticNodeData::Atribstatevalue { expression, .. } => {
+        if let Some(expression) = expression { expression.create_expression_tree(trees); None }
+        else { None }
+      },
+      // CONSTANT -> const_int | const_float | const_string 
+      SemanticNodeData::Constant { value } => {
+        match value {
+          ConstType::Int(i) => { Some(ExpressionTreeNode::Operand{ value: Operand::Integer(*i) }) },
+          ConstType::Float(f) => { Some(ExpressionTreeNode::Operand{ value: Operand::Float(*f) })},
+          ConstType::String(s) => { Some(ExpressionTreeNode::Operand{ value: Operand::String(s.clone()) }) },
+        }
+      },
+      // TODO: Checar se regra Elsestat -> statement está correta ou se deveria ser Elsestat -> statelist
+      SemanticNodeData::Elsestat { statement } => {
+        statement.create_expression_tree(trees);
+        None
+      },
+      // Expression -> NumExpression | NumExpression OpExpression NumExpression
+      SemanticNodeData::Expression { numexpression, op_expression, numexpression2 } => {
+        // Nesse nodo, é criada a raiz da árvore de expressão, e a árvore é inserida no vetor de árvores para retorno da função
+        // Em todos os outros nodos, são criados e retornados os outros nodos da árvore.
+        let root = match op_expression {
+          Some(op_expression) => {
+            let n1 = numexpression.create_expression_tree(trees).unwrap();
+            let n2 = numexpression2.clone().unwrap().create_expression_tree(trees).unwrap();
+            let SemanticNodeData::OpExpression { op } = op_expression.children else { panic!(); }; 
+            ExpressionTreeNode::BinaryOperator { 
+              operator: op.get_operator_type(),
+              left: Box::new(n1),
+              right: Box::new(n2)
+            }
+          }
+          None => {
+            numexpression.create_expression_tree(trees).unwrap()
+          }
+        };
+        let tree = ExpressionTree { root };
+        trees.push(tree);
+        None
+      },
+      SemanticNodeData::Factor { expression, lvalue, constant } => {
+        let node;
+        if let Some(expression) = expression {
+          node = expression.create_expression_tree(trees);
+        } else if let Some(lvalue) = lvalue {
+          node = lvalue.create_expression_tree(trees);
+        } else if let Some(constant) = constant {
+          node = constant.create_expression_tree(trees);
+        } else {
+          panic!();
+        }
+        node
+      },
+      SemanticNodeData::Forstat { init, condition, increment, body } => {
+        init.create_expression_tree(trees);
+        condition.create_expression_tree(trees);
+        increment.create_expression_tree(trees);
+        body.create_expression_tree(trees);
+        None
+      },
+      SemanticNodeData::Funcdef { statelist, .. } => {
+        statelist.create_expression_tree(trees);
+        None
+      },
+      SemanticNodeData::Funclist { funclist } => {
+        for func in funclist.iter() { func.create_expression_tree(trees); }
+        None
+      },
+      SemanticNodeData::Ifstat { condition, then_branch, else_branch } => {
+        condition.create_expression_tree(trees);
+        then_branch.create_expression_tree(trees);
+        if let Some(else_branch) = else_branch {
+          else_branch.create_expression_tree(trees);
+        }
+        None
+      },
+      SemanticNodeData::Lvalue { id, var_index } => {
+        if let Some(var_index) = var_index { var_index.create_expression_tree(trees); }
+        let SemanticNodeData::Terminal { value: id_node } = &id.children else { panic!(); };
+        if let Some(ConstType::String(id_name)) = &id_node.value {
+          Some(ExpressionTreeNode::Operand { value: Operand::Identifier(id_name.clone())})
+        } else {
+          panic!("Expected variable identifier in LValue");
+        }
+      },
+      SemanticNodeData::Numexpression { term, op_numexpression, term2 } => {
+        let root = match op_numexpression {
+          Some(op_numexpression) => {
+            let n1 = term.create_expression_tree(trees).unwrap();
+            let n2 = term2.clone().unwrap().create_expression_tree(trees).unwrap();
+            let SemanticNodeData::OpNumexpression { op } = op_numexpression.children else { panic!(); };
+            ExpressionTreeNode::BinaryOperator { 
+              operator: op.get_operator_type(),
+              left: Box::new(n1),
+              right: Box::new(n2)
+            }
+          }
+          None => {
+            term.create_expression_tree(trees).unwrap()
+          }
+        };
+        Some(root)
+      },
+      SemanticNodeData::Printstat { expression } => {
+        println!("Creating expression tree for PrintStat");
+        expression.create_expression_tree(trees);
+        None
+      },
+      SemanticNodeData::Program { funclist, statement } => {
+        if let Some(funclist) = funclist { funclist.create_expression_tree(trees); }
+        if let Some(statement) = statement { statement.create_expression_tree(trees); }
+        None
+      },
+      SemanticNodeData::Statelist { statelist } => {
+        for statement in statelist.iter() {
+          statement.create_expression_tree(trees);
+        }
+        None
+      },
+      SemanticNodeData::Statement { atribstat, ifstat, forstat, statelist, commandstat, .. } => {
+        if let Some(atribstat) = atribstat { atribstat.create_expression_tree(trees); }
+        if let Some(ifstat) = ifstat { ifstat.create_expression_tree(trees); }
+        if let Some(forstat) = forstat { forstat.create_expression_tree(trees); }
+        if let Some(statelist) = statelist { statelist.create_expression_tree(trees); }
+        if let Some(commandstat) = commandstat { commandstat.create_expression_tree(trees); }
+        None
+      },
+      SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
+        let root = match op_term {
+          Some(op_term) => {
+            let n1 = unaryexpression.create_expression_tree(trees).unwrap();
+            let n2 = unaryexpression2.clone().unwrap().create_expression_tree(trees).unwrap();
+            let SemanticNodeData::OpTerm { op } = op_term.children else { panic!(); };
+            ExpressionTreeNode::BinaryOperator { 
+              operator: op.get_operator_type(),
+              left: Box::new(n1),
+              right: Box::new(n2)
+            }
+          }
+          None => { unaryexpression.create_expression_tree(trees).unwrap() }
+        };
+        Some(root)
+      },
+      SemanticNodeData::Terminal { value } => {
+        match value.token_type {
+          TokenType::ConstInt => {
+            if let Some(ConstType::Int(i)) = &value.value {
+              Some(ExpressionTreeNode::Operand { value: Operand::Integer(*i) })
+            } else {
+              panic!("Expected integer constant");
+            }
+          },
+          TokenType::ConstFloat => {
+            if let Some(ConstType::Float(f)) = &value.value {
+              Some(ExpressionTreeNode::Operand { value: Operand::Float(*f) })
+            } else {
+              panic!("Expected float constant");
+            }
+          },
+          TokenType::ConstString => {
+            if let Some(ConstType::String(s)) = &value.value {
+              Some(ExpressionTreeNode::Operand { value: Operand::String(s.clone()) })
+            } else {
+              panic!("Expected string constant");
+            }
+          },
+          TokenType::Id => {
+            if let Some(ConstType::String(id_name)) = &value.value {
+              Some(ExpressionTreeNode::Operand { value: Operand::Identifier(id_name.clone()) })
+            } else {
+              panic!("Expected variable identifier");
+            }
+          },
+          _ => None,
+        }
+      },
+      SemanticNodeData::Unaryexpression { op, factor } => {
+        match op {
+          Some(op) => {
+            let SemanticNodeData::OpNumexpression { op } = op.children else { panic!(); };
+            Some(ExpressionTreeNode::UnaryOperator {
+              operator: op.get_operator_type(),
+              operand: Box::new(factor.create_expression_tree(trees).unwrap())
+            })
+          },
+          None => { factor.create_expression_tree(trees) }
+        }
+      },
+      SemanticNodeData::VarIndex { index } => {
+        for i in index.iter() { i.create_expression_tree(trees); }
+        None
+      },
+      _ => { None }
+    }
+  }
 }
 
 pub struct SemanticTree {
@@ -896,5 +1119,11 @@ impl SemanticTree {
     self.root.generate_code(&mut code_attrs);
     writeln!(file, "{}", code_attrs.code)?;
     Ok(())
+  }
+
+  pub fn create_expression_trees(&self) -> Vec<ExpressionTree> {
+    let mut trees = Vec::new();
+    self.root.create_expression_tree(&mut trees);
+    trees
   }
 }

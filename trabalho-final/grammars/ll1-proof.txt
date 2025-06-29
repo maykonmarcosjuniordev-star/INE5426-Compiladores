@@ -79,7 +79,7 @@ CONST_INDEX -> ''
 VAR_INDEX -> lbracket NUMEXPRESSION rbracket VAR_INDEX
 VAR_INDEX -> ''
 - FIRST(VAR_INDEX) = {'', lbracket}
-- FOLLOW(VAR_INDEX) = {semicolon, rparenthesis, op_assign, semicolon, op_plus, op_minus, op_mult, op_division, op_modular}
+- FOLLOW(VAR_INDEX) = {semicolon, rparenthesis, op_assign, semicolon, op_plus, op_minus, op_multiply, op_division, op_modular}
 -- FIRST(lbracket) = {lbracket}
 -> FIRST('') ^ {lbracket} ^ FOLLOW(VAR_INDEX) = Ø
 
@@ -190,7 +190,7 @@ TERM -> UNARYEXPRESSION TERM_1
 
 TERM_1 -> OP_TERM UNARYEXPRESSION TERM_1
 TERM_1 -> ''
-- FIRST(TERM_1) = {'', op_mult, op_division, op_modular}
+- FIRST(TERM_1) = {'', op_multiply, op_division, op_modular}
 - FOLLOW(TERM_1) = {op_plus, op_minus}
 -- FIRST(OP_TERM UNARYEXPRESSION TERM_1) = FIRST(OP_TERM)
 -> FIRST('') ^ FIRST(OP_TERM) ^ FOLLOW(TERM_1) = Ø
@@ -198,7 +198,7 @@ TERM_1 -> ''
 UNARYEXPRESSION -> FACTOR
 UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
 - FIRST(UNARYEXPRESSION) = {op_plus, op_minus, lparenthesis, id, const_int, const_float, const_string, const_null}
-- FOLLOW(UNARYEXPRESSION) = {op_plus, op_minus, op_mult, op_division, op_modular}
+- FOLLOW(UNARYEXPRESSION) = {op_plus, op_minus, op_multiply, op_division, op_modular}
 -- FIRST(OP_NUMEXPRESSION FACTOR) = FIRST(OP_NUMEXPRESSION)
 -> FIRST(FACTOR) ^ FIRST(OP_NUMEXPRESSION) = Ø
 -> não anulável
@@ -207,14 +207,14 @@ FACTOR -> CONSTANT
 FACTOR -> LVALUE
 FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
 - FIRST(FACTOR) = {lparenthesis, id, const_int, const_float, const_string, const_null}
-- FOLLOW(FACTOR) = {op_plus, op_minus, op_mult, op_division, op_modular}
+- FOLLOW(FACTOR) = {op_plus, op_minus, op_multiply, op_division, op_modular}
 -- FIRST(lparenthesis NUMEXPRESSION rparenthesis) = {lparenthesis}
 -> FIRST(CONSTANT) ^ FIRST(LVALUE) ^ {lparenthesis} = Ø
 -> não anulável
 
 LVALUE -> id VAR_INDEX
 - FIRST(LVALUE) = {id}
-- FOLLOW(LVALUE) = {op_assign, semicolon, op_plus, op_minus, op_mult, op_division, op_modular}
+- FOLLOW(LVALUE) = {op_assign, semicolon, op_plus, op_minus, op_multiply, op_division, op_modular}
 -> Só 1 operação não anulável
 
 CONSTANT -> const_int
@@ -222,7 +222,7 @@ CONSTANT -> const_float
 CONSTANT -> const_string
 CONSTANT -> const_null
 - FIRST(CONSTANT) = {const_int, const_float, const_string, const_null}
-- FOLLOW(CONSTANT) = {op_plus, op_minus, op_mult, op_division, op_modular}
+- FOLLOW(CONSTANT) = {op_plus, op_minus, op_multiply, op_division, op_modular}
 -- FIRST(const_int) = {const_int}
 -- FIRST(const_float) = {const_float}
 -- FIRST(const_string) = {const_string}
@@ -256,13 +256,13 @@ FIRST(op_minus) = {op_minus}
 -> {op_plus} ^ {op_minus} = Ø
 -> não anulável
 
-OP_TERM -> op_mult
+OP_TERM -> op_multiply
 OP_TERM -> op_division
 OP_TERM -> op_modular
-- FIRST(OP_TERM) = {op_mult, op_division, op_modular}
+- FIRST(OP_TERM) = {op_multiply, op_division, op_modular}
 - FOLLOW(OP_TERM) = {}
-FIRST(op_mult) = {op_mult}
+FIRST(op_multiply) = {op_multiply}
 FIRST(op_division) = {op_division}
 FIRST(op_modular) = {op_modular}
--> {op_mult} ^ {op_division} ^ {op_modular} = Ø
+-> {op_multiply} ^ {op_division} ^ {op_modular} = Ø
 -> não anulável

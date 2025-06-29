@@ -1,5 +1,6 @@
 // Esse arquivo foi gerado automaticamente pelo script scripts/consistency.py
 use std::error::Error;
+use crate::expression::Operator;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {
@@ -32,7 +33,7 @@ pub enum TokenType {
   OpLt,
   OpMinus,
   OpModular,
-  OpMult,
+  OpMultiply,
   OpNe,
   OpPlus,
   Rbrace,
@@ -74,7 +75,7 @@ impl TokenType {
       "op_lt" => Ok(TokenType::OpLt),
       "op_minus" => Ok(TokenType::OpMinus),
       "op_modular" => Ok(TokenType::OpModular),
-      "op_mult" => Ok(TokenType::OpMult),
+      "op_multiply" => Ok(TokenType::OpMultiply),
       "op_ne" => Ok(TokenType::OpNe),
       "op_plus" => Ok(TokenType::OpPlus),
       "rbrace" => Ok(TokenType::Rbrace),
@@ -97,6 +98,22 @@ impl TokenType {
     match self {
       TokenType::Id | TokenType::FuncId => true,
       _ => false
+    }
+  }
+
+  pub fn get_operator_type(&self) -> Operator {
+    match self {
+      TokenType::OpEq => Operator::Eq,
+      TokenType::OpGt => Operator::Gt,
+      TokenType::OpGe => Operator::Ge,
+      TokenType::OpLt => Operator::Lt,
+      TokenType::OpLe => Operator::Le,
+      TokenType::OpPlus => Operator::Plus,
+      TokenType::OpMinus => Operator::Minus,
+      TokenType::OpMultiply => Operator::Multiply,
+      TokenType::OpDivision => Operator::Division,
+      TokenType::OpModular => Operator::Modular,
+      _ => panic!()
     }
   }
 }
