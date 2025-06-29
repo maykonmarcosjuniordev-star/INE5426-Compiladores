@@ -511,7 +511,208 @@ impl SemanticNode {
 
   #[allow(dead_code)]
   fn generate_code(&self, inh: &mut CodeAttrs) {
-    match &self.children {
+    match &self.children {SemanticNodeData::Allocexpression { var_type, dimensions } => {
+        // ALLOCEXPRESSION -> kw_new var_type VAR_INDEX
+        //  inh.code.push(format!("{} = new {}[{}]", inh.var_name, var_type, dimensions));
+        var_type.generate_code(inh);
+        dimensions.generate_code(inh);
+      },
+      SemanticNodeData::Atribstat { lvalue, value } => {
+        // TODO: Implement Atribstat code generation
+        // ATRIBSTAT -> LVALUE ATRIBSTATVALUE
+        // inh.code.push(format!("{} = {}", lvalue, value));
+        lvalue.generate_code(inh);
+        inh.code.push_str(" = ");
+        value.generate_code(inh);
+      },
+      SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
+        // TODO: Verify this
+        if let Some(expression) = expression {
+          expression.generate_code(inh);
+        } else if let Some(allocexpression) = allocexpression {
+          allocexpression.generate_code(inh);
+        } else if let Some(funccall) = funccall {
+          funccall.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Constant { value } => {
+        // TODO: Verify this
+        inh.code.push_str(&format!("{}", value.to_string()));
+      },
+      SemanticNodeData::ConstIndex { index } => {
+        // TODO: Verify this
+        // CONSTINDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
+        for child in index.iter() {
+          child.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Elsestat { statement } => {
+        // TODO: Verify this
+        // ELSESTAT -> STATELIST
+        inh.code.push_str("else {");
+        statement.generate_code(inh);
+        inh.code.push_str("}");
+      },
+      SemanticNodeData::Expression { numexpression, numexpression2, op_expression } => {
+        // TODO: Verify this
+        // EXPRESSION -> NUMEXPRESSION op_expression NUMEXPRESSION2
+        //  inh.code.push(format!("{} {} {}", numexpression, op_expression, numexpression2));
+        numexpression.generate_code(inh);
+        if let Some(op_expression) = op_expression {
+          op_expression.generate_code(inh);
+        }
+        if let Some(numexpression2) = numexpression2 {
+          numexpression2.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Factor { expression, lvalue, constant } => {
+        // TODO: Verify this
+        // FACTOR -> EXPRESSION
+        // FACTOR -> LVALUE
+        // FACTOR -> CONSTANT
+        if let Some(expression) = expression {
+          expression.generate_code(inh);
+        } else if let Some(lvalue) = lvalue {
+          lvalue.generate_code(inh);
+        } else if let Some(constant) = constant {
+          constant.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Forstat { init, condition, increment, body } => {
+        // TODO: Verify this
+        // FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
+        //  inh.code.push(format!("for ({}; {}; {}) {{", init, condition, increment));
+        inh.code.push_str("for (");
+        init.generate_code(inh);
+        inh.code.push_str("; ");
+        condition.generate_code(inh);
+        inh.code.push_str("; ");
+        increment.generate_code(inh);
+        inh.code.push_str(") {");
+        body.generate_code(inh);
+        inh.code.push_str("}");
+      },
+      SemanticNodeData::Funccall { id, paramlistcall } => {
+        // TODO: Verify this
+        // FUNCCALL -> id
+        // FUNCCALL -> id PARAMLISTCALL
+        //  inh.code.push(format!("{}({})", id, paramlistcall));
+        let SemanticNodeData::Terminal { value } = &id.children else { panic!(); };
+        let ConstType::String(func_id) = value.value.clone().unwrap() else { panic!(); };
+        inh.code.push_str(&format!("{}(", func_id));
+        if let Some(paramlistcall) = paramlistcall {
+          paramlistcall.generate_code(inh);
+        }
+        inh.code.push_str(")");
+      },
+      SemanticNodeData::Funcdef { func_id, paramlist, statelist } => {
+        // TODO: Verify this
+        // FUNCDEF -> kw_def id PARAMLIST lbrace STATELIST rbrace
+        let SemanticNodeData::Terminal { value } = &func_id.children else { panic!(); };
+        let ConstType::String(func_name) = value.value.clone().unwrap() else { panic!(); };
+        inh.code.push_str(&format!("def {}(", func_name));
+        if let Some(paramlist) = paramlist {
+          paramlist.generate_code(inh);
+        }
+        inh.code.push_str(") {\n");
+        statelist.generate_code(inh);
+      },
+      SemanticNodeData::Funclist { funclist } => {
+        // TODO: Verify this
+        // FUNCLIST -> FUNCDEF+
+        for func in funclist.iter() {
+          func.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Ifstat { condition, then_branch, else_branch } => {
+        // TODO: Verify this
+        // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
+        inh.code.push_str("if (");
+        condition.generate_code(inh);
+        inh.code.push_str(") {\n");
+        then_branch.generate_code(inh);
+        inh.code.push_str("}");
+        if let Some(else_branch) = else_branch {
+          inh.code.push_str(" else {\n");
+          else_branch.generate_code(inh);
+          inh.code.push_str("}");
+        }
+      },
+      SemanticNodeData::Lvalue { id, var_index } => {
+        // TODO: Verify this
+        // LVALUE -> id VAR_INDEX
+        //  inh.code.push(format!("{}[{}]", id, var_index));
+        let SemanticNodeData::Terminal { value } = &id.children else { panic!(); };
+        let ConstType::String(id_name) = value.value.clone().unwrap() else { panic!(); };
+        inh.code.push_str(&format!("{}", id_name));
+        if let Some(var_index) = var_index {
+          var_index.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Numexpression { term, op_numexpression, term2 } => {
+        // TODO: Verify this
+        // NUMEXPRESSION -> TERM op_numexpression TERM2
+        //  inh.code.push(format!("{} {} {}", term, op_numexpression, term2));
+        term.generate_code(inh);
+        if let Some(op_numexpression) = op_numexpression {
+          op_numexpression.generate_code(inh);
+        }
+        if let Some(term2) = term2 {
+          term2.generate_code(inh);
+        }
+      },
+      SemanticNodeData::OpExpression { op } => {
+        // TODO: Verify this
+        // OPEXPRESSION -> op_expression
+        inh.code.push_str(&format!("{}", op.get_operator_type()));
+      },
+      SemanticNodeData::OpNumexpression { op } => {
+        // TODO: Verify this
+        // OPNUMEXPRESSION -> op_numexpression
+        inh.code.push_str(&format!("{}", op.get_operator_type()));
+      },
+      SemanticNodeData::OpTerm { op } => {
+        // TODO: Verify this
+        // OPTERM -> op_term
+        inh.code.push_str(&format!("{}", op.get_operator_type()));
+      },
+      SemanticNodeData::Paramlist { paramlist } => {
+        // TODO: Verify this
+        // PARAMLIST -> (vartype id)+
+        //  inh.code.push(format!("{}: {}", vartype, id));
+        for param in paramlist.iter() {
+          let SemanticNodeData::Terminal { value } = &param.children else { panic!(); };
+          match value.token_type {
+            TokenType::VarType => {
+              // Get the type of the parameter
+              let var_type = value.value.as_ref().unwrap().get_keyword_type();
+              inh.code.push_str(&format!("{:?}: ", var_type));
+            },
+            TokenType::Id => {
+              // Get the name of the parameter
+              let ConstType::String(param_name) = value.value.clone().unwrap() else { panic!(); };
+              inh.code.push_str(&format!("{}", param_name));
+            },
+            _ => panic!(),
+          }
+          inh.code.push_str(", ");
+        }
+      },
+      SemanticNodeData::Paramlistcall { paramlist } => {
+        // TODO: Verify this
+        // PARAMLISTCALL -> (id)+
+        for param in paramlist.iter() {
+          let SemanticNodeData::Terminal { value } = &param.children else { panic!(); };
+          let ConstType::String(param_name) = value.value.clone().unwrap() else { panic!(); };
+          inh.code.push_str(&format!("{}, ", param_name));
+        }
+      },
+      SemanticNodeData::Printstat { expression } => {
+        // TODO: Verify this
+        // PRINTSTAT -> kw_print lparenthesis EXPRESSION rparenthesis semicolon
+        inh.code.push_str("print(");
+        expression.generate_code(inh);
+      },
       SemanticNodeData::Program { funclist, statement } => {
         if let Some(funclist) = funclist {
           funclist.generate_code(inh);
@@ -519,7 +720,140 @@ impl SemanticNode {
           statement.generate_code(inh);
         }
       },
-      _ => panic!()
+      SemanticNodeData::Readstat { lvalue } => {
+        // TODO: Verify this
+        // READSTAT -> kw_read lparenthesis LVALUE rparenthesis semicolon
+        inh.code.push_str("read(");
+        lvalue.generate_code(inh);
+        inh.code.push_str(")");
+      },
+      SemanticNodeData::Returnstat { .. } => {
+        // TODO: Verify this
+        // RETURNSTAT -> kw_return semicolon
+        inh.code.push_str("return;\n");
+      },
+      SemanticNodeData::Statelist { statelist } => {
+        // TODO: Verify this
+        // STATELIST -> STATEMENT+
+        for statement in statelist.iter() {
+          statement.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Statement { vardecl, atribstat, ifstat, forstat, statelist, commandstat } => {
+        // TODO: Verify this
+        if let Some(vardecl) = vardecl {
+          vardecl.generate_code(inh);
+        } else if let Some(atribstat) = atribstat {
+          atribstat.generate_code(inh);
+        } else if let Some(ifstat) = ifstat {
+          ifstat.generate_code(inh);
+        } else if let Some(forstat) = forstat {
+          forstat.generate_code(inh);
+        } else if let Some(statelist) = statelist {
+          statelist.generate_code(inh);
+        } else if let Some(commandstat) = commandstat {
+          commandstat.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
+        // TODO: Verify this
+        // TERM -> UNARYEXPRESSION op_term UNARYEXPRESSION2
+        //  inh.code.push(format!("{} {} {}", unaryexpression, op_term, unaryexpression2));
+        unaryexpression.generate_code(inh);
+        if let Some(op_term) = op_term {
+          if let SemanticNodeData::OpExpression { op } = op_term.children {
+            inh.code.push_str(&format!("{}", op.get_operator_type()));
+          }
+        }
+        if let Some(unaryexpression2) = unaryexpression2 {
+          unaryexpression2.generate_code(inh);
+        }
+      },
+      SemanticNodeData::Unaryexpression { op, factor } => {
+        // TODO: Verify this
+        // UNARYEXPRESSION -> op_factor factor
+        // UNARYEXPRESSION -> factor
+        if let Some(op) = op {
+          if let SemanticNodeData::OpExpression { op } = op.children {
+            inh.code.push_str(&format!("{}", op.get_operator_type()));
+          }
+        }
+        factor.generate_code(inh);
+      },
+      SemanticNodeData::Vardecl { var_type, id, const_index } => {
+        // TODO: Verify this
+        // VDECL -> vartype id const_index?
+        //  inh.code.push(format!("{} {} = ", var_type, id));
+        let SemanticNodeData::Terminal { value: var_type_node } = &var_type.children else { panic!(); };
+        let var_type_val = var_type_node.value.as_ref().unwrap().get_keyword_type();
+        let SemanticNodeData::Terminal { value: id_node } = &id.children else { panic!(); };
+        let ConstType::String(id_name) = id_node.value.clone().unwrap() else { panic!(); };
+        inh.code.push_str(&format!("{:?} {} = ", var_type_val, id_name));
+        if let Some(const_index) = const_index {
+          const_index.generate_code(inh);
+        } else {
+          inh.code.push_str("0"); // Default value for uninitialized variables
+        }
+      },
+      SemanticNodeData::VarIndex { index } => {
+        // TODO: Verify this
+        // VAR_INDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
+        inh.code.push_str("[");
+        for child in index.iter() {
+          child.generate_code(inh);
+          inh.code.push_str(", ");
+        }
+        if !index.is_empty() {
+          inh.code.pop(); // Remove last comma
+          inh.code.pop(); // Remove last space
+        }
+      },
+      SemanticNodeData::Terminal { value: token } => {
+        match token.token_type {
+          TokenType::Eof => {
+            inh.code.push_str("\n");
+          },
+          TokenType::ConstInt | TokenType::ConstFloat | TokenType::ConstString => {
+            inh.code.push_str(&format!("{}\n", token.value.as_ref().unwrap().to_string()));
+          },
+          TokenType::ConstNull => {
+            // TODO: É isso que null deveria ser?
+            inh.code.push_str("0\n");
+          },
+          TokenType::KwIf => {
+            // TODO: Handle if condition
+          },
+          TokenType::KwFor => {
+            // TODO: Handle for loop condition
+          }
+          TokenType::OpEq | TokenType::OpNe | TokenType::OpGt | TokenType::OpGe |
+            TokenType::OpLt | TokenType::OpLe | TokenType::OpPlus | TokenType::OpMinus |
+            TokenType::OpMultiply | TokenType::OpDivision | TokenType::OpModular
+            => {
+            inh.code.push_str(&format!("{} ", token.token_type.get_operator_type()));
+          },
+          TokenType::Id => {
+            // TODO:
+          },
+          TokenType::FuncId => {
+            // TODO: Maybe create a label for function calls
+          },
+          TokenType::KwBreak => {
+            // TODO: Handle loop break condition
+          },
+          TokenType::KwNew => {
+            // TODO: Handle memory allocation 
+          },
+          TokenType::KwPrint => {
+            // TODO: Handle print syscall
+          },
+          TokenType::KwRead => {
+            // TODO: Handle print syscall
+          },
+          _ => {}
+            
+        }
+      }
     }
   }
 

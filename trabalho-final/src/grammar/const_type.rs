@@ -29,6 +29,14 @@ impl ConstType {
       _ => panic!("Unknown type keyword: {}", s),
     }
   }
+  
+  pub fn to_string(&self) -> String {
+    match self {
+      ConstType::Int(i) => i.to_string(),
+      ConstType::Float(f) => f.to_string(),
+      ConstType::String(s) => s.clone(),
+    }
+  }
 }
 
 #[derive(Debug, Clone, PartialEq)]
