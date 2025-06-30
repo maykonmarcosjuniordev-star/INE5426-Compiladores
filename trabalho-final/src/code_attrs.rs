@@ -2,9 +2,9 @@
 pub struct CodeAttrs {
   pub register_counter: u32,
   pub label_counter: u32,
-  pub last_temp: String,
   pub code: String,
-  pub memory_params: Vec<usize>
+  pub memory_params: Vec<usize>,
+  tmp_return: String,
 }
 
 impl CodeAttrs {
@@ -12,23 +12,29 @@ impl CodeAttrs {
     CodeAttrs {
       register_counter: 0,
       label_counter: 0,
-      last_temp: String::new(),
+      tmp_return: String::new(),
       code: String::new(),
       memory_params: vec![],
     }
   }
 
-  pub fn reset(&mut self) {
-    self.register_counter = 0;
-    self.label_counter = 0;
-    self.last_temp.clear();
-    self.code.clear();
-  }
-
   pub fn create_temp(&mut self) -> String {
     self.register_counter += 1;
     let temp = format!("t{}", self.register_counter);
-    self.last_temp = temp.clone();
     temp
-  }    
+  }
+
+  pub fn create_label(&mut self) -> String {
+    self.label_counter += 1;
+    let label = format!("L{}", self.label_counter);
+    label
+  }
+
+  pub fn get_prev_return(&self) -> &String {
+    &self.tmp_return
+  }
+
+  pub fn set_prev_return(&mut self, tmp: String) {
+    self.tmp_return = tmp;
+  }
 }

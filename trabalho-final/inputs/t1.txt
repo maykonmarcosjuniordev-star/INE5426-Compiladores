@@ -6,7 +6,8 @@ def @b(int a) {
   a = a + 1 - 2;
   a = @b(a);
   print a;
-  read a;
+  string c;
+  read c;
   return;
 }
 
@@ -16,5 +17,13 @@ def @c(int x, int y) {
 }
 
 def @main() {
-  ;
+  if (2 > 3) {
+    print 1;
+  } else {
+    print 2;
+  }
+  int i;
+  for (i = 0; i < 10; i = i + 1) {
+    print i;
+  }
 }
