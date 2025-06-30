@@ -1,5 +1,5 @@
 use crate::grammar::token_type::TokenType;
-use crate::grammar::const_type::ConstType;
+use crate::grammar::const_type::{VarType, ConstType};
 
 #[derive(Clone, PartialEq)]
 pub struct Token {
@@ -14,6 +14,21 @@ impl std::fmt::Debug for Token {
     match &self.value {
       Some(value) => write!(f, "Token {{ type: {:?}, value: {:?} }}", self.token_type, value),
       None => write!(f, "Token {{ type: {:?} }}", self.token_type)
+    }
+  }
+}
+
+impl Token {
+  pub fn get_type(&self) -> VarType {
+    match self.token_type {
+      TokenType::ConstFloat => VarType::Float,
+      TokenType::ConstInt => VarType::Int,
+      TokenType::ConstString => VarType::String,
+      TokenType::VarType => {
+        if let Some(s) = &self.value { s.get_keyword_type() }
+        else { panic!("Expected VarType value for VarType token"); }
+      }
+      _ => panic!(),
     }
   }
 }

@@ -2,6 +2,7 @@ use core::panic;
 use std::error::Error;
 use std::io::Write;
 use crate::code_attrs::CodeAttrs;
+use crate::grammar::token_type;
 use crate::scope_stack::ScopeStack;
 use crate::scope_stack::ScopeType;
 use crate::scope_stack::SymbolEntry;
@@ -25,9 +26,9 @@ impl SemanticNode {
   fn semantic_analysis(&self, scopes: &mut ScopeStack) -> Result<Option<ReturnSem>, Box<dyn Error>> {
     match self.children.clone() {
       SemanticNodeData::Allocexpression {var_type, dimensions} => {
-        var_type.semantic_analysis(scopes)?;
+        let tipo = var_type.semantic_analysis(scopes)?;
         dimensions.semantic_analysis(scopes)?;
-        Ok(None)
+        Ok(tipo)
       },
       SemanticNodeData::Atribstat {lvalue, value} => {
         // ATRIBSTAT -> LVALUE ATRIBSTATVALUE
@@ -46,6 +47,7 @@ impl SemanticNode {
           return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
         };
 
+        println!("{:?} ", value);
         let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
         if value_type != symbol_entry.var_type[0] {
           return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
@@ -495,6 +497,9 @@ impl SemanticNode {
             };
             let tipo = symbol_entry.var_type[0].clone();
             Ok(Some(ReturnSem::Tipo(tipo)))
+          },
+          TokenType::VarType => {
+            Ok(Some(ReturnSem::Tipo(token.get_type())))
           },
           // Comma | ConstNull | FuncId | Id
           //   | KwBreak | KwDef | KwElse | KwFor | KwIf | KwNew | KwPrint | KwRead
@@ -1402,7 +1407,6 @@ impl SemanticNode {
         Some(root)
       },
       SemanticNodeData::Printstat { expression } => {
-        println!("Creating expression tree for PrintStat");
         expression.create_expression_tree(trees);
         None
       },
