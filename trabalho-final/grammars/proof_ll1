@@ -1,0 +1,206 @@
+Queremos provar que a gramática ConvCC-2025-1 G admite uma definição dirigida pela sintaxe L-atribuída (SDD L-atribuída).
+
+Uma definição dirigida pela sintaxe (SDD) é dita L-atribuída se:
+
+1 - Para cada produção A -> X1, X2,...Xn, qualquer atributo herdado de Xi, i∈ [1,n] ) pode depender apenas de atributos herdados ou sintetizados do símbolo pai A e atributos sintetizados de símbolos à esquerda de Xi, ou seja, X1, X2,...Xi-1;
+2 - Atributos sintetizados de um símbolo A podem depender apenas de atributos dos símbolos X1,...,Xn na produção.
+
+3 - Portanto, G admite uma definição L-atribuída.
+
+
+Parte 1: A gramática é compatível com parsing LL(1):
+
+Seja G = (Vn, Vt, P, S) uma gramática livre de contexto, com:
+- Vn: conjunto de não terminais;
+- Vt: conjunto de símbolos terminais;
+- P: conjunto de produções;
+- S: símbolo inicial
+Dizemos que G é uma gramática LL(1) se e somente se, para cada não-terminal A ∈ V e para cada par de produções distintas: A ->  𝛼 e A -> 𝛽, com 𝛼 != 𝛽, valem as seguintes condições:
+1 - FIRST(𝛼) ∩ FIRST(𝛽)
+2 - Se 𝜖 ∈ FIRST(𝛼), então FIRST(𝛽) ∩ FOLLOW(S) = ∅
+3 - Se 𝜖 ∈ FIRST(𝛽), então FIRST(𝛼) ∩ FOLLOW(S) = ∅
+
+Assim, ao examinar o próximo token de entrada (lookahead de 1 símbolo), é possível decidir unicamente qual produção aplicar, requisito para a análise descendente determinística.
+
+ Parte 2 — A gramática admite uma definição dirigida pela sintaxe L-atribuída
+
+Seja uma gramática G = (Vn, Vt, P, S). Uma Definição Dirigida pela Sintaxe (SDD) é dita L-atribuída se, para cada produção da forma: 
+A -> X1, X2,...Xn,
+e para cada atributo herdado h de algum símbolo Xi, a função de avaliação de h pode depender somente de atributos (sintetizados ou herdados) de 
+- A (o símbolo do lado esquerdo da produção);
+- Atributos sintetizados de X1, X2,...Xi-1 (os irmãos à esquerda de Xi).
+Estas restrições garantem que os atributos podem ser avaliados em uma única travessia da árvore sintática da esquerda para a direita. 
+
+1 - Produções com apenas atributos sintetizados
+
+PROGRAM -> FUNCLIST
+ PROGRAM.scopes.push(ScopeType::ANY)
+PROGRAM -> STATEMENT
+ PROGRAM.scopes.push(ScopeType::ANY)
+VARDECL -> vartype id
+ VARDECL.scopes.insert(id.val, vartype.val)
+ 
+CONST_INDEX -> lbracket const_int rbracket CONST_INDEX
+CONST_INDEX -> ''
+VAR_INDEX -> lbracket NUMEXPRESSION rbracket VAR_INDEX
+
+VAR_INDEX -> ''
+    VAR_INDEX.ptr = Node(LVALUE, vec![VAR_INDEX.inh])
+
+UNARYEXPRESSION -> FACTOR
+    UNARYEXPRESSION.ptr = Node(UNARYEXPRESSION, vec![FACTOR.ptr])
+UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
+    UNARYEXPRESSION.ptr = Node(Some(Box::new(self.children[0].visit(None))), 
+                              Box::new(self.children[1].visit(None)))
+                              
+FACTOR -> CONSTANT
+    FACTOR.ptr = Node(FACTOR, vec![CONSTANT.ptr])
+FACTOR -> LVALUE
+    FACTOR.ptr = Node(FACTOR, vec![LVALUE.ptr])
+FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
+    FACTOR.ptr = Node(FACTOR, vec![NUMEXPRESSION.ptr])
+ALLOCEXPRESSION → kw_new var_type VAR_INDEX
+
+2 - Produções com atributos herdados de pai e irmão à esquerda
+
+FUNCLIST → FUNCDEF FUNCLIST
+FUNCLIST → ''
+PARAMLIST -> var_type id PARAMLIST_1
+    PARAMLIST_1.inh = vec![var_type, id]
+    PARAMLIST.ptr = PARAMLIST_1.ptr
+PARAMLIST -> ''
+    PARAMLIST.ptr = vec![]
+
+PARAMLIST_1 -> comma var_type id PARAMLIST_1
+    PARAMLIST_1_1.inh = PARAMLIST_1.inh + vec![var_type, id]
+    PARAMLIST_1.ptr = PARAMLIST_1_1.ptr
+PARAMLIST_1 -> ''
+    PARAMLIST_1.ptr = Node(PARAMLIST, PARAMLIST_1.inh)
+ 
+EXPRESSION -> NUMEXPRESSION EXPRESSION_1
+    EXPRESSION_1.inh = NUMEXPRESSION.ptr
+    EXPRESSION.ptr = EXPRESSION_1.ptr
+
+EXPRESSION_1 -> OP_EXPRESSION NUMEXPRESSION
+    EXPRESSION_1.ptr = Node(Box::new(inh.unwrap()[0].clone()), 
+                          Some(Box::new(self.children[0].visit(None))),
+                          Some(Box::new(self.children[1].visit(None))))
+EXPRESSION_1 -> ''
+    EXPRESSION_1.ptr = Node(Box::new(inh.unwrap()[0].clone()), 
+                          None,
+                          None)
+
+NUMEXPRESSION -> TERM NUMEXPRESSION_1
+    NUMEXPRESSION_1.inh = Node(NUMEXPRESSION, vec![TERM.ptr])
+    NUMEXPRESSION.ptr = NUMEXPRESSION_1.ptr
+NUMEXPRESSION_1 -> OP_NUMEXPRESSION TERM NUMEXPRESSION_1
+    NUMEXPRESSION_1_1.inh = Node(Box::new(inh.unwrap()[0].clone()), 
+                                Some(Box::new(self.children[0].visit(None))),
+                                Some(Box::new(self.children[1].visit(None))))
+ NUMEXPRESSION_1.ptr = NUMEXPRESSION_1_1.ptr
+NUMEXPRESSION_1 -> ''
+    NUMEXPRESSION_1.ptr = NUMEXPRESSION_1.inh
+
+TERM -> UNARYEXPRESSION TERM_1
+    TERM_1.inh = Node(TERM, vec![UNARYEXPRESSION.ptr])
+    TERM.ptr = TERM_1.ptr
+ 
+TERM_1 -> OP_TERM UNARYEXPRESSION TERM_1
+    TERM_1_1.inh = Node(Box::new(inh.unwrap()[0].clone()),
+                                Some(Box::new(self.children[0].visit(None))), 
+                               Some(Box::new(self.children[1].visit(None))))
+    TERM_1.ptr = TERM_1_1.ptr
+TERM_1 -> ''
+    TERM_1.ptr = TERM_1.inh
+
+3 - Herança do pai, síntese dos filhos
+
+FUNCDEF -> kw_def func_id ( PARAMLIST ) { STATELIST }
+ STATELIST.scopes.push(ScopeType::Function)
+ PARAMLIST.scopes.insert(PARAMLIST.values)
+ 
+STATELIST -> STATEMENT STATELIST_1
+    STATELIST_1.inh = vec![STATEMENT.ptr]
+    STATELIST.ptr = STATELIST_1.ptr
+
+STATELIST_1 -> STATEMENT STATELIST_1
+    STATELIST_1_1.inh = STATELIST_1.inh + vec![STATEMENT.ptr]
+    STATELIST_1.ptr = STATELIST_1_1.ptr
+STATELIST_1 -> ''
+    STATELIST_1.ptr = Node(STATELIST, STATELIST_1.inh)
+
+ATRIBSTAT → LVALUE = ATRIBSTATEVALUE
+ATRIBSTATEVALUE → EXPRESSION
+ATRIBSTATEVALUE → ALLOCEXPRESSION
+ATRIBSTATEVALUE → FUNCCALL
+FUNCCALL → func_id ( PARAMLISTCALL )
+PARAMLISTCALL → ''
+PARAMLISTCALL → id PARAMLISTCALL_1
+PARAMLISTCALL_1 → , id PARAMLISTCALL_1
+PARAMLISTCALL_1 → ''
+PRINTSTAT → kw_print EXPRESSION
+READSTAT → kw_read LVALUE
+IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
+    STATELIST.scopes.push(ScopeType::Any)
+
+ELSESTAT_1 -> lbrace STATELIST rbrace
+    STATELIST.scopes.push(ScopeType::Any)
+
+ELSESTAT → ''
+ELSESTAT_1 → IFSTAT
+ELSESTAT_1 → { STATELIST }
+PRINTSTAT → kw_print EXPRESSION
+READSTAT → kw_read LVALUE
+
+4 - Herança do pai, síntese direta/ local
+
+STATEMENT → VARDECL semicolon
+STATEMENT → ATRIBSTAT semicolon
+STATEMENT → PRINTSTAT semicolon
+STATEMENT → READSTAT semicolon
+STATEMENT → RETURNSTAT semicolon
+STATEMENT → IFSTAT
+STATEMENT → FORSTAT
+STATEMENT → { STATELIST }
+STATEMENT → kw_break semicolon
+STATEMENT → semicolon
+FORSTAT → kw_for ( ATRIBSTAT ; EXPRESSION ; ATRIBSTAT ) { STATELIST }
+LVALUE → id VAR_INDEX
+CONSTANT → const_int | const_float | const_string | const_null
+OP_EXPRESSION -> op_eq
+    OP_EXPRESSION.ptr = Node(op_eq, None)
+OP_EXPRESSION -> op_ne
+ OPERACAO.ptr = Node(op_ne, None)
+OP_EXPRESSION -> op_ge
+ OP_EXPRESSION.ptr = Node(op_ge, None)
+OP_EXPRESSION -> op_gt
+ OP_EXPRESSION.ptr = Node(op_gt, None)
+OP_EXPRESSION -> op_le
+ OP_EXPRESSION.ptr = Node(op_le, None)
+OP_EXPRESSION -> op_lt
+ OP_EXPRESSION.ptr = Node(op_lt)
+
+OP_NUMEXPRESSION -> op_plus
+ OP_NUMEXPRESSION.ptr = Node(op_plus, None)
+OP_NUMEXPRESSION -> op_minus
+ OP_NUMEXPRESSION.ptr = Node(op_minus, None)
+ 
+OP_TERM -> op_mutl
+ OP_TERM.ptr = Node(op_mult, None)
+OP_TERM -> op_division
+ OP_TERM.ptr = Node(op_division, None)
+OP_TERM -> op_modular
+ OP_TERM.ptr = Node(op_modular, None)
+
+5 - Trivial
+
+RETURNSTAT → kw_return
+
+Cada produção da gramática aceita uma definição de atributos herdados (somente do pai ou dos irmãos à esquerda) e sintetizados (com base nos filhos) que respeita estritamente as restrições de uma SDD L-atribuída. Portanto, a gramática é compatível com uma definição dirigida pela sintaxe L-atribuída.
+
+
+
+
+
+
+
