@@ -1,168 +1,124 @@
-def @initializeMatrixA() {
+def @multiplyMatrices() {
+    print "Verificando se a multiplicação de matrizes é válida";
+
+    int aRows;
+    int aCols;
+    int bRows;
+    int bCols;
+
+    aRows = 2;
+    aCols = 3;
+    bRows = 3;
+    bCols = 2;
+
+    if (aCols == bRows) {
+        print "Dimensões válidas"; 
+    }
+    else {
+        print "Dimensões inválidas";; 
+        return;
+    }
+
+    print "Declarando matrizes da multiplicação";
+    int matrixA[2][3];
+    int matrixB[3][2];
+    int result[2][2];
+
+    print "Inicializando matriz A";
     matrixA[0][0] = 1;
     matrixA[0][1] = 2;
     matrixA[0][2] = 3;
     matrixA[1][0] = 4;
     matrixA[1][1] = 5;
     matrixA[1][2] = 6;
-    return;
-}
 
-def @initializeMatrixB() {
+    print "Inicializando matriz B";
     matrixB[0][0] = 7;
     matrixB[0][1] = 8;
     matrixB[1][0] = 9;
     matrixB[1][1] = 10;
     matrixB[2][0] = 11;
     matrixB[2][1] = 12;
-    return;
-}
 
-def @initializeResultMatrix() {
+    print "Inicializando matriz de resultado";
     int i;
     int j;
-    for (i = 0; i < 2; i = i + 1) {
-        for (j = 0; j < 2; j = j + 1) {
+    for (i = 0; i < aRows; i = i + 1) {
+        for (j = 0; j < aRows; j = j + 1) {
             result[i][j] = 0;
         }
     }
-    return;
-}
 
-def @printMatrixA() {
-    int i;
-    int j;
-    print 10;
-    for (i = 0; i < 2; i = i + 1) {
-        for (j = 0; j < 3; j = j + 1) {
-            print matrixA[i][j];
-        }
-    }
-    return;
-}
-
-def @printMatrixB() {
-    int i;
-    int j;
-    print 20;
-    for (i = 0; i < 3; i = i + 1) {
-        for (j = 0; j < 2; j = j + 1) {
-            print matrixB[i][j];
-        }
-    }
-    return;
-}
-
-def @printMatrixResult() {
-    int i;
-    int j;
-    print 30;
-    for (i = 0; i < 2; i = i + 1) {
-        for (j = 0; j < 2; j = j + 1) {
-            print result[i][j];
-        }
-    }
-    return;
-}
-
-def @canMultiply(int aCols, int bRows) {
-    if (aCols == bRows) {
-        print 100;
-    }
-    else {
-        print 101;
-    }
-    return;
-    for (i = 0; i < 2; i = i + 1) {
-        for (j = 0; j < 3; j = j + 1) {
-            print matrixA[i][j];
-        }
-    }
-    return;
-}
-
-def @printMatrixB() {
-    int i;
-    int j;
-    print 20;
-    for (i = 0; i < 3; i = i + 1) {
-        for (j = 0; j < 2; j = j + 1) {
-            print matrixB[i][j];
-        }
-    }
-    return;
-}
-
-def @printMatrixResult() {
-    int i;
-    int j;
-    print 30;
-    for (i = 0; i < 2; i = i + 1) {
-        for (j = 0; j < 2; j = j + 1) {
-            print result[i][j];
-        }
-    }
-    return;
-}
-
-def @canMultiply(int aCols, int bRows) {
-    if (aCols == bRows) {
-        print 100;
-    }
-    else {
-        print 101;
-    }
-    return;
-}
-
-def @multiplyMatrices() {
-    int i;
-    int j;
-    int k;
+    print "Realizando a multiplicação";
+    int a;
+    int b;
+    int c;
     int sum;
-    for (i = 0; i < 2; i = i + 1) {
-        for (j = 0; j < 2; j = j + 1) {
+    for (a = 0; a < aRows; a = a + 1) {
+        for (b = 0; b < aRows; b = b + 1) {
             sum = 0;
-            for (k = 0; k < 3; k = k + 1) {
-                sum = sum + matrixA[i][k] * matrixB[k][j];
+            for (c = 0; c < bCols; c = c + 1) {
+                sum = sum + matrixA[a][c] * matrixB[c][b];
             }
-            result[i][j] = sum;
+            result[a][b] = sum;
         }
     }
-    return;
-}
 
-def @debugMatrixSizes() {
-    print rowsA;
-}
+    print "Resultados obtidos:";
+    print "         ";
 
-def @debugMatrixSizes() {
-    print rowsA;
-    print colsA;
-    print rowsB;
-    print colsB;
+    int k;
+    int l;
+    for (k = 0; k < aRows; k = k + 2) {
+        for (l = 0; l < bCols; l = l + 1) {
+            print "Posição ";
+            print k;
+            print ", ";
+            print l;
+            print ": ";
+            print result[k][l];
+        }
+    }
+
+    print "Criando matriz de backup";
+    int backupResult[2][2];
+
+    int r;
+    int s;
+    for (r = 0; r < aRows; r = r + 1) {
+        for (s = 0; s < bCols; b = b + 1) {
+            backupResult[aRows][bCols] = result[aRows][bCols];
+        }
+    }
+
     return;
 }
 
 def @main() {
-    rowsA = 2;
-    colsA = 3;
-    rowsB = 3;
-    colsB = 2;
+    print "MULTIPLICAÇÃO DE MATRIZES";
 
-    result = @debugMatrixSizes();
-    result = @canMultiply(colsA, rowsB);
+    int result;
+    int i;
+    i = 0;
+ 
+    for (i = 0; 1 ; i = i + 1) {
+        print "Iniciando multiplicação de matrizes";
+        result = @multiplyMatrices();
 
-    result = @initializeMatrixA();
-    result = @initializeMatrixB();
-    result = @initializeResultMatrix();
+        print "Multiplicação realizada com sucesso!";
+        print "Gostaria de repetir a operação?";
+        print "(digite 1 para Sim e 2 para Não)";
 
-    result = @printMatrixA();
-    result = @printMatrixB();
+        string userResponse;
+        read userResponse;
 
-    result = @multiplyMatrices();
-
-    result = @printMatrixResult();
-
-    return;
+        if (userResponse == "2") {
+            print "Encerrando execução.";
+            break;
+        } else if (userResponse == "1") {
+            print "Repetindo execução...";
+        } else {
+            print "Operação inválida, abortando execução!";
+        }        
+    }
 }

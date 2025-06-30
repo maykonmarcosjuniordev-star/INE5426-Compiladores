@@ -67,55 +67,44 @@ def @modulo(int a, int b) {
 }
 
 def @menu() {
-    int opcao;
+    string opcao;
     int x;
     int y;
     int valorResultante;
-    print "Escolha uma opcao:";
-    print "1 - Soma";
-    print "2 - Subtracao";
-    print "3 - Multiplicacao";
-    print "4 - Divisao";
-    print "5 - Fatorial";
-    print "6 - Potencia";
+
+    x = 3;
+    y = 2;
+
+    print "Escolha uma opcao para os valores - X = ";
+    print x;
+    print ", Y - ";
+    print y;
+
+    print "1 - Soma (x + y)";
+    print "2 - Subtracao (x - y)";
+    print "3 - Multiplicacao (x * y)";
+    print "4 - Divisao (x / y)";
+    print "5 - Fatorial (x!)";
+    print "6 - Potencia (x ^ y)";
     print "";
     print "0 - Sair";
     read opcao;
     
-    if (opcao == 1) {
-        print "Digite dois numeros:";
-        read x;
-        read y;
+    if (opcao == "1") {
         valorResultante = @soma(x, y);
-    } else if (opcao == 2) {
-        print "Digite dois numeros:";
-        read x;
-        read y;
+    } else if (opcao == "2") {
         valorResultante = @subtrai(x, y);
-    } else if (opcao == 3) {
-        print "Digite dois numeros:";
-        read x;
-        read y;
+    } else if (opcao == "3") {
         valorResultante = @multiplica(x, y);
-    } else if (opcao == 4) {
-        print "Digite dois numeros:";
-        read x;
-        read y;
+    } else if (opcao == "4") {
         valorResultante = @divide(x, y);
-    } else if (opcao == 5) {
-        print "Digite um numero:";
-        read x;
+    } else if (opcao == "5") {
         valorResultante = @fatorial(x);
-    } else if (opcao == 6) {
-        print "Digite base e expoente:";
-        read x;
-        read y;
+    } else if (opcao == "6") {
         valorResultante = @potencia(x, y);
-    } else if (opcao == 7) {
-        print "Digite dois numeros:";
-        read x;
+    } else if (opcao == "7") {
         valorResultante = @modulo(x, y);
-    } else if (opcao == 0) {
+    } else if (opcao == "0") {
         print "Encerrando...";
     } else {
         print "Opcao invalida.";
