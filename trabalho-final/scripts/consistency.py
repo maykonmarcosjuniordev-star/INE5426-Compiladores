@@ -29,6 +29,7 @@ ID_TOKENS = [
 
 OPERATORS = [
   "op_eq",
+  "op_ne",
   "op_gt",
   "op_ge",
   "op_lt",
