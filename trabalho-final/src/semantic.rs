@@ -1,6 +1,7 @@
+use core::panic;
 use std::error::Error;
+use std::intrinsics::volatile_set_memory;
 use std::io::Write;
-
 use crate::code_attrs::CodeAttrs;
 use crate::scope_stack::ScopeStack;
 use crate::scope_stack::ScopeType;
@@ -510,23 +511,41 @@ impl SemanticNode {
   }
 
   #[allow(dead_code)]
+  /// generate TAC (Three Address Code) for the semantic node
   fn generate_code(&self, inh: &mut CodeAttrs) {
-    match &self.children {SemanticNodeData::Allocexpression { var_type, dimensions } => {
-        // ALLOCEXPRESSION -> kw_new var_type VAR_INDEX
-        //  inh.code.push(format!("{} = new {}[{}]", inh.var_name, var_type, dimensions));
+    match &self.children {
+      SemanticNodeData::Allocexpression { var_type, dimensions } => {
+        // TODO(não boto fé que é assim)
+        // ALLOCEXPRESSION -> vartype VARINDEX
+        // t0 = alloc tipo, d1, d2, ..., dn
+        let temp = inh.create_temp();
+        inh.code.push_str(&format!("{} = alloc ", temp));
+        // Generate code for the variable type
         var_type.generate_code(inh);
-        dimensions.generate_code(inh);
+        // will not call generate_code for dimensions,
+        // because it would print the dimensions between brackets
+        let SemanticNodeData::VarIndex { index } = &dimensions.children else { panic!(); };
+        if !index.is_empty() {
+          inh.code.push_str(", ");
+          for (i, child) in index.iter().enumerate() {
+            child.generate_code(inh);
+            if i < index.len() - 1 {
+              inh.code.push_str(", ");
+            }
+          }
+        }
+
       },
       SemanticNodeData::Atribstat { lvalue, value } => {
-        // TODO: Implement Atribstat code generation
-        // ATRIBSTAT -> LVALUE ATRIBSTATVALUE
-        // inh.code.push(format!("{} = {}", lvalue, value));
+        // ATRIBSTAT -> LVALUE op_assign ATRIBSTATEVALUE
         lvalue.generate_code(inh);
         inh.code.push_str(" = ");
         value.generate_code(inh);
       },
       SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
-        // TODO: Verify this
+        // ATRIBSTATEVALUE -> EXPRESSION 
+        // ATRIBSTATEVALUE -> ALLOCEXPRESSION
+        // ATRIBSTATEVALUE -> FUNCCALL
         if let Some(expression) = expression {
           expression.generate_code(inh);
         } else if let Some(allocexpression) = allocexpression {
@@ -536,64 +555,68 @@ impl SemanticNode {
         }
       },
       SemanticNodeData::Constant { value } => {
-        // TODO: Verify this
-        inh.code.push_str(&format!("{}", value.to_string()));
+        // TODO: make sure it is not condflicting with the parent prints
+        // creates a new temporary variable for the constant
+        let temp = inh.create_temp();
+        inh.code.push_str(&format!("{temp} = {};\n", value.to_string()));
       },
       SemanticNodeData::ConstIndex { index } => {
-        // TODO: Verify this
         // CONSTINDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
+        // CONST_INDEX -> [lbracket const_int rbracket]+
         for child in index.iter() {
+          inh.code.push_str("[");
           child.generate_code(inh);
+          inh.code.push_str("]");
         }
       },
+      // TODO
       SemanticNodeData::Elsestat { statement } => {
-        // TODO: Verify this
-        // ELSESTAT -> STATELIST
+        // ELSESTAT -> STATEMENT
         inh.code.push_str("else {");
         statement.generate_code(inh);
         inh.code.push_str("}");
       },
       SemanticNodeData::Expression { numexpression, numexpression2, op_expression } => {
-        // TODO: Verify this
-        // EXPRESSION -> NUMEXPRESSION op_expression NUMEXPRESSION2
-        //  inh.code.push(format!("{} {} {}", numexpression, op_expression, numexpression2));
+        // EXPRESSION -> NUMEXPRESSION
+        // EXPRESSION -> NUMEXPRESSION op_expression numexpression2 
         numexpression.generate_code(inh);
         if let Some(op_expression) = op_expression {
+          inh.code.push_str(" ");
           op_expression.generate_code(inh);
+          inh.code.push_str(" ");
         }
         if let Some(numexpression2) = numexpression2 {
           numexpression2.generate_code(inh);
         }
       },
       SemanticNodeData::Factor { expression, lvalue, constant } => {
-        // TODO: Verify this
         // FACTOR -> EXPRESSION
         // FACTOR -> LVALUE
         // FACTOR -> CONSTANT
         if let Some(expression) = expression {
+          inh.code.push_str("(");
           expression.generate_code(inh);
+          inh.code.push_str(")");
         } else if let Some(lvalue) = lvalue {
           lvalue.generate_code(inh);
         } else if let Some(constant) = constant {
           constant.generate_code(inh);
         }
       },
+      // TODO
       SemanticNodeData::Forstat { init, condition, increment, body } => {
-        // TODO: Verify this
-        // FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
-        //  inh.code.push(format!("for ({}; {}; {}) {{", init, condition, increment));
+        // FORSTAT -> ATRIBSTAT EXPRESSION ATRIBSTAT STATELIST
         inh.code.push_str("for (");
         init.generate_code(inh);
         inh.code.push_str("; ");
         condition.generate_code(inh);
         inh.code.push_str("; ");
         increment.generate_code(inh);
-        inh.code.push_str(") {");
+        inh.code.push_str(") {\n");
         body.generate_code(inh);
-        inh.code.push_str("}");
       },
+      // TODO achar um jeito de saber o tamanho da função
       SemanticNodeData::Funccall { id, paramlistcall } => {
-        // TODO: Verify this
         // FUNCCALL -> id
         // FUNCCALL -> id PARAMLISTCALL
         //  inh.code.push(format!("{}({})", id, paramlistcall));
@@ -605,12 +628,13 @@ impl SemanticNode {
         }
         inh.code.push_str(")");
       },
+      // TODO etender como funcionam as labels
       SemanticNodeData::Funcdef { func_id, paramlist, statelist } => {
-        // TODO: Verify this
-        // FUNCDEF -> kw_def id PARAMLIST lbrace STATELIST rbrace
+        // FUNCDEF -> func_id PARAMLIST STATELIST
+        // FUNCDEF -> func_id STATELIST
         let SemanticNodeData::Terminal { value } = &func_id.children else { panic!(); };
         let ConstType::String(func_name) = value.value.clone().unwrap() else { panic!(); };
-        inh.code.push_str(&format!("def {}(", func_name));
+        inh.code.push_str(&format!("function {}(", func_name));
         if let Some(paramlist) = paramlist {
           paramlist.generate_code(inh);
         }
@@ -618,15 +642,16 @@ impl SemanticNode {
         statelist.generate_code(inh);
       },
       SemanticNodeData::Funclist { funclist } => {
-        // TODO: Verify this
         // FUNCLIST -> FUNCDEF+
         for func in funclist.iter() {
           func.generate_code(inh);
         }
       },
+      // TODO
       SemanticNodeData::Ifstat { condition, then_branch, else_branch } => {
-        // TODO: Verify this
-        // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
+        
+        // IFSTAT -> EXPRESSION STATELIST
+        // IFSTAT -> EXPRESSION STATELIST STATELIST        
         inh.code.push_str("if (");
         condition.generate_code(inh);
         inh.code.push_str(") {\n");
@@ -639,81 +664,79 @@ impl SemanticNode {
         }
       },
       SemanticNodeData::Lvalue { id, var_index } => {
-        // TODO: Verify this
-        // LVALUE -> id VAR_INDEX
-        //  inh.code.push(format!("{}[{}]", id, var_index));
-        let SemanticNodeData::Terminal { value } = &id.children else { panic!(); };
-        let ConstType::String(id_name) = value.value.clone().unwrap() else { panic!(); };
-        inh.code.push_str(&format!("{}", id_name));
+        // LVALUE -> id
+        // LVALUE -> id VARINDEX        
+        id.generate_code(inh);
         if let Some(var_index) = var_index {
           var_index.generate_code(inh);
         }
+        inh.code.push_str(";\n");
       },
       SemanticNodeData::Numexpression { term, op_numexpression, term2 } => {
-        // TODO: Verify this
-        // NUMEXPRESSION -> TERM op_numexpression TERM2
-        //  inh.code.push(format!("{} {} {}", term, op_numexpression, term2));
+        // NUMEXPRESSION -> term
+        // NUMEXPRESSION -> term op_numexpression term2
         term.generate_code(inh);
         if let Some(op_numexpression) = op_numexpression {
+          inh.code.push_str(" ");
           op_numexpression.generate_code(inh);
+          inh.code.push_str(" ");
         }
         if let Some(term2) = term2 {
           term2.generate_code(inh);
         }
       },
       SemanticNodeData::OpExpression { op } => {
-        // TODO: Verify this
-        // OPEXPRESSION -> op_expression
+        // OP_EXPRESSION -> op_eq
+        // OP_EXPRESSION -> op_ne
+        // OP_EXPRESSION -> op_ge
+        // OP_EXPRESSION -> op_gt
+        // OP_EXPRESSION -> op_le
+        // OP_EXPRESSION -> op_lt        
         inh.code.push_str(&format!("{}", op.get_operator_type()));
       },
       SemanticNodeData::OpNumexpression { op } => {
-        // TODO: Verify this
-        // OPNUMEXPRESSION -> op_numexpression
+        // OP_NUMEXPRESSION -> op_plus
+        // OP_NUMEXPRESSION -> op_minus
         inh.code.push_str(&format!("{}", op.get_operator_type()));
       },
       SemanticNodeData::OpTerm { op } => {
-        // TODO: Verify this
-        // OPTERM -> op_term
+        // OP_TERM -> op_multiply
+        // OP_TERM -> op_division
+        // OP_TERM -> op_modular
         inh.code.push_str(&format!("{}", op.get_operator_type()));
       },
-      SemanticNodeData::Paramlist { paramlist } => {
-        // TODO: Verify this
+      SemanticNodeData::Paramlist { paramlist } => {        
+        // TODO Vai ficar vazio?
         // PARAMLIST -> (vartype id)+
-        //  inh.code.push(format!("{}: {}", vartype, id));
-        for param in paramlist.iter() {
-          let SemanticNodeData::Terminal { value } = &param.children else { panic!(); };
-          match value.token_type {
-            TokenType::VarType => {
-              // Get the type of the parameter
-              let var_type = value.value.as_ref().unwrap().get_keyword_type();
-              inh.code.push_str(&format!("{:?}: ", var_type));
-            },
-            TokenType::Id => {
-              // Get the name of the parameter
-              let ConstType::String(param_name) = value.value.clone().unwrap() else { panic!(); };
-              inh.code.push_str(&format!("{}", param_name));
-            },
-            _ => panic!(),
-          }
-          inh.code.push_str(", ");
-        }
       },
       SemanticNodeData::Paramlistcall { paramlist } => {
-        // TODO: Verify this
+        // TODO Verificar se é o jeito certo de calcular o tamanho dos parâmetros
         // PARAMLISTCALL -> (id)+
         for param in paramlist.iter() {
-          let SemanticNodeData::Terminal { value } = &param.children else { panic!(); };
-          let ConstType::String(param_name) = value.value.clone().unwrap() else { panic!(); };
-          inh.code.push_str(&format!("{}, ", param_name));
+          inh.code.push_str("PushParam ");
+          let param_start = inh.code.len();
+          param.generate_code(inh);
+          let param_length = inh.code.len() - param_start;
+          inh.memory_params.push(param_length);
+          inh.code.push_str(";\n");
         }
       },
       SemanticNodeData::Printstat { expression } => {
-        // TODO: Verify this
-        // PRINTSTAT -> kw_print lparenthesis EXPRESSION rparenthesis semicolon
-        inh.code.push_str("print(");
+        // TODO: Verify if this is correct
+        // PRINTSTAT -> EXPRESSION
+        // converts to TAC version of a print statement
+        // gets the value of the expression
         expression.generate_code(inh);
+        // loads as a parameter to the print function
+        inh.code.push_str(&format!("PushParam t{};", inh.last_temp));
+        // calls the print function
+        inh.code.push_str("LCall _PrintString;");
+        inh.code.push_str("PopParam 4;"); // Pop the parameter from the stack
+
       },
       SemanticNodeData::Program { funclist, statement } => {
+        // PROGRAM -> FUNCLIST
+        // PROGRAM -> STATEMENT
         if let Some(funclist) = funclist {
           funclist.generate_code(inh);
         } else if let Some(statement) = statement {
@@ -721,26 +744,31 @@ impl SemanticNode {
         }
       },
       SemanticNodeData::Readstat { lvalue } => {
-        // TODO: Verify this
-        // READSTAT -> kw_read lparenthesis LVALUE rparenthesis semicolon
-        inh.code.push_str("read(");
+        // TODO: Add parameters push and pop
+        // READSTAT -> LVALUE
+        // converts to TAC version of a read statement
+        inh.code.push_str("LCall _ReadLine;");
         lvalue.generate_code(inh);
-        inh.code.push_str(")");
       },
       SemanticNodeData::Returnstat { .. } => {
-        // TODO: Verify this
         // RETURNSTAT -> kw_return semicolon
-        inh.code.push_str("return;\n");
+        inh.code.push_str("Return;\n");
       },
       SemanticNodeData::Statelist { statelist } => {
-        // TODO: Verify this
         // STATELIST -> STATEMENT+
         for statement in statelist.iter() {
           statement.generate_code(inh);
         }
       },
       SemanticNodeData::Statement { vardecl, atribstat, ifstat, forstat, statelist, commandstat } => {
-        // TODO: Verify this
+        // STATEMENT -> VARDECL 
+        // STATEMENT -> ATRIBSTAT
+        // STATEMENT -> IFSTAT
+        // STATEMENT -> FORSTAT
+        // STATEMENT -> STATELIST
+        // STATEMENT -> PRINTSTAT
+        // STATEMENT -> READSTAT
+        // STATEMENT -> RETURNSTAT
         if let Some(vardecl) = vardecl {
           vardecl.generate_code(inh);
         } else if let Some(atribstat) = atribstat {
@@ -756,62 +784,54 @@ impl SemanticNode {
         }
       },
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
-        // TODO: Verify this
-        // TERM -> UNARYEXPRESSION op_term UNARYEXPRESSION2
-        //  inh.code.push(format!("{} {} {}", unaryexpression, op_term, unaryexpression2));
+        // TERM -> UNARYEXPRESSION
+        // TERM -> UNARYEXPRESSION op_term UNARYEXPRESSION
         unaryexpression.generate_code(inh);
         if let Some(op_term) = op_term {
-          if let SemanticNodeData::OpExpression { op } = op_term.children {
-            inh.code.push_str(&format!("{}", op.get_operator_type()));
-          }
+          inh.code.push_str(" ");
+          op_term.generate_code(inh);
+          inh.code.push_str(" ");
         }
         if let Some(unaryexpression2) = unaryexpression2 {
           unaryexpression2.generate_code(inh);
         }
       },
       SemanticNodeData::Unaryexpression { op, factor } => {
-        // TODO: Verify this
-        // UNARYEXPRESSION -> op_factor factor
-        // UNARYEXPRESSION -> factor
+        // UNARYEXPRESSION -> FACTOR
+        // UNARYEXPRESSION -> op FACTOR
         if let Some(op) = op {
-          if let SemanticNodeData::OpExpression { op } = op.children {
-            inh.code.push_str(&format!("{}", op.get_operator_type()));
-          }
+          inh.code.push_str(" ");
+          op.generate_code(inh);
+          inh.code.push_str(" ");
         }
         factor.generate_code(inh);
       },
-      SemanticNodeData::Vardecl { var_type, id, const_index } => {
-        // TODO: Verify this
-        // VDECL -> vartype id const_index?
-        //  inh.code.push(format!("{} {} = ", var_type, id));
-        let SemanticNodeData::Terminal { value: var_type_node } = &var_type.children else { panic!(); };
-        let var_type_val = var_type_node.value.as_ref().unwrap().get_keyword_type();
-        let SemanticNodeData::Terminal { value: id_node } = &id.children else { panic!(); };
-        let ConstType::String(id_name) = id_node.value.clone().unwrap() else { panic!(); };
-        inh.code.push_str(&format!("{:?} {} = ", var_type_val, id_name));
+      SemanticNodeData::Vardecl { id, const_index, .. } => {
+        // TODO Como criar uma variável vazia? Estou sempre iniciando com 0 por agora
+        //VARDECL -> var_type id
+        //VARDECL -> var_type id CONSTINDEX
+        // cria uma variável local com um identificador especificado, não tX
+        id.generate_code(inh);
         if let Some(const_index) = const_index {
           const_index.generate_code(inh);
-        } else {
-          inh.code.push_str("0"); // Default value for uninitialized variables
         }
+        // Initialize the variable to 0
+        inh.code.push_str(" = 0;\n");
+
       },
       SemanticNodeData::VarIndex { index } => {
-        // TODO: Verify this
-        // VAR_INDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
-        inh.code.push_str("[");
+        // VARINDEX -> [NUMEXPRESSION1, NUMEXPRESSION2, NUMEXPRESSION3]
         for child in index.iter() {
+          inh.code.push_str("[");
           child.generate_code(inh);
-          inh.code.push_str(", ");
-        }
-        if !index.is_empty() {
-          inh.code.pop(); // Remove last comma
-          inh.code.pop(); // Remove last space
+          inh.code.push_str("]");
         }
       },
       SemanticNodeData::Terminal { value: token } => {
+        // TODO: Verificar o resto dos terminais
         match token.token_type {
-          TokenType::Eof => {
-            inh.code.push_str("\n");
+          TokenType::Id | TokenType::FuncId => {
+            inh.code.push_str(&format!("{}", token.value.as_ref().unwrap().to_string()));
           },
           TokenType::ConstInt | TokenType::ConstFloat | TokenType::ConstString => {
             inh.code.push_str(&format!("{}\n", token.value.as_ref().unwrap().to_string()));
@@ -820,11 +840,16 @@ impl SemanticNode {
             // TODO: É isso que null deveria ser?
             inh.code.push_str("0\n");
           },
+          TokenType::VarType => {
+            // adds the vartype to the code
+            let var_type = token.value.as_ref().unwrap().get_keyword_type();
+            inh.code.push_str(&format!("{:?} ", var_type));
+          },
           TokenType::KwIf => {
-            // TODO: Handle if condition
+            panic!("If keyword should not appear on generated code");
           },
           TokenType::KwFor => {
-            // TODO: Handle for loop condition
+            panic!("For keyword should not appear on generated code");
           }
           TokenType::OpEq | TokenType::OpNe | TokenType::OpGt | TokenType::OpGe |
             TokenType::OpLt | TokenType::OpLe | TokenType::OpPlus | TokenType::OpMinus |
@@ -832,25 +857,24 @@ impl SemanticNode {
             => {
             inh.code.push_str(&format!("{} ", token.token_type.get_operator_type()));
           },
-          TokenType::Id => {
-            // TODO:
-          },
-          TokenType::FuncId => {
-            // TODO: Maybe create a label for function calls
-          },
           TokenType::KwBreak => {
-            // TODO: Handle loop break condition
+            panic!("Break keyword should not appear on generated code");
           },
           TokenType::KwNew => {
-            // TODO: Handle memory allocation 
+            // This is usually handled in the AllocExpression node
+            panic!("New keyword should not appear on generated code");
           },
           TokenType::KwPrint => {
-            // TODO: Handle print syscall
+            // This is usually handled in the PrintStat node
+            panic!("Print keyword should not appear on generated code");
           },
           TokenType::KwRead => {
-            // TODO: Handle print syscall
+            // This is usually handled in the ReadStat node
+            panic!("Read keyword should not appear on generated code");
           },
-          _ => {}
+          _ => {
+            panic!("Unexpected token type in code generation: {:?}", token.token_type);
+          }
             
         }
       }
@@ -1445,11 +1469,7 @@ impl SemanticTree {
 
   pub fn _generate_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
-    let mut code_attrs = CodeAttrs {
-      register_counter: 0,
-      label_counter: 0,
-      code: String::new(),
-    };
+    let mut code_attrs = CodeAttrs::new();
     self.root.generate_code(&mut code_attrs);
     writeln!(file, "{}", code_attrs.code)?;
     Ok(())
