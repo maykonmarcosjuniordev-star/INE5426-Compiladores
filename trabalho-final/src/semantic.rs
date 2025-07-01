@@ -43,7 +43,7 @@ impl SemanticNode {
 
         // Check if the variable is declared in the current scope
         let Some(symbol_entry) = scopes.get_symbol(&id_name) else {
-          return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
+          return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual na linha {}, coluna {}", id_name, id_token.line, id_token.column).into());
         };
 
         let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
@@ -57,7 +57,7 @@ impl SemanticNode {
             let tipo = child.semantic_analysis(scopes)?;
             if let Some(ReturnSem::Tipo(tipo)) = tipo {
               if tipo != VarType::Int {
-                return Err(format!("Erro semântico: índice de variável deve ser do tipo 'int', encontrado '{:?}'", tipo).into());
+                return Err(format!("Erro semântico: índice de variável deve ser do tipo 'int', encontrado '{:?}' na linha {}, coluna {}", tipo, 0, 0).into());
               }
             } else {
               panic!(); 
@@ -105,9 +105,9 @@ impl SemanticNode {
         //   _ => panic!()
         // }
         // EXPRESSION.tipo = children[0].tipo
-        let tipo1 = numexpression.semantic_analysis(scopes).unwrap().unwrap();
+        let tipo1 = numexpression.semantic_analysis(scopes)?.unwrap();
         if let Some(numexpression2) = numexpression2 {
-          let tipo2 = numexpression2.semantic_analysis(scopes).unwrap().unwrap();
+          let tipo2 = numexpression2.semantic_analysis(scopes)?.unwrap();
           if tipo1 != tipo2 {
             return Err("Type mismatch in expression".into());
           } else {
@@ -151,7 +151,7 @@ impl SemanticNode {
       },
       SemanticNodeData::Funccall {id, paramlistcall} => {
         let SemanticNodeData::Terminal { value } = id.children else { panic!() };
-        let ConstType::String(func_id) = value.value.clone().unwrap() else { panic!() };
+        let (ConstType::String(func_id), func_line, func_col) = (value.value.clone().unwrap(), value.line, value.column) else { panic!() };
         let Some(func_types) = scopes.get_symbol(&func_id) else { return Err("Erro Semântico: função não definida nesse escopo".into()); };
         
         let mut called_types: Vec<VarType> = vec![];
@@ -167,11 +167,12 @@ impl SemanticNode {
                 Some(symbol_entry) => {
                   let var_type = symbol_entry.var_type.clone();
                   if var_type.len() > 1 {
+                    // Esse erro é tratado na análise sintática
                     return Err(format!("Erro semântico: função '{}' não pode ser passada como parâmetro de outra função", param_value).into());
                   }
                   called_types.push(var_type.first().unwrap().clone());
                 },
-                None => return Err(format!("Erro semântico: variável '{}' não definida no escopo atual", param_value).into()),
+                None => return Err(format!("Erro semântico: variável '{}' não definida no escopo atual na linha {}, coluna {}", param_value, value.line, value.column).into()),
               }
               // Count the appearance of the parameter
               scopes.count_appearance(&param_value, value.line, value.column)?;
@@ -182,7 +183,7 @@ impl SemanticNode {
 
         // Check if called_types matches func_types
         if func_types.var_type != called_types {
-          return Err(format!("Erro semântico: tipos de parâmetros incompatíveis na chamada da função '{}'", func_id).into());
+          return Err(format!("Erro semântico: tipos de parâmetros incompatíveis na chamada da função '{}' na linha {}, coluna {}", func_id, func_line, func_col).into());
         }
         // Count the appearance of the function
         scopes.count_appearance(&func_id, value.line, value.column)?;
@@ -285,7 +286,7 @@ impl SemanticNode {
         if let Some(term2) = term2 {
           let tipo2 = term2.semantic_analysis(scopes)?.unwrap();
           if tipo1 != tipo2 {
-            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna " ).into());
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha {} coluna {}", 0, 0).into());
           }
         }
         // NUMEXPRESSION.children { 
@@ -331,10 +332,10 @@ impl SemanticNode {
         scopes.count_appearance(&id_name, id_token.line, id_token.column)?;
         // Check variable type
         let Some(symbol_entry) = scopes.get_symbol(&id_name) else {
-          return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
+          return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
         };
         if symbol_entry.var_type[0] != VarType::String {
-          return Err(format!("Erro semântico: comando Read deve atribuir valor a uma variável de tipo string, mas tipo {:?} foi encontrado na linha {} coluna {}", symbol_entry.var_type[0], id_token.column, id_token.line).into());
+          return Err(format!("Erro semântico: comando Read deve atribuir valor a uma variável de tipo string, mas tipo {:?} foi encontrado na linha {} coluna {}", symbol_entry.var_type[0], id_token.line, id_token.column).into());
         }
         Ok(None)
       },
@@ -361,14 +362,14 @@ impl SemanticNode {
         if let Some(commandstat) = commandstat {
           match &commandstat.children {
             SemanticNodeData::Returnstat { token } => {
-              if !scopes.contains(ScopeType::Function) { return Err(format!("Erro semântico: Comando \"return\" fora de um laço de repetição na linha {} coluna {}", token.line, token.column).into()); }
+              if !scopes.contains(ScopeType::Function) { return Err(format!("Erro semântico: Comando 'return' fora de um laço de repetição na linha {} coluna {}", token.line, token.column).into()); }
             },
             // STATEMENT -> kw_break semicolon
             //  if !STATEMENT.scopes.contains(ScopeType::Loop) { ERRO("Break keyword usada fora de um laço de repetição"); }
             SemanticNodeData::Terminal { value } => {
               if value.token_type == TokenType::KwBreak {
                 if !scopes.contains(ScopeType::Loop) {
-                  return Err(format!("Erro semântico: Comando \"break\" fora de um laço de repetição na linha {} coluna {}", value.line, value.column).into());
+                  return Err(format!("Erro semântico: Comando 'break' fora de um laço de repetição na linha {} coluna {}", value.line, value.column).into());
                 }
               }
             },
@@ -384,7 +385,7 @@ impl SemanticNode {
         if let Some(unaryexpression2) = unaryexpression2 {
           let tipo2 = unaryexpression2.semantic_analysis(scopes)?.unwrap();
           if tipo1 != tipo2 {
-            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha coluna").into());
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha {} coluna {}", 0, 0).into());
           }
         }
         return Ok(Some(tipo1));
@@ -491,7 +492,7 @@ impl SemanticNode {
             // Count the appearance of the variable
             scopes.count_appearance(&id_name, token.line, token.column)?;
             let Some(symbol_entry) = scopes.get_symbol(&id_name) else {
-              return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
+              return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual na linha {} columna {}", id_name, token.line, token.column).into());
             };
             let tipo = symbol_entry.var_type[0].clone();
             Ok(Some(ReturnSem::Tipo(tipo)))

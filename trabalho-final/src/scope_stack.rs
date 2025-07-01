@@ -68,7 +68,8 @@ impl ScopeStack {
     // Se o escopo atual já contém o símbolo, retorna erro semântico de redefinição de símbolo.
     let table = &mut current_scope.1;
     if table.contains_key(&name) {
-      return Err(format!("Erro semântico: Redefinição do símbolo '{}' ", name).into());
+      let (line, column) = entry.appearances.last().unwrap_or(&(0, 0));
+      return Err(format!("Erro semântico: Redefinição de símbolo na linha {}, coluna {}: '{}'", line, column, name).into());
     }
     table.insert(name, entry);
 
@@ -90,14 +91,14 @@ impl ScopeStack {
     for scope in self.stack.iter_mut().rev() {
       if scope.1.contains_key(name) {
         scope.1.get_mut(name)
-          .ok_or_else(|| format!("Erro semântico: Símbolo '{}' não encontrado", name))?
+          .ok_or_else(|| format!("Erro semântico: Símbolo não encontrado na linha {}, coluna {}: {}", line, column, name))?
           .appearances.push((line, column));
         
         return Ok(());
       }
     }    
     
-    Err(format!("Erro semântico: Símbolo '{}' não encontrado", name).into())
+    Err(format!("Erro semântico: Símbolo não encontrado na linha {}, coluna {}: {}", line, column, name).into())
   }
 
   pub fn contains(&self, scope_type: ScopeType) -> bool {

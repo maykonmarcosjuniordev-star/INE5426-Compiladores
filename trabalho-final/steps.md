@@ -79,6 +79,7 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
 - [-] Readme
 - [ ] Saída do programa no terminal
  - [-] Árvores de expressão
+   - [ ] Existem 3 pontos no código no qual o erro semântico não tem acesso à linha e coluna do código fonte na qual o erro acontece. Esses pontos podem ser identificados pela presença de "0, 0" no lugar dos valores apropriados.
  - [-] Tabela de símbolos com tipo
  - [ ] Mensagem de sucesso para a análise das expressões
  - [ ] Mensagem de sucesso para a análise das declarações por escopo
