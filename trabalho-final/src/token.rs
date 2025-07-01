@@ -18,6 +18,15 @@ impl std::fmt::Debug for Token {
   }
 }
 
+impl std::fmt::Display for Token {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match &self.value {
+      Some(value) => write!(f, "{}", value),
+      None => write!(f, "{}", self.token_type),
+    }
+  }
+}
+
 impl Token {
   pub fn get_type(&self) -> VarType {
     match self.token_type {

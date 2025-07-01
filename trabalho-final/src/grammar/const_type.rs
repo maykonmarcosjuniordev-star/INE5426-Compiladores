@@ -39,6 +39,16 @@ impl ConstType {
   }
 }
 
+impl std::fmt::Display for ConstType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      ConstType::Int(i) => write!(f, "{}", i),
+      ConstType::Float(fl) => write!(f, "{}", fl),
+      ConstType::String(s) => write!(f, "{}", s),
+    }
+  }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum VarType {
   Int,

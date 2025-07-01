@@ -6,7 +6,7 @@ def @b(int a) {
   a = a + 1 - 2;
   a = @b(a);
   print a;
-  string c;
+  c;
   read c;
   return;
 }

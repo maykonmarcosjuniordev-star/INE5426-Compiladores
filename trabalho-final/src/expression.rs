@@ -65,6 +65,7 @@ impl ExpressionTreeNode {
 #[derive(Debug)]
 pub enum Operator {
   Eq,
+  Ne,
   Gt,
   Ge,
   Lt,
@@ -80,6 +81,7 @@ impl std::fmt::Display for Operator {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let symbol = match self {
       Operator::Eq => "==",
+      Operator::Ne => "!=",
       Operator::Gt => ">",
       Operator::Ge => ">=",
       Operator::Lt => "<",

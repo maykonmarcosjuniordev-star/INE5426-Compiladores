@@ -81,10 +81,11 @@ with open("scripts/token_type_template.txt") as f: token_type_template = f.read(
 with open("src/grammar/token_type.rs", "w") as f:
   token_list = "  ".join([f"{clean_token(token)},\n" for token in sorted(terminals)])[:-1]
   token_string_list = "      ".join([f"\"{token}\" => Ok(TokenType::{clean_token(token)}),\n" for token in sorted(terminals)])[:-1]
+  token_type_display = "      ".join([f"TokenType::{clean_token(token)} => write!(f, \"{token}\"),\n" for token in sorted(terminals)])[:-1]
   valued_string = " | ".join([f"TokenType::{clean_token(token)}" for token in VALUED_TOKENS])
   id_tokens = " | ".join([f"TokenType::{clean_token(token)}" for token in ID_TOKENS])
   operators = "      ".join([f"TokenType::{clean_token(token)} => Operator::{clean_token(token)[2:]},\n" for token in OPERATORS])
-  f.write(token_type_template.format(token_list=token_list, token_string_list=token_string_list, valued_string=valued_string, id_tokens=id_tokens, script_name=SCRIPT_NAME, operators=operators))
+  f.write(token_type_template.format(token_list=token_list, token_string_list=token_string_list, token_type_display=token_type_display, valued_string=valued_string, id_tokens=id_tokens, script_name=SCRIPT_NAME, operators=operators))
 
 # Criar NonTerminal enum
 def clean_variable(var: str) -> str:

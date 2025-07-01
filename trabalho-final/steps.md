@@ -63,15 +63,15 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
 - [ ] What the title says
 
 # Entrega
-- [ ] Programa com todas as fases
+- [-] Programa com todas as fases
   - [-] Análise Léxica
   - [-] Análise Sintática
   - [-] Análise Semântica
-  - [ ] Geração de Código Intermediário (Deus)
+  - [-] Geração de Código Intermediário (Deus)
 - [-] 3 Programas escritos na linguagem. +100 linhas. (Clara)
 - [ ] Makefile (Maykon)
     - [ ] Definir se as dependências já estarão précompiladas ou se os scripts precisarão ser rodados pelo professor.
-    - [ ] Criar função para execução direta do binário com um arquivo de entrada, de forma não interativa.
+    - [-] Criar função para execução direta do binário com um arquivo de entrada, de forma não interativa.
     - [ ] Retornar toda a saída necessária do programa no terminal. (cat dos arquivos da pasta output)
 - [ ] Documentação
  - [-] Documento com prova de que a gramática está em LL1

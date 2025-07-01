@@ -104,6 +104,7 @@ impl TokenType {
   pub fn get_operator_type(&self) -> Operator {
     match self {
       TokenType::OpEq => Operator::Eq,
+      TokenType::OpNe => Operator::Ne,
       TokenType::OpGt => Operator::Gt,
       TokenType::OpGe => Operator::Ge,
       TokenType::OpLt => Operator::Lt,
@@ -113,7 +114,52 @@ impl TokenType {
       TokenType::OpMultiply => Operator::Multiply,
       TokenType::OpDivision => Operator::Division,
       TokenType::OpModular => Operator::Modular,
+
       _ => panic!()
+    }
+  }
+}
+
+impl std::fmt::Display for TokenType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      TokenType::Comma => write!(f, ","),
+      TokenType::ConstFloat => write!(f, "const_float"),
+      TokenType::ConstInt => write!(f, "const_int"),
+      TokenType::ConstNull => write!(f, "null"),
+      TokenType::ConstString => write!(f, "const_string"),
+      TokenType::Eof => write!(f, "eof"),
+      TokenType::FuncId => write!(f, "func_id"),
+      TokenType::Id => write!(f, "id"),
+      TokenType::KwBreak => write!(f, "break"),
+      TokenType::KwDef => write!(f, "def"),
+      TokenType::KwElse => write!(f, "else"),
+      TokenType::KwFor => write!(f, "for"),
+      TokenType::KwIf => write!(f, "if"),
+      TokenType::KwNew => write!(f, "new"),
+      TokenType::KwPrint => write!(f, "print"),
+      TokenType::KwRead => write!(f, "read"),
+      TokenType::KwReturn => write!(f, "return"),
+      TokenType::Lbrace => write!(f, "{{"),
+      TokenType::Lbracket => write!(f, "["),
+      TokenType::Lparenthesis => write!(f, "("),
+      TokenType::OpAssign => write!(f, "="),
+      TokenType::OpDivision => write!(f, "/"),
+      TokenType::OpEq => write!(f, "=="),
+      TokenType::OpGe => write!(f, ">="),
+      TokenType::OpGt => write!(f, ">"),
+      TokenType::OpLe => write!(f, "<="),
+      TokenType::OpLt => write!(f, "<"),
+      TokenType::OpMinus => write!(f, "-"),
+      TokenType::OpModular => write!(f, "%"),
+      TokenType::OpMultiply => write!(f, "*"),
+      TokenType::OpNe => write!(f, "!="),
+      TokenType::OpPlus => write!(f, "+"),
+      TokenType::Rbrace => write!(f, "}}"),
+      TokenType::Rbracket => write!(f, "]"),
+      TokenType::Rparenthesis => write!(f, ")"),
+      TokenType::Semicolon => write!(f, ";"),
+      TokenType::VarType => write!(f, "var_type"),
     }
   }
 }

@@ -52,7 +52,7 @@ impl Node {
       Symbol::Terminal(token_type, _) => {
         // Se o token lido for diferente do esperado, retorna um erro sintático
         if *token_type != current_token.token_type { 
-          return Err(format!("Erro sintático: esperava {:?}, mas encontrou {:?} na linha {}, coluna {}", token_type, current_token.token_type, current_token.line, current_token.column).into());
+          return Err(format!("Erro sintático: esperava {:?}, mas encontrou {} na linha {}, coluna {}", token_type, current_token.token_type, current_token.line, current_token.column).into());
         }
         // Caso contrário, avança para o próximo token
         self.value = Symbol::Terminal(*token_type, Some(current_token.clone()));
@@ -62,7 +62,7 @@ impl Node {
       Symbol::NonTerminal(non_terminal) => {
         // Se a tabela LL1 não contiver uma entrada para o não terminal e o token atual, retorna um erro sintático
         let Some(rule_index) = self.parse_table.get(&(*non_terminal, current_token.token_type)) else {
-          return Err(format!("Erro sintático: não há regra para {:?} com o token {:?} na linha {}, coluna {}", non_terminal, current_token.token_type, current_token.line, current_token.column).into());
+          return Err(format!("Erro sintático: token inesperado encontrado na linha {}, coluna {}: {}", current_token.line, current_token.column, current_token).into());
         };
         let rule_index = *rule_index;
         // Se a produção for vazia, não precisa fazer nada
@@ -831,13 +831,6 @@ impl SyntaxTree {
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn Error>> {
     let mut counter = 0;
     self.root.parse(tokens, &mut counter)?;
-    // Como a regra sintática explicita a criação do token de fim de arquivo,
-    // não é possível que o parser encerre sem consumir o token de fim de arquivo, que só é inserido no final da lista de tokens.
-    // Logo, essa verificação é desnecessária. :D
-    // let last_token = &tokens[counter];
-    // if counter != tokens.len() {
-    //   return Err(format!("Erro sintático: Parsing terminou, mas ainda há tokens após a linha {} coluna {}", last_token.line, last_token.column).into());
-    // }
     Ok(())
   }
   pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
