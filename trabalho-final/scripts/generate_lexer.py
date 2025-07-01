@@ -1,7 +1,11 @@
 import json
 from fda import FDA
 
-VALID_LETTERS = { chr(i) for i in range(256) if chr(i).isalpha() and chr(i).islower() }
+# Escolha a lista de caracteres válidos para os identificadores.
+# Todos os caracteres alfabéticos minúsculos, inclui acentos 
+# VALID_LETTERS = { chr(i) for i in range(256) if chr(i).isalpha() and chr(i).islower() }
+# Apenas a-z, exclui acentos
+VALID_LETTERS = { chr(i) for i in range(97, 97+27) }  # a-z in ASCII
 EMPTY_CHARS = { chr(i) for i in range(256) if chr(i).isspace() }
 
 with open("grammars/tokens.json", "r") as f: token_types = json.load(f)
