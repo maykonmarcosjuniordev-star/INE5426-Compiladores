@@ -41,7 +41,7 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
   - [ ] Separar as regras sintáticas relacionadas
   - [ ] Adicionar comentários com as regras semânticas
   - [ ] Comparar a implementação com as regras semânticas
-- [ ] Inserção de ids na tabela de símbolos
+- [-] Inserção de ids na tabela de símbolos
   - [ ] Posição da aparição dos ids está zoada
   - [ ] Separar as regras sintáticas relacionadas
   - [ ] Adicionar comentários com as regras semânticas
@@ -60,7 +60,7 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
 - [ ] No momento, verificação de tipos é feita utilizando a árvore semântica. Seria mais eficiente realizar essa verificação diretamente na árvore de expressão.
 
 # Geração de Código Intermediário
-- [ ] What the title says
+- [ ] Corrigir cálculo de registradores
 
 # Entrega
 - [-] Programa com todas as fases
@@ -69,10 +69,10 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
   - [-] Análise Semântica
   - [-] Geração de Código Intermediário (Deus)
 - [-] 3 Programas escritos na linguagem. +100 linhas. (Clara)
-- [ ] Makefile (Maykon)
-    - [ ] Definir se as dependências já estarão précompiladas ou se os scripts precisarão ser rodados pelo professor.
+- [-] Makefile (Maykon)
+    - [-] Definir se as dependências já estarão précompiladas ou se os scripts precisarão ser rodados pelo professor.
     - [-] Criar função para execução direta do binário com um arquivo de entrada, de forma não interativa.
-    - [ ] Retornar toda a saída necessária do programa no terminal. (cat dos arquivos da pasta output)
+    - [-] Retornar toda a saída necessária do programa no terminal. (cat dos arquivos da pasta output)
 - [ ] Documentação
  - [-] Documento com prova de que a gramática está em LL1
  - [ ] Documento com prova de que as SDDs são L-atribuídas (Clara)
@@ -81,9 +81,9 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
  - [-] Árvores de expressão
    - [ ] Existem 3 pontos no código no qual o erro semântico não tem acesso à linha e coluna do código fonte na qual o erro acontece. Esses pontos podem ser identificados pela presença de "0, 0" no lugar dos valores apropriados.
  - [-] Tabela de símbolos com tipo
- - [ ] Mensagem de sucesso para a análise das expressões
- - [ ] Mensagem de sucesso para a análise das declarações por escopo
- - [ ] Mensagem de sucesso para a análise de comandos por escopo
- - [ ] Código intermediário
- - [ ] Mensagem detalhada de erro caso haja erro no código fonte. Lembrando que o processo de compilação encerra no momento em que o primeiro erro for encontrado, independentemente da etapa de compilação.
+ - [-] Mensagem de sucesso para a análise das expressões
+ - [-] Mensagem de sucesso para a análise das declarações por escopo
+ - [-] Mensagem de sucesso para a análise de comandos por escopo
+ - [-] Código intermediário
+ - [-] Mensagem detalhada de erro caso haja erro no código fonte. Lembrando que o processo de compilação encerra no momento em que o primeiro erro for encontrado, independentemente da etapa de compilação.
 - [-] Cabeçalho com nomes dos integrantes

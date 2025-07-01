@@ -2,7 +2,7 @@
 ## Construção de um compilador para a linguagem ConvCC-2025-1
 Esse repositório consiste na construção de um compilador para geração de código intermediário da gramática ConvCC-2025-1.
 
-O trabalho foi feito pelos alunos
+## Integrantes
 - Beatriz de Quadros Schmitt - 22100608
 - Clara Rosa Oliveira Gonçalves - 22103511
 - Gabriel Sartori Rangel - 22100617

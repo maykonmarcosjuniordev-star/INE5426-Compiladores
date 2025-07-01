@@ -1,14 +1,12 @@
 all:
-	mkdir -p inputs
 	mkdir -p machines
-	mkdir -p output
-	mkdir -p output/expression_trees
-	python3 scripts/generate_lexer.py
+	# TODO: Buscar versão python e usar a apropriada
+	python3.10 scripts/generate_lexer.py
 	cargo --quiet build --release
 	clear
-	@echo "Compilação concluída com sucesso!"
-	@echo "Para executar o analisador léxico, use o comando 'make run'"
-	@echo "Ou, para rodar diretamente, use './target/release/compiler <caminho_para_o_arquivo>'"
+	@echo "Compilação concluída com sucesso. Binário salvo em './target/release/compiler'"
+	@echo "Para compilador um arquivo contendo código fonte, use './target/release/compiler <caminho_para_o_arquivo>'"
+	@echo "Ou, para executar o compilador de forma interativa, use o comando 'make run'"
 
 
 run:
