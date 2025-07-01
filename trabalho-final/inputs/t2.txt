@@ -6,7 +6,7 @@ if (1 <= 10) {
   print i;
   read i[x][5];
 
-  return;
+  ;
 } else if ( 2 < 5) {
   int i;
   int x[5];

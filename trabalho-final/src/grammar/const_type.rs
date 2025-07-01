@@ -34,7 +34,7 @@ impl ConstType {
     match self {
       ConstType::Int(i) => i.to_string(),
       ConstType::Float(f) => f.to_string(),
-      ConstType::String(s) => s.clone(),
+      ConstType::String(s) => s.replace("\"", "\\\"")
     }
   }
 }

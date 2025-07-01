@@ -2,7 +2,6 @@ use core::panic;
 use std::error::Error;
 use std::io::Write;
 use crate::code_attrs::CodeAttrs;
-use crate::grammar::token_type;
 use crate::scope_stack::ScopeStack;
 use crate::scope_stack::ScopeType;
 use crate::scope_stack::SymbolEntry;
@@ -47,7 +46,6 @@ impl SemanticNode {
           return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual", id_name).into());
         };
 
-        println!("{:?} ", value);
         let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
         if value_type != symbol_entry.var_type[0] {
           return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
@@ -363,7 +361,7 @@ impl SemanticNode {
         if let Some(commandstat) = commandstat {
           match &commandstat.children {
             SemanticNodeData::Returnstat { token } => {
-              if !scopes.contains(ScopeType::Function) { return Err(format!("Erro semântico: Comando \"break\" fora de um laço de repetição na linha {} coluna {}", token.line, token.column).into()); }
+              if !scopes.contains(ScopeType::Function) { return Err(format!("Erro semântico: Comando \"return\" fora de um laço de repetição na linha {} coluna {}", token.line, token.column).into()); }
             },
             // STATEMENT -> kw_break semicolon
             //  if !STATEMENT.scopes.contains(ScopeType::Loop) { ERRO("Break keyword usada fora de um laço de repetição"); }

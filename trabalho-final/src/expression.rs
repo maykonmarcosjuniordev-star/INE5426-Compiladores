@@ -107,7 +107,7 @@ impl std::fmt::Display for Operand {
     let value = match self {
       Operand::Integer(i) => i.to_string(),
       Operand::Float(fl) => fl.to_string(),
-      Operand::String(s) => format!("\"{}\"", s),
+      Operand::String(s) => s.replace("\"", "\\\""),
       Operand::Identifier(id) => if id.starts_with("@") {
         format!("Função {}", id)
       } else {
