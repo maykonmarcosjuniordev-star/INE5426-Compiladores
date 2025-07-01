@@ -162,7 +162,7 @@ impl Lexer {
     Ok(())
   }
 
-  pub fn save_token_list(&self, path: &str) -> Result<(), Box<dyn Error>> {
+  pub fn _save_token_list(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     for token in &self.token_list {
       writeln!(file, "{:?}", token)?;
@@ -171,7 +171,7 @@ impl Lexer {
     Ok(())
   }
 
-  pub fn save_token_table(&self, path: &str) -> Result<(), Box<dyn Error>> {
+  pub fn _save_token_table(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     for (key, value) in &self.token_table {
       writeln!(file, "{}: {:?}", key, value)?;

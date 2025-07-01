@@ -833,7 +833,7 @@ impl SyntaxTree {
     self.root.parse(tokens, &mut counter)?;
     Ok(())
   }
-  pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
+  pub fn _save(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     writeln!(file, "// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot")?;
     writeln!(file, "digraph G {{")?;

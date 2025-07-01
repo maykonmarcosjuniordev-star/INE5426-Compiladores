@@ -1513,7 +1513,7 @@ impl SemanticTree {
     Ok(())
   }
 
-  pub fn save(&self, path: &str) -> Result<(), Box<dyn Error>> {
+  pub fn _save(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     let mut output = "digraph G {\n".to_string();
     self.root.save(&mut output, &mut 0);
@@ -1523,7 +1523,7 @@ impl SemanticTree {
     Ok(())
   }
 
-  pub fn save_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
+  pub fn _save_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     let mut code_attrs = CodeAttrs::new();
     self.root.generate_code(&mut code_attrs);
@@ -1550,11 +1550,12 @@ impl SemanticTree {
     self.root.save(&mut ast, &mut 0);
     println!("{}", ast);
     let expression_trees = self.create_expression_trees();
-    println!("Árvores de expressão geradas: {}", expression_trees.len());
+    println!("Árvores de expressão geradas: {} [", expression_trees.len());
     for (i, tree) in expression_trees.iter().enumerate() {
       println!("Árvore de expressão {}:\n{}", i + 1, tree.output());
     }
-    println!("Tipos de símbolos por escopo:\n{:?}", self.scopes);
+    println!("]");
+    println!("Tipos de símbolos por escopo:\n{}", self.scopes.output);
     println!("Verificação de tipos: Ok");
     println!("Verificação identificadores de escopos: Ok");
     println!("Verificação de comandos por escopo: Ok\n");

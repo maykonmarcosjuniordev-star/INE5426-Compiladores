@@ -6,7 +6,7 @@ pub struct ExpressionTree {
 }
 
 impl ExpressionTree {
-  pub fn save(&self, path: &str) {
+  pub fn _save(&self, path: &str) {
     let mut file = File::create(format!("output/{}", path)).expect("Failed to create output file for expression tree");
     let mut output = String::new();
     output.push_str("digraph ExpressionTree {\n");

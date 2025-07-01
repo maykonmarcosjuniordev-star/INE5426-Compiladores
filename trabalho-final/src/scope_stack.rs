@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
 use crate::grammar::const_type::VarType;
-use std::fs::{File, OpenOptions}; // Import Write trait for writeln! macro
-use std::io::Write; // Import Write trait for writeln! macro
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ScopeType {
@@ -26,18 +24,14 @@ type Scope = (ScopeType, HashMap<String, SymbolEntry>);
 #[derive(Debug)]
 pub struct ScopeStack {
   pub stack: Vec<Scope>,
-  file: File,
+  pub output: String,
 }
 
 impl ScopeStack {
   pub fn new() -> Self {
     ScopeStack { 
       stack: vec![(ScopeType::Any, HashMap::new())],
-      file: OpenOptions::new()
-        .create(true)
-        .write(true)
-        .open("output/scope_stack.log")
-        .expect("Unable to open file"),
+      output: String::new(),
     }
   }
 
@@ -58,7 +52,8 @@ impl ScopeStack {
         }
       }
     }
-    writeln!(self.file, "{}\n", scope_display).unwrap();
+    scope_display.push_str("\n");
+    self.output.push_str(&scope_display);
     x
   }
 
