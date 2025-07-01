@@ -1291,8 +1291,6 @@ impl SemanticNode {
         if let Some(value) = &token.value {
           let nome = format!("{:?}", value).replace("\"", "\\\"");
           output.push_str(&format!("  {} [label=\"{}\"]\n", count, nome));
-        } else {
-          println!("Warning: Terminal node {:?}", token);
         }
       }
     }
@@ -1525,7 +1523,7 @@ impl SemanticTree {
     Ok(())
   }
 
-  pub fn _generate_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
+  pub fn save_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     let mut code_attrs = CodeAttrs::new();
     self.root.generate_code(&mut code_attrs);
@@ -1533,9 +1531,32 @@ impl SemanticTree {
     Ok(())
   }
 
+  pub fn generate_code(&self) -> String {
+    let mut code_attrs = CodeAttrs::new();
+    self.root.generate_code(&mut code_attrs);
+    code_attrs.code
+  }
+
   pub fn create_expression_trees(&self) -> Vec<ExpressionTree> {
     let mut trees = Vec::new();
     self.root.create_expression_tree(&mut trees);
     trees
+  }
+
+  pub fn output_stats(&self) {
+    println!("\nAnálise semântica concluída com sucesso!");
+    println!("Árvore semântica construída a partir da árvore sintática:");
+    let mut ast = String::new();
+    self.root.save(&mut ast, &mut 0);
+    println!("{}", ast);
+    let expression_trees = self.create_expression_trees();
+    println!("Árvores de expressão geradas: {}", expression_trees.len());
+    for (i, tree) in expression_trees.iter().enumerate() {
+      println!("Árvore de expressão {}:\n{}", i + 1, tree.output());
+    }
+    println!("Tipos de símbolos por escopo:\n{:?}", self.scopes);
+    println!("Verificação de tipos: Ok");
+    println!("Verificação identificadores de escopos: Ok");
+    println!("Verificação de comandos por escopo: Ok\n");
   }
 }

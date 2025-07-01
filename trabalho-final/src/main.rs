@@ -32,26 +32,21 @@ fn main() -> Result<(), Box<dyn Error>> {
   // Lexical analysis
   let mut lexer = Lexer::new();
   lexer.parse(&input)?;
-  lexer.save_token_list("output/token_list.txt")?;
-  lexer.save_token_table("output/token_table.txt")?;
+  lexer.output_stats();
 
   // Syntax analysis
   let mut syntax_tree = SyntaxTree::new()?;
   syntax_tree.parse(&lexer.token_list)?;
-  syntax_tree.save("output/parse_tree.txt")?;
+  syntax_tree.output_stats();
 
   // Semantic analysis
   let mut semantic_tree = syntax_tree.semantic_tree()?;
-  semantic_tree.save("output/ast.txt")?;
-  let expression_trees = semantic_tree.create_expression_trees();
-  for (i, tree) in expression_trees.iter().enumerate() {
-    tree.save(&format!("expression_trees/tree_{}.dot", i));
-  }
   semantic_tree.semantic_analysis()?;
+  semantic_tree.output_stats();
 
 
-  // Should run without errors, except of course if the output file can't be created
-  semantic_tree._generate_code("output/intermediate_code.txt")?;
+  let intermediate_code = semantic_tree.generate_code();
+  println!("Código intermediário gerado:\n{}", intermediate_code);
 
   Ok(())
 }

@@ -5,10 +5,7 @@ def @a(int x) {
 def @b(int a) {
   a = a + 1 - 2;
   a = @b(a);
-  int x;
-  read x;
   print a;
-  read c;
   return;
 }
 

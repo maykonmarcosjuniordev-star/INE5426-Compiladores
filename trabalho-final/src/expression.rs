@@ -16,6 +16,16 @@ impl ExpressionTree {
     write!(file, "{}", output).expect("Failed to write to output file for expression tree");
     println!("Árvore de expressão salva em output/{}", path);
   }
+
+  pub fn output(&self) -> String {
+    let mut output = String::new();
+    output.push_str("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\n");
+    output.push_str("digraph ExpressionTree {\n");
+    let mut counter = 0;
+    self.root.save(&mut output, &mut counter);
+    output.push_str("}\n");
+    output
+  }
 }
 
 #[derive(Debug)]

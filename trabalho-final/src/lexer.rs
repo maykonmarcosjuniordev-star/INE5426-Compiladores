@@ -159,7 +159,6 @@ impl Lexer {
       column: self.column_count,
     });
 
-    println!("Análise léxica concluída com sucesso, {} tokens no total.", self.token_list.len());
     Ok(())
   }
 
@@ -179,5 +178,10 @@ impl Lexer {
     }
     println!("Tabela de símbolos salva em {}", path);
     Ok(())
+  }
+
+  pub fn output_stats(&self) {
+    println!("\nAnálise léxica concluída com sucesso, {} tokens no total.", self.token_list.len());
+    println!("Tabela de símbolos contém {} entradas.\n", self.token_table.len());
   }
 }
