@@ -1,0 +1,265 @@
+Deve-se provar que a gramática ConvCC-2025-1 G admite uma definição dirigida pela sintaxe L-atribuída (SDD L-atribuída).
+
+Uma definição dirigida pela sintaxe (SDD) é dita L-atribuída se:
+
+1 - Para cada produção A -> X1, X2,...Xn, qualquer atributo herdado de Xi, i∈ [1,n] pode depender apenas de atributos herdados ou sintetizados do símbolo pai A e atributos sintetizados de símbolos à esquerda de Xi, ou seja, X1, X2,...Xi-1;
+2 - Atributos sintetizados de um símbolo A podem depender apenas de atributos dos símbolos X1,...,Xn na produção.
+3 - Portanto, G admite uma definição L-atribuída.
+
+Parte 1: A gramática é compatível com parsing LL(1):
+
+Seja G = (Vn, Vt, P, S) uma gramática livre de contexto, com:
+- Vn: conjunto de não terminais;
+- Vt: conjunto de símbolos terminais;
+- P: conjunto de produções;
+- S: símbolo inicial
+
+Dizemos que G é uma gramática LL(1) se e somente se, para cada não-terminal A ∈ V e para cada par de produções distintas: A ->  𝛼 e A -> 𝛽, com 𝛼 != 𝛽, valem as seguintes condições:
+1 - FIRST(𝛼) ∩ FIRST(𝛽)
+2 - Se 𝜖 ∈ FIRST(𝛼), então FIRST(𝛽) ∩ FOLLOW(S) = ∅
+3 - Se 𝜖 ∈ FIRST(𝛽), então FIRST(𝛼) ∩ FOLLOW(S) = ∅
+
+Assim, ao examinar o próximo token de entrada (lookahead de 1 símbolo), é possível decidir unicamente qual produção aplicar, requisito para a análise descendente determinística.
+
+A prova de que a gramática ConvCC-2025-1 G é LL(1) está no arquivo 'grammars/ll1_proof.txt'.
+
+Parte 2 — A gramática admite uma definição dirigida pela sintaxe L-atribuída
+
+Seja uma gramática G = (Vn, Vt, P, S). Uma Definição Dirigida pela Sintaxe (SDD) é dita L-atribuída se, para cada produção da forma: 
+A -> X1, X2,...Xn,
+e para cada atributo herdado h de algum símbolo Xi, a função de avaliação de h pode depender somente de atributos (sintetizados ou herdados) de 
+- A (o símbolo do lado esquerdo da produção);
+- Atributos sintetizados de X1, X2,...Xi-1 (os irmãos à esquerda de Xi).
+Estas restrições garantem que os atributos podem ser avaliados em uma única travessia da árvore sintática da esquerda para a direita. 
+
+# TODO: Provar que essa SDD é L-atribuída
+# TODO: Substituir vetores por (esquerda, operação, direita)
+
+1 - Bloco EXPRESSIONS
+
+Produção:
+EXPRESSION -> NUMEXPRESSION EXPRESSION_1
+
+Atributos:
+- NUMEXPRESSION.ptr: sintetizado
+- EXPRESSION_1.inh: herdado
+- EXPRESSION.ptr: sintetizado
+
+ EXPRESSION_1.inh = NUMEXPRESSION.ptr
+ EXPRESSION.ptr = EXPRESSION_1.ptr
+ 
+- EXPRESSION_1.inh depende de NUMEXPRESSION.ptr, irmão à esquerda 
+- EXPRESSION.ptr depende de EXPRESSION_1.ptr, filho à direita 
+
+Produção:
+EXPRESSION_1 -> OP_EXPRESSION NUMEXPRESSION
+
+Atributos:
+- EXPRESSION_1.inh: herdado
+- OP_EXPRESSION.ptr: sintetizado
+- NUMEXPRESSION.ptr: sintetizado
+- EXPRESSION_1.ptr: sintetizado
+
+ EXPRESSION_1.ptr = Node(EXPRESSION, Some(vec![EXPRESSION_1.inh, OP_EXPRESSION.ptr, NUMEXPRESSION.ptr]))
+
+- EXPRESSION_1.ptr depende de:
+  - EXPRESSION_1.inh, herdado (do pai) 
+  - OP_EXPRESSION.ptr: filho à esquerda
+  - NUMEXPRESSION.ptr: filho à direita
+
+Produção:
+EXPRESSION_1 -> ''
+
+Atributos:
+- EXPRESSION_1.inh: herdado
+- EXPRESSION_1.ptr: sintetizado
+
+ EXPRESSION_1.ptr = Node(EXPRESSION, Some(vec![EXPRESSION_1.inh]))
+
+EXPRESSION_1.ptr depende apenas do atributo herdado do pai (EXPRESSION_1.inh)
+
+2 - Bloco NUMEXPRESSIONS:
+
+Produção:
+NUMEXPRESSION -> TERM NUMEXPRESSION_1
+
+Atributos:
+- TERM.ptr: sintetizado
+- NUMEXPRESSION_1.inh: herdado
+- NUMEXPRESSION.ptr: sintetizado
+
+ NUMEXPRESSION_1.inh = Node(NUMEXPRESSION, vec![TERM.ptr])
+ NUMEXPRESSION.ptr = NUMEXPRESSION_1.ptr
+
+- NUMEXPRESSION_1.inh depende de TERM.ptr, irmão à esquerda 
+- NUMEXPRESSION.ptr depende de NUMEXPRESSION_1.ptr, filho à direita
+
+Produção:
+NUMEXPRESSION_1 -> OP_NUMEXPRESSION TERM NUMEXPRESSION_1
+
+Atributos:
+- NUMEXPRESSION_1.inh: herdado
+- OP_NUMEXPRESSION.ptr: sintetizado
+- TERM.ptr: sintetizado
+- NUMEXPRESSION_1_1.inh: herdado
+- NUMEXPRESSION_1.ptr: sintetizado
+
+ NUMEXPRESSION_1_1.inh = Node(NUMEXPRESSION, vec![NUMEXPRESSION_1.inh.children[0], OP_NUMEXPRESSION.ptr, TERM.ptr])
+ NUMEXPRESSION_1.ptr = NUMEXPRESSION_1_1.ptr
+
+- NUMEXPRESSION_1_1.inh depende de:
+  - NUMEXPRESSION_1.inh (herdado do pai)
+  - OP_NUMEXPRESSION.ptr (filho à esquerda)
+  - TERM.ptr (filho à esquerda de NUMEXPRESSION_1_1)
+- NUMEXPRESSION_1.ptr depende de NUMEXPRESSION_1_1.ptr (filho)
+
+Produção:
+NUMEXPRESSION_1 -> ''
+
+Atributos
+- NUMEXPRESSION_1.inh: herdado
+- NUMEXPRESSION_1.ptr: sintetizado
+
+ NUMEXPRESSION_1.ptr = NUMEXPRESSION_1.inh
+- NUMEXPRESSION_1.ptr depende apenas de NUMEXPRESSION_1.inh (herdado do pai)
+
+3 - Bloco TERMS:
+
+Produção:
+TERM -> UNARYEXPRESSION TERM_1
+
+Atributos
+- UNARYEXPRESSION.ptr: sintetizado
+- TERM_1.inh: herdado
+- TERM.ptr: sintetizado
+
+ TERM_1.inh = Node(TERM, vec![UNARYEXPRESSION.ptr])
+ TERM.ptr = TERM_1.ptr
+- TERM_1.inh depende de UNARYEXPRESSION.ptr, irmão à esquerda
+- TERM.ptr depende de TERM_1.ptr, filho à direita 
+ 
+Produção:
+TERM_1 -> OP_TERM UNARYEXPRESSION TERM_1
+
+Atributos:
+- TERM_1.inh: herdado
+- OP_TERM.ptr: sintetizado
+- UNARYEXPRESSION.ptr: sintetizado
+- TERM_1_1.inh: herdado
+- TERM_1.ptr: sintetizado
+
+ TERM_1_1.inh = Node(TERM, vec![TERM_1.inh.children[0], OP_TERM.ptr, UNARYEXPRESSION.ptr])
+ TERM_1.ptr = TERM_1_1.ptr
+- TERM_1_1.inh depende de:
+  - TERM_1.inh (herdado do pai)
+  - OP_TERM.ptr (filho à esquerda)
+  - UNARYEXPRESSION.ptr (filho à esquerda de TERM_1_1)
+- TERM_1.ptr depende de TERM_1_1.ptr (filho à direita) 
+
+Produção:
+TERM_1 -> ''
+
+Atributos:
+- TERM_1.inh: herdado
+- TERM_1.ptr: sintetizado
+ 
+ TERM_1.ptr = TERM_1.inh
+- TERM_1.ptr depende apenas de TERM_1.inh (herdado do pai)
+
+4 - Bloco UNARYEXPRESSION
+
+Produção:
+UNARYEXPRESSION -> FACTOR
+
+Atributos:
+- FACTOR.ptr: sintetizado
+- UNARYEXPRESSION.ptr: sintetizado
+
+ UNARYEXPRESSION.ptr = Node(UNARYEXPRESSION, vec![FACTOR.ptr])
+- UNARYEXPRESSION.ptr depende de FACTOR.ptr (filho)
+
+Produção:
+UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
+
+Atributos:
+- OP_NUMEXPRESSION.ptr: sintetizado
+- FACTOR.ptr: sintetizado
+- UNARYEXPRESSION.ptr: sintetizado
+
+ UNARYEXPRESSION.ptr = Node(UNARYEXPRESSION, vec![OP_NUMEXPRESSION.ptr, FACTOR.ptr])
+UNARYEXPRESSION.ptr depende de:
+- OP_NUMEXPRESSION.ptr (filho à esquerda)
+- FACTOR.ptr (filho à direita)
+
+5 - Bloco FACTOR
+
+Produção:
+FACTOR -> CONSTANT
+
+Atributos:
+- CONSTANT.ptr: sintetizado
+- FACTOR.ptr: sintetizado
+
+ FACTOR.ptr = Node(FACTOR, vec![CONSTANT.ptr])
+- FACTOR.ptr depende de CONSTANT.ptr (filho)
+
+Produção:
+FACTOR -> LVALUE
+
+Atributos:
+- LVALUE.ptr: sintetizado
+- FACTOR.ptr: sintetizado
+
+ FACTOR.ptr = Node(FACTOR, vec![LVALUE.ptr])
+- FACTOR.ptr depende de LVALUE.ptr (filho)
+
+Produção:
+FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
+
+Atributos:
+- NUMEXPRESSION.ptr: sintetizado
+- FACTOR.ptr: sintetizado
+
+ FACTOR.ptr = Node(FACTOR, vec![NUMEXPRESSION.ptr])
+- FACTOR.ptr depende de NUMEXPRESSION.ptr (filho)
+
+Produção:
+LVALUE -> id VAR_INDEX
+
+Atributos:
+- id.val: valor léxico do terminal
+- VAR_INDEX.inh: herdado
+- VAR_INDEX.ptr: sintetizado
+- LVALUE.ptr: sintetizado
+
+ VAR_INDEX.inh = id.val
+ LVALUE.ptr = Node(LVALUE, vec![VAR_INDEX.ptr])
+
+- VAR_INDEX.inh depende de id.val (irmão à esquerda)
+- LVALUE.ptr depende de VAR_INDEX.ptr (filho)
+
+Produção:
+VAR_INDEX -> ''
+
+Atributos:
+- VAR_INDEX.inh: herdado
+- VAR_INDEX.ptr: sintetizado
+
+ VAR_INDEX.ptr = Node(LVALUE, vec![VAR_INDEX.inh])
+- VAR_INDEX.ptr depende apenas de VAR_INDEX.inh (herdado do pai)
+
+Somente atributos sintetizados:
+CONSTANT -> const_int
+ CONSTANT.ptr = Node(CONSTANT, const_int.val)
+CONSTANT -> const_float
+ CONSTANT.ptr = Node(CONSTANT, const_float.val)
+CONSTANT -> const_string
+ CONSTANT.ptr = Node(CONSTANT, const_string.val)
+CONSTANT -> const_null
+ CONSTANT.ptr = Node(CONSTANT, 0)
+
+Cada produção da gramática aceita uma definição de atributos herdados (somente do pai ou dos irmãos à esquerda) e sintetizados (com base nos filhos) que respeita estritamente as restrições de uma SDD L-atribuída. 
+Portanto, a gramática é compatível com uma definição dirigida pela sintaxe L-atribuída.
+
+
+
