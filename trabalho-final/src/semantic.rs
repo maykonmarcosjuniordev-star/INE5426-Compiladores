@@ -808,6 +808,7 @@ impl SemanticNode {
         // STATEMENT -> PRINTSTAT
         // STATEMENT -> READSTAT
         // STATEMENT -> RETURNSTAT
+        // STATEMENT -> kw_break
         if let Some(vardecl) = vardecl {
           vardecl.generate_code(inh);
         } else if let Some(atribstat) = atribstat {
@@ -819,6 +820,12 @@ impl SemanticNode {
         } else if let Some(statelist) = statelist {
           statelist.generate_code(inh);
         } else if let Some(commandstat) = commandstat {
+          if let SemanticNodeData::Terminal { value } = &commandstat.children {
+            if value.token_type == TokenType::KwBreak {
+              inh.code.push_str("break\n");
+              return; // No need to generate code for the break statement
+            }
+          }
           commandstat.generate_code(inh);
         }
       },
