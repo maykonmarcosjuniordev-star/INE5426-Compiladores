@@ -181,7 +181,14 @@ impl Lexer {
   }
 
   pub fn output_stats(&self) {
-    println!("\nAnálise léxica concluída com sucesso, {} tokens no total.", self.token_list.len());
-    println!("Tabela de símbolos contém {} entradas.\n", self.token_table.len());
+    println!("Análise léxica concluída com sucesso, {} tokens no total.", self.token_list.len());
+    println!("Tabela de símbolos contém {} entradas.", self.token_table.len());
+    println!("Lista de tokens: [");
+    for token in &self.token_list { println!("  {:?}", token); }
+    println!("]\nTabela de símbolos: [");
+    for (key, value) in &self.token_table {
+      println!("  Símbolo: {}, Aparições: {:?}, Total: {:?}", key, value, value.len());
+    }
+    println!("]");
   }
 }

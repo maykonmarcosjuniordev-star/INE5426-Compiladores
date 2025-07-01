@@ -30,21 +30,25 @@ fn main() -> Result<(), Box<dyn Error>> {
   let input = std::fs::read_to_string(input_file)?;
 
   // Lexical analysis
+  println!("# INICIANDO ANÁLISE LÉXICA #");
   let mut lexer = Lexer::new();
   lexer.parse(&input)?;
   lexer.output_stats();
 
   // Syntax analysis
+  println!("\n# INICIANDO ANÁLISE SINTÁTICA #");
   let mut syntax_tree = SyntaxTree::new()?;
   syntax_tree.parse(&lexer.token_list)?;
   syntax_tree.output_stats();
 
   // Semantic analysis
+  println!("\n# INICIANDO ANÁLISE SEMÂNTICA #");
   let mut semantic_tree = syntax_tree.semantic_tree()?;
   semantic_tree.semantic_analysis()?;
   semantic_tree.output_stats();
 
-
+  // Generate intermediate code
+  println!("\n# GERANDO CÓDIGO INTERMEDIÁRIO #");
   let intermediate_code = semantic_tree.generate_code();
   println!("Código intermediário gerado:\n{}", intermediate_code);
 

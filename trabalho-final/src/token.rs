@@ -12,8 +12,8 @@ pub struct Token {
 impl std::fmt::Debug for Token {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match &self.value {
-      Some(value) => write!(f, "Token {{ type: {:?}, value: {:?}, line: {}, column: {} }}", self.token_type, value, self.line, self.column),
-      None => write!(f, "Token {{ type: {:?}, line: {}, column: {} }}", self.token_type, self.line, self.column),
+      Some(value) => write!(f, "token: {:?}, value: {:?}, line: {}, column: {}", self.token_type, value, self.line, self.column),
+      None => write!(f, "token: {:?}, line: {}, column: {}", self.token_type, self.line, self.column),
     }
   }
 }

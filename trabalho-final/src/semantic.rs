@@ -1544,11 +1544,11 @@ impl SemanticTree {
   }
 
   pub fn output_stats(&self) {
-    println!("\nAnálise semântica concluída com sucesso!");
+    println!("Análise semântica concluída com sucesso.");
     println!("Árvore semântica construída a partir da árvore sintática:");
-    let mut ast = String::new();
+    let mut ast = "Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {\n".to_string();
     self.root.save(&mut ast, &mut 0);
-    println!("{}", ast);
+    println!("{}}}", ast);
     let expression_trees = self.create_expression_trees();
     println!("Árvores de expressão geradas: {} [", expression_trees.len());
     for (i, tree) in expression_trees.iter().enumerate() {
@@ -1558,6 +1558,6 @@ impl SemanticTree {
     println!("Tipos de símbolos por escopo:\n{}", self.scopes.output);
     println!("Verificação de tipos: Ok");
     println!("Verificação identificadores de escopos: Ok");
-    println!("Verificação de comandos por escopo: Ok\n");
+    println!("Verificação de comandos por escopo: Ok");
   }
 }

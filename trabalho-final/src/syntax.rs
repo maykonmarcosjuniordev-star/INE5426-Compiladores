@@ -849,7 +849,7 @@ impl SyntaxTree {
     Ok(semantic_tree)
   }
   pub fn output_stats(&self) {
-    println!("\nAnálise sintática concluída com sucesso. Árvore sintática gerada:");
-    println!("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {{{}\n}}\n", self.root.to_string(&mut 0));
+    println!("Análise sintática concluída com sucesso. Árvore sintática gerada:");
+    println!("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {{{}}}", self.root.to_string(&mut 0));
   }
 }
