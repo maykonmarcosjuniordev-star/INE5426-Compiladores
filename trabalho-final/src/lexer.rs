@@ -38,7 +38,7 @@ impl Lexer {
 
   /// Retorna um erro léxico com a linha, coluna e o token inválido.
   fn lexical_error(&self) -> Result<(), Box<dyn Error>> {
-    Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count, self.token_value).into())
+    Err(format!("Erro léxico: Caracter inválido na linha {}, coluna {}: '{}'", self.line_count, self.column_count-self.token_value.len(), self.token_value).into())
   }
 
   /// Verifica se o token construído até agora é válido.
