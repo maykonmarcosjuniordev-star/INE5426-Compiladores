@@ -5,6 +5,7 @@ pub struct CodeAttrs {
   pub code: String,
   pub memory_params: Vec<usize>,
   tmp_return: String,
+  break_label: String,
 }
 
 impl CodeAttrs {
@@ -12,6 +13,7 @@ impl CodeAttrs {
     CodeAttrs {
       register_counter: 0,
       label_counter: 0,
+      break_label: String::new(),
       tmp_return: String::new(),
       code: String::new(),
       memory_params: vec![],
@@ -36,5 +38,13 @@ impl CodeAttrs {
 
   pub fn set_prev_return(&mut self, tmp: String) {
     self.tmp_return = tmp;
+  }
+
+  pub fn get_scope_label(&self) -> &String {
+    &self.break_label
+  }
+
+  pub fn set_scope_end(&mut self, label: String) {
+    self.break_label = label;
   }
 }

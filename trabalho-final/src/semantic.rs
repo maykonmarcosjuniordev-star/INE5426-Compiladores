@@ -625,6 +625,8 @@ impl SemanticNode {
         let loop_end_label = inh.create_label();
         // inverts the condition and adds a goto to the end of the loop
         inh.code.push_str(&format!("if {} == 0 goto {}\n", cond_tmp, loop_end_label));
+        // sets the end label as the break label
+        inh.set_scope_end(loop_end_label.clone());
         // generates code for the loop body
         body.generate_code(inh);
         // generates code for the loop increment
@@ -820,12 +822,6 @@ impl SemanticNode {
         } else if let Some(statelist) = statelist {
           statelist.generate_code(inh);
         } else if let Some(commandstat) = commandstat {
-          if let SemanticNodeData::Terminal { value } = &commandstat.children {
-            if value.token_type == TokenType::KwBreak {
-              inh.code.push_str("break\n");
-              return; // No need to generate code for the break statement
-            }
-          }
           commandstat.generate_code(inh);
         }
       },
@@ -920,7 +916,7 @@ impl SemanticNode {
             inh.code.push_str(&format!("{} ", token.token_type.get_operator_type()));
           },
           TokenType::KwBreak => {
-            panic!("Break keyword should not appear on generated code");
+            inh.code.push_str(&format!("goto {}\n", &inh.get_scope_label()));
           },
           TokenType::KwNew => {
             // This is usually handled in the AllocExpression node
