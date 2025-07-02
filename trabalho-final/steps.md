@@ -42,22 +42,13 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
   - [ ] Adicionar comentários com as regras semânticas
   - [ ] Comparar a implementação com as regras semânticas
 - [-] Inserção de ids na tabela de símbolos
-  - [ ] Posição da aparição dos ids está zoada
+  - [-] Posição da aparição dos ids está zoada
   - [ ] Separar as regras sintáticas relacionadas
   - [ ] Adicionar comentários com as regras semânticas
   - [ ] Comparar a implementação com as regras semânticas
 - [-] Verificação de identificadores por escopo
-  - [ ] Separar as regras sintáticas relacionadas
-  - [ ] Adicionar comentários com as regras semânticas
-  - [ ] Comparar a implementação com as regras semânticas
-- [-] Verificação de tipos em expressões numericas. (Talvez em funções)
-  - [ ] Separar as regras sintáticas relacionadas
-  - [ ] Adicionar comentários com as regras semânticas
-  - [ ] Comparar a implementação com as regras semânticas
+- [-] Verificação de tipos em expressões numericas.
 - [-] Verificar se kw_break está no escopo de um FORSTAT
-
-## Adicionais
-- [ ] No momento, verificação de tipos é feita utilizando a árvore semântica. Seria mais eficiente realizar essa verificação diretamente na árvore de expressão.
 
 # Geração de Código Intermediário
 - [ ] Corrigir cálculo de registradores
@@ -73,9 +64,9 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
     - [-] Definir se as dependências já estarão précompiladas ou se os scripts precisarão ser rodados pelo professor.
     - [-] Criar função para execução direta do binário com um arquivo de entrada, de forma não interativa.
     - [-] Retornar toda a saída necessária do programa no terminal. (cat dos arquivos da pasta output)
-- [ ] Documentação
+- [-] Documentação
  - [-] Documento com prova de que a gramática está em LL1
- - [ ] Documento com prova de que as SDDs são L-atribuídas (Clara)
+ - [-] Documento com prova de que as SDDs são L-atribuídas (Clara)
 - [-] Readme
 - [ ] Saída do programa no terminal
  - [-] Árvores de expressão

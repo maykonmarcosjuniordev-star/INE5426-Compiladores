@@ -32,9 +32,6 @@ e para cada atributo herdado h de algum símbolo Xi, a função de avaliação d
 - Atributos sintetizados de X1, X2,...Xi-1 (os irmãos à esquerda de Xi).
 Estas restrições garantem que os atributos podem ser avaliados em uma única travessia da árvore sintática da esquerda para a direita. 
 
-# TODO: Provar que essa SDD é L-atribuída
-# TODO: Substituir vetores por (esquerda, operação, direita)
-
 1 - Bloco EXPRESSIONS
 
 Produção:

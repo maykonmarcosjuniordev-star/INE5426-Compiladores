@@ -1,7 +1,7 @@
 all:
 	mkdir -p machines
 	# TODO: Buscar versão python e usar a apropriada
-	python3.10 scripts/generate_lexer.py
+	python3 scripts/generate_lexer.py
 	cargo --quiet build --release
 	clear
 	@echo "Compilação concluída com sucesso. Binário salvo em './target/release/compiler'"

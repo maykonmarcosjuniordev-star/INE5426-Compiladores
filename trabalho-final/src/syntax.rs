@@ -9,11 +9,13 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::io::Write;
 use crate::scope_stack::ScopeStack;
+
 #[derive(Clone)] 
 pub enum Symbol {
   NonTerminal(NonTerminal),
   Terminal(TokenType, Option<Token>),
 }
+
 impl std::fmt::Debug for Symbol {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
@@ -22,7 +24,9 @@ impl std::fmt::Debug for Symbol {
     }
   }
 }
+
 pub type ParseTable = HashMap<(NonTerminal, TokenType), u32>;
+
 #[derive(Clone)]
 struct Node {
   value: Symbol,
@@ -31,6 +35,7 @@ struct Node {
   rules: Rc<Vec<(NonTerminal, Option<Vec<Symbol>>)>>,
   scopes: Rc<ScopeStack>,
 }
+
 impl Node {
   fn new(
     value: Symbol,
@@ -46,6 +51,7 @@ impl Node {
       scopes
     }
   }
+
   fn parse(&mut self, tokens: &Vec<Token>, index: &mut usize) -> Result<(), Box<dyn Error>> {
     let current_token = &tokens[*index];
     match &self.value {
@@ -84,7 +90,7 @@ impl Node {
     }
   }
 
-  /// Regras semânticas para criação da AST,
+  /// Regras semânticas para criação da AST
   /// Nessa etapa, todos os outros nós serão apenas transformados em nós semânticos.
   /// Já para os nós relacionados a expressões, serão aplicadas as regras semânticas específicas para condensar a AST.
   fn visit(&self, inh: Option<&Vec<SemanticNode>>) -> SemanticNode {
@@ -99,6 +105,8 @@ impl Node {
         if self.children.len() != 2 { panic!() }
         let child = self.children[0].clone();
         match child.value {
+          // PROGRAM -> FUNCLIST
+          //  PROGRAM.ptr = Node(PROGRAM, funclist=FUNCLIST.ptr, statement=None)
           Symbol::NonTerminal(NonTerminal::Funclist) => {
             SemanticNode {
               children: SemanticNodeData::Program {
@@ -107,6 +115,8 @@ impl Node {
               },
             }
           },
+          // PROGRAM -> STATEMENT
+          //  PROGRAM.ptr = Node(PROGRAM, funclist=None, statement=STATEMENT.ptr)
           Symbol::NonTerminal(NonTerminal::Statement) => {
             SemanticNode {
               children: SemanticNodeData::Program {
@@ -121,12 +131,15 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Funclist) => {
         match self.children.len() {
           // FUNCLIST -> ''
+          //   FUNCLIST.ptr = Node(FUNCLIST, funclist=FUNCLIST.inh)
           0 => {
             SemanticNode {
               children: SemanticNodeData::Funclist { funclist: inh.unwrap().clone() },
             }
           },
           // FUNCLIST -> FUNCDEF FUNCLIST
+          //   FUNCLIST_2.inh = FUNCLIST_1.inh + [FUNCDEF.ptr]
+          //   FUNCLIST_1.ptr = FUNCLIST_2.ptr 
           2 => {
             let mut funclist = match inh {
               None => vec![],
@@ -140,9 +153,13 @@ impl Node {
       }, 
       Symbol::NonTerminal(NonTerminal::Funcdef) => {
         if self.children.len() != 8 { panic!() }
+        // FUNCDEF -> kw_def func_id lparenthesis PARAMLIST rparenthesis lbrace STATELIST rbrace
+        //   FUNCDEF.ptr = Node(FUNCDEF, func_id=func_id.ptr, paramlist=PARAMLIST.ptr, statelist=STATELIST.ptr)
         SemanticNode {
           children: SemanticNodeData::Funcdef {
             func_id: Box::new(self.children[1].visit(None)),
+            // PARAMLIST -> ''
+            //  PARAMLIST.ptr = None
             paramlist: if self.children[3].children.len() > 0 {
               Some(Box::new(self.children[3].visit(None)))
             } else {
@@ -165,18 +182,22 @@ impl Node {
 
             self.children[2].visit(Some(&new_params))
           }
+          // PARAMLIST -> '' is handled in FUNCDEF
           _ => panic!()
         }
       }, 
       Symbol::NonTerminal(NonTerminal::Paramlist1) => {
         match self.children.len() {
           // PARAMLIST1 -> ''
+          //   PARAMLIST1.ptr = Node(PARAMLIST, paramlist=PARAMLIST.inh)
           0 => {
             SemanticNode {
               children: SemanticNodeData::Paramlist { paramlist: inh.unwrap().clone() },
             }
           },
           // PARAMLIST1 -> comma var_type id PARAMLIST1
+          //   PARAMLIST1_2.inh = PARAMLIST1_1.inh + [var_type.ptr, id.ptr]
+          //   PARAMLIST1_1.ptr = PARAMLIST1_2.ptr
           4 => {
             let mut new_params = match inh {
               None => vec![],
@@ -191,18 +212,23 @@ impl Node {
       }, 
       Symbol::NonTerminal(NonTerminal::Statelist) => {
         if self.children.len() != 2 { panic!() }
+        // STATELIST -> STATEMENT STATELIST1
+        //   STATELIST1.inh = [STATEMENT.ptr]
+        //   STATELIST.ptr = STATELIST1.ptr
         let statelist = vec![self.children[0].visit(None)];
         self.children[1].visit(Some(&statelist))
       }, 
       Symbol::NonTerminal(NonTerminal::Statelist1) => {
         match self.children.len() {
           // STATELIST1 -> ''
+          //   STATELIST1.ptr = Node(STATELIST, statelist=STATELIST.inh)
           0 => {
             SemanticNode {
               children: SemanticNodeData::Statelist { statelist: inh.unwrap().clone() },
             }
           },
           // STATELIST1 -> STATEMENT STATELIST1
+          //   STATELIST1_2.inh = STATELIST1_1.inh + [STATEMENT.ptr]
           2 => {
             let mut statelist = match inh {
               None => vec![],
@@ -217,6 +243,7 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Statement) => {
         match self.children[0].value {
           // STATEMENT -> Vardecl semicolon
+          //   STATEMENT.ptr = Node(STATEMENT, vardecl=Vardecl.ptr, atribstat=None, ifstat=None, forstat=None, statelist=None, commandstat=None)
           Symbol::NonTerminal(NonTerminal::Vardecl) => {
             SemanticNode {
               children: SemanticNodeData::Statement {
@@ -230,6 +257,7 @@ impl Node {
             }
           },
           // STATEMENT -> ATRIBSTAT semicolon
+          //   STATEMENT.ptr = Node(STATEMENT, vardecl=None, atribstat=Atribstat.ptr, ifstat=None, forstat=None, statelist=None, commandstat=None)
           Symbol::NonTerminal(NonTerminal::Atribstat) => {
             SemanticNode {
               children: SemanticNodeData::Statement {
@@ -243,6 +271,7 @@ impl Node {
             }
           },
           // STATEMENT -> (PRINTSTAT | READSTAT | RETURNSTAT | kw_break) semicolon
+          //   STATEMENT.ptr = Node(STATEMENT, vardecl=None, atribstat=None, ifstat=None, forstat=None, statelist=None, commandstat=CommandStat.ptr)
           Symbol::NonTerminal(NonTerminal::Printstat) | Symbol::NonTerminal(NonTerminal::Readstat) | Symbol::NonTerminal(NonTerminal::Returnstat) | Symbol::Terminal(TokenType::KwBreak, _) => {
             let commandstat = self.children[0].visit(None);
             SemanticNode {
@@ -257,6 +286,7 @@ impl Node {
             }
           },
           // STATEMENT -> IFSTAT
+          //   STATEMENT.ptr = Node(STATEMENT, vardecl=None, atribstat=None, ifstat=IfStat.ptr, forstat=None, statelist=None, commandstat=None)
           Symbol::NonTerminal(NonTerminal::Ifstat) => {
             SemanticNode {
               children: SemanticNodeData::Statement {
@@ -270,6 +300,7 @@ impl Node {
             }
           },
           // STATEMENT -> FORSTAT
+          //   STATEMENT.ptr = Node(STATEMENT, vardecl=None, atribstat=None, ifstat=None, forstat=ForStat.ptr, statelist=None, commandstat=None)
           Symbol::NonTerminal(NonTerminal::Forstat) => {
             SemanticNode {
               children: SemanticNodeData::Statement {
@@ -283,6 +314,7 @@ impl Node {
             }
           },
           // STATEMENT -> lbrace STATELIST rbrace
+          //   STATEMENT.ptr = Node(STATEMENT, vardecl=None, atribstat=None, ifstat=None, forstat=None, statelist=STATELIST.ptr, commandstat=None)
           Symbol::Terminal(TokenType::Lbrace, _) => {
             let statelist = self.children[1].visit(None);
             SemanticNode {
@@ -297,6 +329,7 @@ impl Node {
             }
           },
           // STATEMENT -> semicolon
+          //   STATEMENT.ptr = Node(STATEMENT, vardecl=None, atribstat=None, ifstat=None, forstat=None, statelist=None, commandstat=None)
           Symbol::Terminal(TokenType::Semicolon, _) => {
             SemanticNode {
               children: SemanticNodeData::Statement {
@@ -314,22 +347,25 @@ impl Node {
       },
       Symbol::NonTerminal(NonTerminal::Vardecl) => {
         // VARDECL -> var_type id CONST_INDEX
-        let const_index = if self.children[2].children.len() == 0 {
-          None
-        } else {
-          Some(Box::new(self.children[2].visit(None)))
-        };
+        //   VARDECL.ptr = Node(VARDECL, var_type=var_type.ptr, id=id.ptr, const_index=CONST_INDEX.ptr)
         SemanticNode {
           children: SemanticNodeData::Vardecl {
             var_type: Box::new(self.children[0].visit(None)),
             id: Box::new(self.children[1].visit(None)),
-            const_index
+            const_index: if self.children[2].children.len() == 0 {
+              // CONST_INDEX -> '': CONST_INDEX.ptr = None
+              None
+            } else {
+              Some(Box::new(self.children[2].visit(None)))
+            }
           }
         }
       },
       Symbol::NonTerminal(NonTerminal::ConstIndex) => {
         match self.children.len() {
           // CONST_INDEX -> lbracket const_int rbracket CONST_INDEX
+          //   CONST_INDEX_2.inh = CONST_INDEX_1.inh + [const_int.ptr]
+          //   CONST_INDEX_1.ptr = CONST_INDEX_2.ptr
           4 => {
             let mut new_inh = match inh {
               None => vec![],
@@ -339,6 +375,7 @@ impl Node {
             self.children[3].visit(Some(&new_inh))
           },
           // CONST_INDEX -> ''
+          //   CONST_INDEX.ptr = Node(CONST_INDEX, index=CONST_INDEX.inh)
           0 => {
             SemanticNode {
               children: SemanticNodeData::ConstIndex { index: inh.unwrap().clone() },
@@ -350,12 +387,15 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::VarIndex) => {
         match self.children.len() {
           // VAR_INDEX -> ''
+          //   VAR_INDEX.ptr = Node(VAR_INDEX, index=VAR_INDEX.inh)
           0 => {
             SemanticNode {
               children: SemanticNodeData::VarIndex { index: inh.unwrap().clone() }
             }
           },
           // VAR_INDEX -> lbracket NUMEXPRESSION rbracket VAR_INDEX
+          //   VAR_INDEX_2.inh = VAR_INDEX_1.inh + [NUMEXPRESSION.ptr]
+          //   VAR_INDEX_1.ptr = VAR_INDEX_2.ptr
           4 => {
             let mut new_params = match inh {
               None => vec![],
@@ -368,6 +408,7 @@ impl Node {
         }
       }, 
       // ATRIBSTAT -> LVALUE op_assign ATRIBSTATEVALUE
+      //   ATRIBSTAT.ptr = Node(ATRIBSTAT, lvalue=LVALUE.ptr, value=ATRIBSTATEVALUE.ptr)
       Symbol::NonTerminal(NonTerminal::Atribstat) => {
         SemanticNode {
           children: SemanticNodeData::Atribstat {
@@ -378,16 +419,22 @@ impl Node {
       },
       Symbol::NonTerminal(NonTerminal::Atribstatevalue) => {
         match self.children[0].value {
+          // ATRIBSTATEVALUE -> expression
+          //   ATRIBSTATEVALUE.ptr = Node(ATRIBSTATEVALUE, expression=EXPRESSION.ptr, allocexpression=None, funccall=None)
           Symbol::NonTerminal(NonTerminal::Expression) => {
             SemanticNode {
               children: SemanticNodeData::Atribstatevalue { expression: Some(Box::new(self.children[0].visit(None))), allocexpression: None, funccall: None }
             }
           },
+          // ATRIBSTATEVALUE -> allocexpression
+          //   ATRIBSTATEVALUE.ptr = Node(ATRIBSTATEVALUE, expression=None, allocexpression=ALLOCEXPRESSION.ptr, funccall=None)
           Symbol::NonTerminal(NonTerminal::Allocexpression) => {
             SemanticNode {
               children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: Some(Box::new(self.children[0].visit(None))), funccall: None }
             }
           },
+          // ATRIBSTATEVALUE -> funccall
+          //   ATRIBSTATEVALUE.ptr = Node(ATRIBSTATEVALUE, expression=None, allocexpression=None, funccall=FUNCCALL.ptr)
           Symbol::NonTerminal(NonTerminal::Funccall) => {
             SemanticNode {
               children: SemanticNodeData::Atribstatevalue { expression: None, allocexpression: None, funccall: Some(Box::new(self.children[0].visit(None))) }
@@ -397,6 +444,7 @@ impl Node {
         }
       },
       // FUNCCALL -> func_id lparenthesis PARAMLISTCALL rparenthesis
+      //   FUNCCALL.ptr = Node(FUNCCALL, id=func_id.ptr, paramlistcall=PARAMLISTCALL.ptr)
       Symbol::NonTerminal(NonTerminal::Funccall) => {
         SemanticNode {
           children: SemanticNodeData::Funccall {
@@ -404,6 +452,7 @@ impl Node {
             paramlistcall: if self.children[2].children.len() > 0 {
               Some(Box::new(self.children[2].visit(None)))
             } else {
+              // PARAMLISTCALL -> '': PARAMLISTCALL.ptr = None
               None
             }
           }
@@ -412,22 +461,26 @@ impl Node {
       Symbol::NonTerminal(NonTerminal::Paramlistcall) => {
         match self.children.len() {
           // PARAMLISTCALL -> expression PARAMLISTCALL1
+          //   PARAMLISTCALL_1.inh = [EXPRESSION.ptr]
           2 => {
             let inh = vec![self.children[0].visit(None)];
             self.children[1].visit(Some(&inh))
           },
+          // PARAMLISTCALL -> '' is handled in FUNCCALL
           _ => panic!()
         }
       }, 
       Symbol::NonTerminal(NonTerminal::Paramlistcall1) => {
         match self.children.len() {
           // PARAMLISTCALL_1 -> ''
+          //   PARAMLISTCALL_1.ptr = Node(PARAMLISTCALL, paramlist=PARAMLISTCALL.inh)
           0 => {
             SemanticNode {
               children: SemanticNodeData::Paramlistcall { paramlist: inh.unwrap().clone() },
             }
           },
           // PARAMLISTCALL_1 -> comma id PARAMLISTCALL_1
+          //   PARAMLISTCALL_1_2.inh = PARAMLISTCALL_1_1.inh + [id.ptr]
           3 => {
             let mut new_params = match inh {
               None => vec![],
@@ -439,31 +492,36 @@ impl Node {
           _ => panic!()
         }
       },
-      // PRINTSTAT -> kw_print EXPRESSION 
       Symbol::NonTerminal(NonTerminal::Printstat) => {
         if self.children.len() != 2 { panic!() }
+        // PRINTSTAT -> kw_print EXPRESSION
+        //   PRINTSTAT.ptr = Node(PRINTSTAT, expression=EXPRESSION.ptr) 
         SemanticNode {
           children: SemanticNodeData::Printstat { expression: Box::new(self.children[1].visit(None)) },
         }
       },
-      // READSTAT -> kw_read LVALUE
       Symbol::NonTerminal(NonTerminal::Readstat) => {
         if self.children.len() != 2 { panic!() }
+        // READSTAT -> kw_read LVALUE
+        //   READSTAT.ptr = Node(READSTAT, lvalue=LVALUE.ptr)
         SemanticNode {
           children: SemanticNodeData::Readstat { lvalue: Box::new(self.children[1].visit(None)) },
         }
       }, 
       Symbol::NonTerminal(NonTerminal::Returnstat) => {
         let Symbol::Terminal(_, token) = &self.children[0].value else { panic!("Expected terminal token for return statement"); };
+        // RETURNSTAT -> kw_return semicolon
+        //   RETURNSTAT.ptr = Node(kw_return, token=token)
         SemanticNode {
           children: SemanticNodeData::Returnstat {
             token: token.clone().unwrap()
           },
         }
       },
-      // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT 
       Symbol::NonTerminal(NonTerminal::Ifstat) => {
         if self.children.len() != 8 { panic!() }
+        // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT 
+        //   IFSTAT.ptr = Node(IFSTAT, condition=EXPRESSION.ptr, then_branch=STATELIST.ptr, else_branch=ELSESTAT.ptr)
         SemanticNode {
           children: SemanticNodeData::Ifstat {
             condition: Box::new(self.children[2].visit(None)),
@@ -471,32 +529,38 @@ impl Node {
             else_branch: if self.children[7].children.len() > 0 {
               Some(Box::new(self.children[7].visit(None)))
             } else {
+              // ELSESTAT -> '': ELSESTAT.ptr = None
               None
             }
           },
         }
       }, 
       Symbol::NonTerminal(NonTerminal::Elsestat) => {
-        // ELSESTAT -> kw_else ELSESTAT_1
         if self.children.len() != 2 { panic!() }
+        // ELSESTAT -> kw_else ELSESTAT_1
+        //   ELSESTAT.ptr = ELSESTAT_1.ptr
         SemanticNode {
           children: SemanticNodeData::Elsestat {
             statement: Box::new(self.children[1].visit(None)),
           }
         }
+        // ELSESTAT -> '' is handled in IFSTAT
       }, 
       Symbol::NonTerminal(NonTerminal::Elsestat1) => {
         match self.children.len() {
           // ELSESTAT_1 -> lbrace STATELIST rbrace
+          //   ELSESTAT_1.ptr = STATELIST.ptr
           3 => { self.children[1].visit(None) },
           // ELSESTAT_1 -> IFSTAT
+          //   ELSESTAT_1.ptr = IFSTAT.ptr
           1 => { self.children[0].visit(None) },
           _ => panic!()
         }
       },
-      // FORSTAT -> kw_for lparenthesis ATRIBSTAT semicolon EXPRESSION semicolon ATRIBSTAT rparenthesis lbrace STATELIST rbrace
       Symbol::NonTerminal(NonTerminal::Forstat) => {
         if self.children.len() != 11 { panic!() }
+        // FORSTAT -> kw_for lparenthesis ATRIBSTAT_1 semicolon EXPRESSION semicolon ATRIBSTAT_2 rparenthesis lbrace STATELIST rbrace
+        //  FORSTAT.ptr = Node(FORSTAT, init=ATRIBSTAT_1.ptr, condition=EXPRESSION.ptr, increment=ATRIBSTAT_2.ptr, body=STATELIST.ptr)
         SemanticNode {
           children: SemanticNodeData::Forstat {
             init: Box::new(self.children[2].visit(None)),
@@ -508,6 +572,8 @@ impl Node {
       }, 
       Symbol::NonTerminal(NonTerminal::Allocexpression) => {
         if self.children.len() != 3 { panic!() }
+        // ALLOCEXPRESSION -> kw_new var_type VAR_INDEX
+        //  ALLOCEXPRESSION.ptr = Node(ALLOCEXPRESSION, var_type=var_type.ptr, dimensions=VAR_INDEX.ptr)
         SemanticNode {
           children: SemanticNodeData::Allocexpression {
             var_type: Box::new(self.children[1].visit(None)),
@@ -749,6 +815,7 @@ impl Node {
       }, 
     }
   }
+
   fn to_string(&self, count: &mut u32) -> String {
     let mut result = String::new();
     let node_name = format!("{:?}_{}", self.value, count);
@@ -781,9 +848,11 @@ impl Node {
     result
   }
 }
+
 pub struct SyntaxTree {
   root: Node
 }
+
 impl SyntaxTree {
   pub fn new() -> Result<Self, Box<dyn Error>> {
     // Load Grammar rules
@@ -828,11 +897,13 @@ impl SyntaxTree {
     );
     Ok(SyntaxTree { root })
   }
+
   pub fn parse(&mut self, tokens: &Vec<Token>) -> Result<(), Box<dyn Error>> {
     let mut counter = 0;
     self.root.parse(tokens, &mut counter)?;
     Ok(())
   }
+
   pub fn _save(&self, path: &str) -> Result<(), Box<dyn Error>> {
     let mut file = std::fs::File::create(path)?;
     writeln!(file, "// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot")?;
@@ -841,6 +912,7 @@ impl SyntaxTree {
     writeln!(file, "}}")?;
     Ok(())
   }
+
   pub fn semantic_tree(&mut self) -> Result<SemanticTree, Box<dyn Error>> {
     let semantic_tree = SemanticTree {
       root: self.root.visit(None),
@@ -848,6 +920,7 @@ impl SyntaxTree {
     };
     Ok(semantic_tree)
   }
+
   pub fn output_stats(&self) {
     println!("Análise sintática concluída com sucesso. Árvore sintática gerada:");
     println!("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {{{}}}", self.root.to_string(&mut 0));
