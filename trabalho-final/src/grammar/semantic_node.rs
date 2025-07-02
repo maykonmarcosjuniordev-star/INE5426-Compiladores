@@ -23,7 +23,9 @@ pub enum SemanticNodeData {
     funccall: Option<Box<SemanticNode>>,
   },
   Constant {
-    value: ConstType
+    value: ConstType,
+    line: usize,
+    column: usize,
   },
   // CONSTINDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
   ConstIndex {

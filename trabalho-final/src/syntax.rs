@@ -783,9 +783,12 @@ impl Node {
       }, 
       Symbol::NonTerminal(NonTerminal::Constant) => {
         let Symbol::Terminal(_token_type, token ) = self.children[0].clone().value else { panic!(); };
+        let token = token.unwrap();
         SemanticNode {
           children: SemanticNodeData::Constant { 
-            value: token.unwrap().value.unwrap(),
+            value: token.value.unwrap(),
+            line: token.line,
+            column: token.column,
           },
         }
       }, 

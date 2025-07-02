@@ -17,7 +17,10 @@ pub struct SemanticNode {
 
 #[derive(Debug, Clone, PartialEq)]
 enum ReturnSem {
-  Tipo(VarType),
+  Dado {
+    tipo: VarType,
+    pos: Option<(usize, usize)>,
+  },
   TT(TokenType),
 }
 
@@ -47,18 +50,19 @@ impl SemanticNode {
           return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual na linha {}, coluna {}", id_name, id_token.line, id_token.column).into());
         };
 
-        let Some(ReturnSem::Tipo(value_type)) = value.semantic_analysis(scopes)? else { panic!(); };
+        let Some(ReturnSem::Dado{tipo: value_type, pos: Some((value_line, value_column))}) = value.semantic_analysis(scopes)? else { panic!(); };
         if value_type != symbol_entry.var_type[0] {
-          return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, id_token.line, id_token.column).into());
+          return Err(format!("Erro semântico: tipo incompatível na atribuição de '{}' na linha {} coluna {}", id_name, value_line, value_column).into());
         }
         // Check if the variable index is valid
+        // LVALUE -> id VAR_INDEX
         if let Some(var_index) = var_index {
           let SemanticNodeData::VarIndex { index } = var_index.children else { panic!("{:?}", var_index.children) };
           for child in index.iter() {
             let tipo = child.semantic_analysis(scopes)?;
-            if let Some(ReturnSem::Tipo(tipo)) = tipo {
+            if let Some(ReturnSem::Dado { tipo, pos: Some(index_pos) }) = tipo {
               if tipo != VarType::Int {
-                return Err(format!("Erro semântico: índice de variável deve ser do tipo 'int', encontrado '{:?}' na linha {}, coluna {}", tipo, 0, 0).into());
+                return Err(format!("Erro semântico: índice de variável deve ser do tipo 'int', encontrado '{:?}' na linha {}, coluna {}", tipo, index_pos.0, index_pos.1).into());
               }
             } else {
               panic!(); 
@@ -88,10 +92,10 @@ impl SemanticNode {
         }
         Ok(None)
       },
-      SemanticNodeData::Constant {value} => {
+      SemanticNodeData::Constant {value, line, column} => {
         // CONSTANT -> const_int
         //  CONSTANT.tipo = "int"
-        return Ok(Some(ReturnSem::Tipo(value.get_type())));
+        return Ok(Some(ReturnSem::Dado{ tipo: value.get_type(), pos: Some((line, column)) }));
       },
       SemanticNodeData::ConstIndex { index } => {
         // CONSTINDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
@@ -115,19 +119,20 @@ impl SemanticNode {
         //   _ => panic!()
         // }
         // EXPRESSION.tipo = children[0].tipo
-        let tipo1 = numexpression.semantic_analysis(scopes)?.unwrap();
+        let ReturnSem::Dado { tipo: tipo1, pos: exp1_pos} = numexpression.semantic_analysis(scopes)?.unwrap() else { panic!(); };
         if let Some(numexpression2) = numexpression2 {
-          let tipo2 = numexpression2.semantic_analysis(scopes)?.unwrap();
+          let ReturnSem::Dado { tipo: tipo2, pos: exp2_pos} = numexpression2.semantic_analysis(scopes)?.unwrap() else { panic!(); };
+          let exp2_pos = exp2_pos.unwrap_or((0, 0));
           if tipo1 != tipo2 {
-            return Err("Type mismatch in expression".into());
+            return Err(format!("Erro semântico: Tipos incompátiveis na expressão na linha {} coluna {}", exp2_pos.0, exp2_pos.1).into());
           } else {
             // Sempre que uma expressão possui uma operação (de comparação), o valor retornado será uma int
             // falso: 0
             // verdadeiro: 1
-            return Ok(Some(ReturnSem::Tipo(VarType::Int)));
+            return Ok(Some(ReturnSem::Dado { tipo: VarType::Int, pos: exp1_pos }));
           }
         }
-        Ok(Some(tipo1))
+        Ok(Some(ReturnSem::Dado { tipo: tipo1, pos: exp1_pos }))
       },
       SemanticNodeData::Factor {expression, lvalue, constant} => {
         // FACTOR -> CONSTANT
@@ -201,7 +206,7 @@ impl SemanticNode {
         }
         // Count the appearance of the function
         scopes.count_appearance(&func_id, value.line, value.column)?;
-        Ok(Some(ReturnSem::Tipo(VarType::Int))) // Assuming all function calls return an int
+        Ok(Some(ReturnSem::Dado { tipo: VarType::Int, pos: Some((func_line, func_col)) }))  // Assuming all function calls return an int
       },
       SemanticNodeData::Funcdef {func_id, paramlist, statelist} => {
         // Get function name
@@ -293,14 +298,15 @@ impl SemanticNode {
         return Ok(Some(tipo));
       },
       SemanticNodeData::Numexpression {term, op_numexpression, term2} => {
-        let tipo1 = term.semantic_analysis(scopes)?.unwrap();
+        let ReturnSem::Dado { tipo: tipo1, pos: exp1_pos } = term.semantic_analysis(scopes)?.unwrap() else { panic!(); };
         if let Some(op_numexpression) = op_numexpression {
           op_numexpression.semantic_analysis(scopes)?;
         }
         if let Some(term2) = term2 {
-          let tipo2 = term2.semantic_analysis(scopes)?.unwrap();
+          let ReturnSem::Dado { tipo: tipo2, pos: exp2_pos } = term2.semantic_analysis(scopes)?.unwrap() else { panic!(); };
+          let exp2_pos = exp2_pos.unwrap_or((0, 0));
           if tipo1 != tipo2 {
-            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha {} coluna {}", 0, 0).into());
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha {} coluna {}", exp2_pos.0, exp2_pos.1).into());
           }
         }
         // NUMEXPRESSION.children { 
@@ -309,7 +315,7 @@ impl SemanticNode {
         //   _ => panic!()
         // }
         // NUMEXPRESSION.tipo = children[0].tipo
-        return Ok(Some(tipo1));
+        return Ok(Some(ReturnSem::Dado { tipo: tipo1, pos: exp1_pos }));
       },
       SemanticNodeData::OpExpression {op} => {
         Ok(Some(ReturnSem::TT(op.clone())))
@@ -395,21 +401,19 @@ impl SemanticNode {
         Ok(None)
       },
       SemanticNodeData::Term { unaryexpression, unaryexpression2, .. } => {
-        let tipo1 = unaryexpression.semantic_analysis(scopes)?.unwrap();
+        let ReturnSem::Dado { tipo: tipo1, pos: exp1_pos } = unaryexpression.semantic_analysis(scopes)?.unwrap() else { panic!(); };
         if let Some(unaryexpression2) = unaryexpression2 {
-          let tipo2 = unaryexpression2.semantic_analysis(scopes)?.unwrap();
+          let ReturnSem::Dado { tipo: tipo2, pos: exp2_pos } = unaryexpression2.semantic_analysis(scopes)?.unwrap() else { panic!(); };
+          let exp2_pos = exp2_pos.unwrap_or((0, 0));
+
           if tipo1 != tipo2 {
-            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha {} coluna {}", 0, 0).into());
+            return Err(format!("Erro semântico: tipos incompatíveis na expressão numérica na linha {} coluna {}", exp2_pos.0, exp2_pos.1).into());
           }
         }
-        return Ok(Some(tipo1));
+        return Ok(Some(ReturnSem::Dado { tipo: tipo1, pos: exp1_pos }));
       },
-      SemanticNodeData::Unaryexpression { op, factor } => {
-        if let Some(op) = op {
-          op.semantic_analysis(scopes)?;
-        }
-        let tipo = factor.semantic_analysis(scopes)?.unwrap();
-        return Ok(Some(tipo));
+      SemanticNodeData::Unaryexpression { factor, .. } => {
+        factor.semantic_analysis(scopes)
       },
       SemanticNodeData::Vardecl {var_type, id, const_index} => {
         // Declared variable type
@@ -465,7 +469,7 @@ impl SemanticNode {
             // #  CONSTANT.tipo = "int"
             if let Some(value) = &token.value {
               if let ConstType::Int(_) = value {
-                Ok(Some(ReturnSem::Tipo(VarType::Int)))
+                Ok(Some(ReturnSem::Dado{ tipo: VarType::Int, pos: Some((token.line, token.column)) }))
               } else {
                 Err("Expected integer constant".into())
               }
@@ -478,7 +482,7 @@ impl SemanticNode {
             // #  CONSTANT.tipo = "float"
             if let Some(value) = &token.value {
               if let ConstType::Float(_) = value {
-                Ok(Some(ReturnSem::Tipo(VarType::Float)))
+                Ok(Some(ReturnSem::Dado{ tipo: VarType::Float, pos: Some((token.line, token.column)) }))
               } else {
                 Err("Expected float constant".into())
               }
@@ -491,7 +495,7 @@ impl SemanticNode {
             // #  CONSTANT.tipo = "string"
             if let Some(value) = &token.value {
               if let ConstType::String(_) = value {
-                Ok(Some(ReturnSem::Tipo(VarType::String)))
+                Ok(Some(ReturnSem::Dado{ tipo: VarType::String, pos: Some((token.line, token.column)) }))
               } else {
                 Err("Expected string constant".into())
               }
@@ -509,10 +513,10 @@ impl SemanticNode {
               return Err(format!("Erro semântico: variável '{}' não declarada no escopo atual na linha {} columna {}", id_name, token.line, token.column).into());
             };
             let tipo = symbol_entry.var_type[0].clone();
-            Ok(Some(ReturnSem::Tipo(tipo)))
+            Ok(Some(ReturnSem::Dado { tipo, pos: Some((token.line, token.column)) }))
           },
           TokenType::VarType => {
-            Ok(Some(ReturnSem::Tipo(token.get_type())))
+            Ok(Some(ReturnSem::Dado{ tipo: token.get_type(), pos: Some((token.line, token.column)) }))
           },
           // Comma | ConstNull | FuncId | Id
           //   | KwBreak | KwDef | KwElse | KwFor | KwIf | KwNew | KwPrint | KwRead
@@ -571,7 +575,7 @@ impl SemanticNode {
           funccall.generate_code(inh);
         }
       },
-      SemanticNodeData::Constant { value } => {
+      SemanticNodeData::Constant { value, .. } => {
         // creates a new temporary variable for the constant
         let tmp = inh.create_temp();
         inh.code.push_str(&format!("{tmp} = {}\n", value.to_string()));
@@ -995,7 +999,7 @@ impl SemanticNode {
           funccall.save(output, count);
         }
       },
-      SemanticNodeData::Constant { value } => {
+      SemanticNodeData::Constant { value, .. } => {
         output.push_str(&format!("  {} [label=\"{:?}\"]\n", count, value));
       },
       SemanticNodeData::ConstIndex { index } => {
@@ -1321,7 +1325,7 @@ impl SemanticNode {
         if let Some(expression) = expression { expression.create_expression_tree(trees); None }
         else { None }
       },
-      SemanticNodeData::Constant { value } => {
+      SemanticNodeData::Constant { value, .. } => {
         // CONSTANT -> const_int | const_float | const_string 
         // CONSTANT.ptr = const.ptr
         match value {
@@ -1435,6 +1439,8 @@ impl SemanticNode {
           // NUMEXPRESSION -> TERM
           //  NUMEXPRESSION.ptr = TERM.ptr
           }
+          // NUMERICEXPRESSION -> TERM
+          //  NUMERICEXPRESSION.ptr = TERM.ptr
           None => {
             term.create_expression_tree(trees).unwrap()
           }

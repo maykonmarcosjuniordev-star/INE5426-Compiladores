@@ -2,9 +2,9 @@ def @a(int x) {
   return;
 }
 
-def @b() {
+def @b(int a) {
   a = a + 1 - 2;
-  a = @b();
+  a = @b(a);
   print a;
   return;
 }
