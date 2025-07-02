@@ -38,14 +38,14 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
   - [-] Buscar o escopo mais ao topo da pilha, retornar erro caso símbolo não tenha sido definido
 
 - [-] Gerar a árvore de expressão com operadores e operandos
-  - [ ] Separar as regras sintáticas relacionadas
-  - [ ] Adicionar comentários com as regras semânticas
-  - [ ] Comparar a implementação com as regras semânticas
+  - [-] Separar as regras sintáticas relacionadas
+  - [-] Adicionar comentários com as regras semânticas
+  - [-] Comparar a implementação com as regras semânticas
 - [-] Inserção de ids na tabela de símbolos
   - [-] Posição da aparição dos ids está zoada
-  - [ ] Separar as regras sintáticas relacionadas
-  - [ ] Adicionar comentários com as regras semânticas
-  - [ ] Comparar a implementação com as regras semânticas
+  - [-] Separar as regras sintáticas relacionadas
+  - [-] Adicionar comentários com as regras semânticas
+  - [-] Comparar a implementação com as regras semânticas
 - [-] Verificação de identificadores por escopo
 - [-] Verificação de tipos em expressões numericas.
 - [-] Verificar se kw_break está no escopo de um FORSTAT
@@ -68,9 +68,9 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
  - [-] Documento com prova de que a gramática está em LL1
  - [-] Documento com prova de que as SDDs são L-atribuídas (Clara)
 - [-] Readme
-- [ ] Saída do programa no terminal
+- [-] Saída do programa no terminal
  - [-] Árvores de expressão
-   - [ ] Existem 3 pontos no código no qual o erro semântico não tem acesso à linha e coluna do código fonte na qual o erro acontece. Esses pontos podem ser identificados pela presença de "0, 0" no lugar dos valores apropriados.
+   - [-] Existem 3 pontos no código no qual o erro semântico não tem acesso à linha e coluna do código fonte na qual o erro acontece. Esses pontos podem ser identificados pela presença de "0, 0" no lugar dos valores apropriados.
  - [-] Tabela de símbolos com tipo
  - [-] Mensagem de sucesso para a análise das expressões
  - [-] Mensagem de sucesso para a análise das declarações por escopo
