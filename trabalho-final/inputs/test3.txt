@@ -1,4 +1,4 @@
-def @play() {
+{
     int a;
     a = 0;
 
@@ -137,11 +137,5 @@ def @play() {
         }
     }
 
-    return;
 }
 
-def @main() {
-    int result;
-    result = @play();
-    return;
-}
