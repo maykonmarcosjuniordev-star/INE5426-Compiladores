@@ -1,5 +1,3 @@
-# TODO: Provar que essa SDD é L-atribuída
-# TODO: Substituir vetores por (esquerda, operação, direita)
 EXPRESSION -> NUMEXPRESSION EXPRESSION_1
  EXPRESSION_1.inh = NUMEXPRESSION.ptr
  EXPRESSION.ptr = EXPRESSION_1.ptr

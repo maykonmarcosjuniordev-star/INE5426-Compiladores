@@ -43,10 +43,13 @@ Para a realização desse projeto, a gramática ConvCC-2025-1 foi levemente modi
 ## Requisitos
 - rust 1.75.0+
 - python 3.10+
+- Ferramenta para visualização de arquivos .dot: [GraphVizOnline](https://dreampuf.github.io/GraphvizOnline/?engine=dot)
 
 O projeto foi escrito principalmente na linguagem Rust. Tanto a versão 1.75.0 quanto 1.85.1 (mais recente no momento de entrega do trabalho) compilam sem problemas.
 
 Além disso, o projeto depende de alguns scripts feitos em python3.13. Porém, os scripts se mostraram compatíveis com python3.10+
+
+Durante o processo de compilação, diversas árvores são geradas. Para facilitar a correção da estrutura, essas árvores são exportadas seguindo um formato compátivel para entrada de ferramentas de visualização de grafos. Esse formato será mencionado ao longo desse documento como "padrão de árvore do trabalho".
 
 # Etapas
 Os arquivos na pasta `grammars` e na pasta `machines` definem regras para o funcionamento da análise léxica e análise sintática. Alguns desses arquivos foram feitos manualmente e outros são gerados por scripts python da pasta `scripts`. Esses arquivos precisam estar criados no tempo de compilação do projeto, visto que eles serão incorporados no arquivo binário resultante. Assim sendo, após a compilação do projeto, esses arquivos não são mais necessários.
@@ -77,7 +80,7 @@ A análise sintática utiliza os arquivos `grammars/syntax.txt` e `grammars/pars
 
 A tabela LL1 foi gerada pelo site [LL(1) parser generator](https://jsmachines.sourceforge.net/machines/ll1.html). Como formato de entrada para esse site, `syntax.txt` é convertido para `syntax-forge.txt` e a tabela resultante foi manualmente escrita em `grammars/parse_table.txt` de forma que `src/syntax.rs` possa facilmente importar e parsear essas informações.
 
-O resultado da análise sintática é uma árvore sintática. Essa estrutura possui uma forma de exportação compatível com o site [GraphVizOnline](https://dreampuf.github.io/GraphvizOnline/?engine=dot), que permite a visualização da árvore na forma de grafo.
+O resultado da análise sintática é uma árvore sintática, que será impressa na saída do programa utilizando o padrão de árvore desse trabalho.
 
 ## Análise semântica
 A implementação das regras será diretamente no código e não haverá necessidade de carregar os arquivos previamente mencionados.
@@ -90,16 +93,16 @@ Como a gramática da linguagem é definida de forma que funções não especific
 Para receber entrada pelo terminal, é necessário que a variável na qual o valor da entrada será armezado seja uma `string`
 
 ### Saída esperada da análise semântica
-O resultado da análise semântica consiste de 3 arquivos e 5 mensagens no terminal. As etapas definidas apenas como um arquivo serão armazenadas na pasta output e impressas no terminal. Seguem as definições de cada etapa:
-- Construção das Árvores de expressão: Armazenadas em `output/expression_trees/`. Podem ser visualizadas no mesmo site da árvore sintática.
+O resultado da análise semântica consiste das 6 mensagens no terminal descritas a seguir:
+- Construção da Árvore Semântica: A árvore sintática é usada para construir uma árvore mais enxuta, removendo gerações artificiais necessárias para o parser LL1. O formato dessa saída segue o padrão das árvores no trabalho.
+- Construção das Árvores de expressão: Cada expressão encontrada no código fonte é convertida para uma árvore de expressão. O formato dessa árvore segue o padrão de árvore do trabalho.
 - Inserção de tipo na tabela de símbolos: Implicíta no item "Verificação de Escopos". 
 - Verificação de tipos: Mensagem de status no terminal.
-- Verificação de identificadores por escopo: Armazenado em `output/scope_stack.log`. No momento em que cada escopo for fechado, será criada uma entrada no log de escopos, listando todos os identificadores definidos no escopo. Isso inclui as informações do identificador pedidas no item "Inserção de tipo na tabela de símbolos".
+- Verificação de identificadores por escopo: No momento em que cada escopo for fechado, será criada uma entrada no log de escopos, listando todos os identificadores definidos no escopo. Isso inclui as informações do identificador pedidas no item "Inserção de tipo na tabela de símbolos".
 - Comandos dentro de escopos: Mensagem de status no terminal.
 
 ## Geração de Código Intermediário
-<!-- TODO: Descrever como isso afeta o programa (depois de implementar) -->
-Senta e chora paizão
+O código intermediário é impresso no terminal após conclusão com êxito da análise semântica.
 
 # Execução do compilador e programas escritos na linguagem
 Os arquivos para testar o funcionamento do compilador estão na pasta `inputs`.
