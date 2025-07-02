@@ -34,6 +34,7 @@ impl SemanticNode {
         //  if LVALUE.tipo != ATRIBSTATVALUE.tipo: ERRO 
 
         // get lvalue id
+        // 
         let SemanticNodeData::Lvalue { id, var_index } = lvalue.children else { panic!() };
         let SemanticNodeData::Terminal { value: id_token } = id.children else { panic!() };
         let ConstType::String(id_name) = id_token.value.clone().unwrap() else { panic!() };
@@ -67,13 +68,21 @@ impl SemanticNode {
         Ok(None)
       },
       SemanticNodeData::Atribstatevalue {expression, allocexpression, funccall} => {
-        
+
+        // ATRIBSTATEVALUE -> EXPRESSION
+        // ATRIBSTATEVALUE.tipo = EXPRESSION.tipo
         if let Some(expression) = expression {
           return Ok(expression.semantic_analysis(scopes)?);
         }
+        
+        // ATRIBSTATEVALUE -> ALLOCEXPRESSION
+        // ATRIBSTATEVALUE.tipo -> ALLOCEXPRESSION.tipo
         if let Some(allocexpression) = allocexpression {
           return Ok(allocexpression.semantic_analysis(scopes)?);
         }
+
+        // ATRIBSTATEVALUE -> FUNCCALL
+        // ATRIBSTATEVALUE.tipo -> FUNCCALL.tipo
         if let Some(funccall) = funccall {
           return Ok(funccall.semantic_analysis(scopes)?);
         }
@@ -85,6 +94,7 @@ impl SemanticNode {
         return Ok(Some(ReturnSem::Tipo(value.get_type())));
       },
       SemanticNodeData::ConstIndex { index } => {
+        // CONSTINDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
         for i in index.iter() {
           i.semantic_analysis(scopes)?;
         }
@@ -150,12 +160,16 @@ impl SemanticNode {
         Ok(None)
       },
       SemanticNodeData::Funccall {id, paramlistcall} => {
+        // FUNCCALL -> id
+        // FUNCCALL -> id PARAMLISTCALL
         let SemanticNodeData::Terminal { value } = id.children else { panic!() };
         let (ConstType::String(func_id), func_line, func_col) = (value.value.clone().unwrap(), value.line, value.column) else { panic!() };
         let Some(func_types) = scopes.get_symbol(&func_id) else { return Err("Erro Semântico: função não definida nesse escopo".into()); };
         
         let mut called_types: Vec<VarType> = vec![];
+        // verificar tipo (id PARAMLISTCALL)
         match paramlistcall {
+          //TODO: Implementar verificacao de funcao sem parametro
           None => {},
           Some(paramlistcall) => {
             let SemanticNodeData::Paramlistcall { paramlist } = &paramlistcall.children else { panic!(); };
@@ -1302,29 +1316,32 @@ impl SemanticNode {
         value.create_expression_tree(trees);
         None
       },
-      // AtribStateValue -> Expression
       SemanticNodeData::Atribstatevalue { expression, .. } => {
+        // ATRIBSTATEVALUE -> EXPRESSION 
         if let Some(expression) = expression { expression.create_expression_tree(trees); None }
         else { None }
       },
-      // CONSTANT -> const_int | const_float | const_string 
       SemanticNodeData::Constant { value } => {
+        // CONSTANT -> const_int | const_float | const_string 
+        // CONSTANT.ptr = const.ptr
         match value {
           ConstType::Int(i) => { Some(ExpressionTreeNode::Operand{ value: Operand::Integer(*i) }) },
           ConstType::Float(f) => { Some(ExpressionTreeNode::Operand{ value: Operand::Float(*f) })},
           ConstType::String(s) => { Some(ExpressionTreeNode::Operand{ value: Operand::String(s.clone()) }) },
         }
       },
-      // TODO: Checar se regra Elsestat -> statement está correta ou se deveria ser Elsestat -> statelist
       SemanticNodeData::Elsestat { statement } => {
         statement.create_expression_tree(trees);
         None
       },
-      // Expression -> NumExpression | NumExpression OpExpression NumExpression
       SemanticNodeData::Expression { numexpression, op_expression, numexpression2 } => {
+        // Expression -> NumExpression | NumExpression OpExpression NumExpression
         // Nesse nodo, é criada a raiz da árvore de expressão, e a árvore é inserida no vetor de árvores para retorno da função
         // Em todos os outros nodos, são criados e retornados os outros nodos da árvore.
+
         let root = match op_expression {
+          // EXPRESSION -> NUMEXPRESSION op_expression numexpression2 
+          //  EXPRESSION_1.ptr = NODE(op_expression.op, NUMEXPRESSION.ptr, NUMEXPRESSION2.ptr)
           Some(op_expression) => {
             let n1 = numexpression.create_expression_tree(trees).unwrap();
             let n2 = numexpression2.clone().unwrap().create_expression_tree(trees).unwrap();
@@ -1335,6 +1352,8 @@ impl SemanticNode {
               right: Box::new(n2)
             }
           }
+          // EXPRESSION -> NUMEXPRESSION 
+          //   EXPRESSION.ptr -> NUMEXPRESSION.ptr 
           None => {
             numexpression.create_expression_tree(trees).unwrap()
           }
@@ -1345,11 +1364,19 @@ impl SemanticNode {
       },
       SemanticNodeData::Factor { expression, lvalue, constant } => {
         let node;
+        // FACTOR -> EXPRESSION
+        //  FACTOR.ptr = expression.ptr
         if let Some(expression) = expression {
           node = expression.create_expression_tree(trees);
-        } else if let Some(lvalue) = lvalue {
+        } 
+        // FACTOR -> LVALUE
+        //  FACTOR.ptr = lvalue.ptr
+        else if let Some(lvalue) = lvalue {
           node = lvalue.create_expression_tree(trees);
-        } else if let Some(constant) = constant {
+        } 
+        // FACTOR -> constant
+        //  FACTOR.ptr = constant.ptr
+        else if let Some(constant) = constant {
           node = constant.create_expression_tree(trees);
         } else {
           panic!();
@@ -1380,8 +1407,12 @@ impl SemanticNode {
         None
       },
       SemanticNodeData::Lvalue { id, var_index } => {
+        // LVALUE -> id
+        // LVALUE -> id VARINDEX
+        //    LVALUE.ptr = id.ptr
         if let Some(var_index) = var_index { var_index.create_expression_tree(trees); }
         let SemanticNodeData::Terminal { value: id_node } = &id.children else { panic!(); };
+
         if let Some(ConstType::String(id_name)) = &id_node.value {
           Some(ExpressionTreeNode::Operand { value: Operand::Identifier(id_name.clone())})
         } else {
@@ -1390,6 +1421,8 @@ impl SemanticNode {
       },
       SemanticNodeData::Numexpression { term, op_numexpression, term2 } => {
         let root = match op_numexpression {
+          // NUMEXPRESSION -> NUMEXPRESSION op_numexpression TERM
+          //  NUMEXPRESSION_1.ptr = NODE(op_numexpression.op, NUMEXPRESSION_2.ptr, TERM.ptr)
           Some(op_numexpression) => {
             let n1 = term.create_expression_tree(trees).unwrap();
             let n2 = term2.clone().unwrap().create_expression_tree(trees).unwrap();
@@ -1399,6 +1432,8 @@ impl SemanticNode {
               left: Box::new(n1),
               right: Box::new(n2)
             }
+          // NUMEXPRESSION -> TERM
+          //  NUMEXPRESSION.ptr = TERM.ptr
           }
           None => {
             term.create_expression_tree(trees).unwrap()
@@ -1431,6 +1466,8 @@ impl SemanticNode {
       },
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
         let root = match op_term {
+          // TERM -> TERM_1 op_term UNARYEXPRESSION
+          //  TERM.ptr = NODE(op_term.op, TERM_1.ptr, UNARYEXPRESSION.ptr)
           Some(op_term) => {
             let n1 = unaryexpression.create_expression_tree(trees).unwrap();
             let n2 = unaryexpression2.clone().unwrap().create_expression_tree(trees).unwrap();
@@ -1441,11 +1478,14 @@ impl SemanticNode {
               right: Box::new(n2)
             }
           }
+          // TERM -> UNARYEXPRESSION
+          //  TERM.ptr = UNARYEXPRESSION.ptr
           None => { unaryexpression.create_expression_tree(trees).unwrap() }
         };
         Some(root)
       },
       SemanticNodeData::Terminal { value } => {
+        // token.ptr = NODE(operando, token.value)
         match value.token_type {
           TokenType::ConstInt => {
             if let Some(ConstType::Int(i)) = &value.value {
@@ -1479,6 +1519,8 @@ impl SemanticNode {
         }
       },
       SemanticNodeData::Unaryexpression { op, factor } => {
+        // UNARYEXPRESSION -> op FACTOR
+        //  UNARYEXPRESSION.ptr = NODE(op.op, FACTOR.ptr)
         match op {
           Some(op) => {
             let SemanticNodeData::OpNumexpression { op } = op.children else { panic!(); };
@@ -1487,10 +1529,13 @@ impl SemanticNode {
               operand: Box::new(factor.create_expression_tree(trees).unwrap())
             })
           },
+          // UNARYEXPRESSION -> FACTOR
+          //  UNARYEXPRESSION.ptr -> FACTOR.ptr
           None => { factor.create_expression_tree(trees) }
         }
       },
       SemanticNodeData::VarIndex { index } => {
+        // VARINDEX -> [NUMEXPRESSION1, NUMEXPRESSION2, NUMEXPRESSION3]
         for i in index.iter() { i.create_expression_tree(trees); }
         None
       },
