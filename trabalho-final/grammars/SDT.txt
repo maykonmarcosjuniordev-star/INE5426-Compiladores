@@ -1,0 +1,108 @@
+
+EXPRESSION -> NUMEXPRESSION { EXPRESSION_1.inh = NUMEXPRESSION.ptr; } EXPRESSION_1
+            { EXPRESSION.ptr = EXPRESSION_1.ptr; }
+
+EXPRESSION_1 -> OP_EXPRESSION NUMEXPRESSION
+    { EXPRESSION_1.ptr = Node(EXPRESSION, Some(vec![
+        EXPRESSION_1.inh, OP_EXPRESSION.ptr, NUMEXPRESSION.ptr
+    ])); }
+
+EXPRESSION_1 -> ''
+    { EXPRESSION_1.ptr = Node(EXPRESSION, Some(vec![
+        EXPRESSION_1.inh
+    ])); }
+
+NUMEXPRESSION -> TERM { NUMEXPRESSION_1.inh = Node(NUMEXPRESSION, vec![TERM.ptr]); } NUMEXPRESSION_1
+                { NUMEXPRESSION.ptr = NUMEXPRESSION_1.ptr; }
+
+
+NUMEXPRESSION_1 -> OP_NUMEXPRESSION TERM {
+    NUMEXPRESSION_1_1.inh = Node(NUMEXPRESSION, vec![
+        NUMEXPRESSION_1.inh.children[0], OP_NUMEXPRESSION.ptr, TERM.ptr
+    ]);
+} NUMEXPRESSION_1
+    { NUMEXPRESSION_1.ptr = NUMEXPRESSION_1_1.ptr; }
+
+NUMEXPRESSION_1 -> ''
+    { NUMEXPRESSION_1.ptr = NUMEXPRESSION_1.inh; }
+
+
+TERM -> UNARYEXPRESSION { TERM_1.inh = Node(TERM, vec![UNARYEXPRESSION.ptr]); } TERM_1
+        { TERM.ptr = TERM_1.ptr; }
+
+
+TERM_1 -> OP_TERM UNARYEXPRESSION {
+    TERM_1_1.inh = Node(TERM, vec![
+        TERM_1.inh.children[0], OP_TERM.ptr, UNARYEXPRESSION.ptr
+    ]);
+} TERM_1
+    { TERM_1.ptr = TERM_1_1.ptr; }
+
+TERM_1 -> ''
+    { TERM_1.ptr = TERM_1.inh; }
+
+
+UNARYEXPRESSION -> FACTOR
+    { UNARYEXPRESSION.ptr = Node(UNARYEXPRESSION, vec![FACTOR.ptr]); }
+
+UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
+    { UNARYEXPRESSION.ptr = Node(UNARYEXPRESSION, vec![OP_NUMEXPRESSION.ptr, FACTOR.ptr]); }
+
+
+OP_EXPRESSION -> op_eq
+    { OP_EXPRESSION.ptr = Node(op_eq, None); }
+
+OP_EXPRESSION -> op_ne
+    { OP_EXPRESSION.ptr = Node(op_ne, None); }
+
+OP_EXPRESSION -> op_ge
+    { OP_EXPRESSION.ptr = Node(op_ge, None); }
+    
+OP_EXPRESSION -> op_gt
+    { OP_EXPRESSION.ptr = Node(op_gt, None); }
+    
+OP_EXPRESSION -> op_le
+    { OP_EXPRESSION.ptr = Node(op_le, None); }
+    
+OP_EXPRESSION -> op_lt
+    { OP_EXPRESSION.ptr = Node(op_lt, None); }
+
+
+FACTOR -> CONSTANT
+    { FACTOR.ptr = Node(FACTOR, vec![CONSTANT.ptr]); }
+
+FACTOR -> LVALUE
+    { FACTOR.ptr = Node(FACTOR, vec![LVALUE.ptr]); }
+
+FACTOR -> lparenthesis NUMEXPRESSION rparenthesis
+    { FACTOR.ptr = Node(FACTOR, vec![NUMEXPRESSION.ptr]); }
+
+
+CONSTANT -> const_int
+    { CONSTANT.ptr = Node(CONSTANT, const_int.val); }
+
+CONSTANT -> const_float
+    { CONSTANT.ptr = Node(CONSTANT, const_float.val); }
+
+CONSTANT -> const_string
+    { CONSTANT.ptr = Node(CONSTANT, const_string.val); }
+
+CONSTANT -> const_null
+    { CONSTANT.ptr = Node(CONSTANT, 0); }
+
+
+LVALUE -> id { VAR_INDEX.inh = id.val; } VAR_INDEX
+         { LVALUE.ptr = Node(LVALUE, vec![VAR_INDEX.ptr]); }
+
+
+VAR_INDEX -> ''
+    { VAR_INDEX.ptr = Node(LVALUE, vec![VAR_INDEX.inh]); }
+
+
+
+
+
+
+
+
+

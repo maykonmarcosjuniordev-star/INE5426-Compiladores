@@ -38,7 +38,7 @@ UNARYEXPRESSION -> OP_NUMEXPRESSION FACTOR
 OP_EXPRESSION -> op_eq
  OP_EXPRESSION.ptr = Node(op_eq, None)
 OP_EXPRESSION -> op_ne
- OPERACAO.ptr = Node(op_ne, None)
+ OP_EXPRESSION.ptr = Node(op_ne, None)
 OP_EXPRESSION -> op_ge
  OP_EXPRESSION.ptr = Node(op_ge, None)
 OP_EXPRESSION -> op_gt
