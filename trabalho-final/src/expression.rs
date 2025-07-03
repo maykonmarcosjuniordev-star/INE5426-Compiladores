@@ -1,21 +1,8 @@
-use std::fs::File;
-use std::io::Write;
-
 pub struct ExpressionTree {
   pub root: ExpressionTreeNode
 }
 
 impl ExpressionTree {
-  pub fn _save(&self, path: &str) {
-    let mut file = File::create(format!("output/{}", path)).expect("Failed to create output file for expression tree");
-    let mut output = String::new();
-    output.push_str("digraph ExpressionTree {\n");
-    let mut counter = 0;
-    self.root.save(&mut output, &mut counter);
-    output.push_str("}\n");
-    write!(file, "{}", output).expect("Failed to write to output file for expression tree");
-    println!("Árvore de expressão salva em output/{}", path);
-  }
 
   pub fn output(&self) -> String {
     let mut output = String::new();

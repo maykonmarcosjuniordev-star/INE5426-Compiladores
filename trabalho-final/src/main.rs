@@ -30,27 +30,31 @@ fn main() -> Result<(), Box<dyn Error>> {
   let input = std::fs::read_to_string(input_file)?;
 
   // Lexical analysis
-  println!("# INICIANDO ANÁLISE LÉXICA #");
+  let mut output = String::new();
+  output.push_str(&format!("# INICIANDO ANÁLISE LÉXICA #"));
   let mut lexer = Lexer::new();
   lexer.parse(&input)?;
-  lexer.output_stats();
+  lexer.output_stats(&mut output);
 
   // Syntax analysis
-  println!("\n# INICIANDO ANÁLISE SINTÁTICA #");
+  output.push_str(&format!("\n# INICIANDO ANÁLISE SINTÁTICA #"));
   let mut syntax_tree = SyntaxTree::new()?;
   syntax_tree.parse(&lexer.token_list)?;
-  syntax_tree.output_stats();
+  syntax_tree.output_stats(&mut output);
 
   // Semantic analysis
-  println!("\n# INICIANDO ANÁLISE SEMÂNTICA #");
+  output.push_str(&format!("\n# INICIANDO ANÁLISE SEMÂNTICA #"));
   let mut semantic_tree = syntax_tree.semantic_tree()?;
   semantic_tree.semantic_analysis()?;
-  semantic_tree.output_stats();
+  semantic_tree.output_stats(&mut output);
 
   // Generate intermediate code
-  println!("\n# GERANDO CÓDIGO INTERMEDIÁRIO #");
+  output.push_str(&format!("\n# GERANDO CÓDIGO INTERMEDIÁRIO #"));
   let intermediate_code = semantic_tree.generate_code();
-  println!("Código intermediário gerado:\n{}", intermediate_code);
+  output.push_str(&format!("Código intermediário gerado:\n{}", intermediate_code));
+
+  // print the output
+  println!("{}", output);
 
   Ok(())
 }

@@ -51,7 +51,7 @@ Como diferentes escopos podem usar o mesmo símbolo de formas diferentes, serão
 - [-] Verificar se kw_break está no escopo de um FORSTAT
 
 # Geração de Código Intermediário
-- [ ] Corrigir cálculo de registradores
+- [-] Corrigir cálculo de registradores
 
 # Entrega
 - [-] Programa com todas as fases

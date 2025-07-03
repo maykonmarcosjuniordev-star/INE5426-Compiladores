@@ -3,7 +3,6 @@ use crate::token::Token;
 use crate::grammar::{token_type::TokenType, const_type::ConstType};
 use std::collections::HashMap;
 use std::error::Error;
-use std::io::Write;
 
 type State = u32;
 pub struct Lexer {
@@ -162,33 +161,17 @@ impl Lexer {
     Ok(())
   }
 
-  pub fn _save_token_list(&self, path: &str) -> Result<(), Box<dyn Error>> {
-    let mut file = std::fs::File::create(path)?;
+  pub fn output_stats(&self, output: &mut String) {
+    output.push_str(&format!("Análise léxica concluída com sucesso, {} tokens no total.", self.token_list.len()));
+    output.push_str(&format!("Tabela de símbolos contém {} entradas.", self.token_table.len()));
+    output.push_str(&format!("Lista de tokens: ["));
     for token in &self.token_list {
-      writeln!(file, "{:?}", token)?;
+        output.push_str(&format!("  {:?}", token));
     }
-    println!("Lista de tokens salva em {}", path);
-    Ok(())
-  }
-
-  pub fn _save_token_table(&self, path: &str) -> Result<(), Box<dyn Error>> {
-    let mut file = std::fs::File::create(path)?;
+    output.push_str(&format!("]\nTabela de símbolos: ["));
     for (key, value) in &self.token_table {
-      writeln!(file, "{}: {:?}", key, value)?;
+      output.push_str(&format!("  Símbolo: {}, Aparições: {:?}, Total: {:?}", key, value, value.len()));
     }
-    println!("Tabela de símbolos salva em {}", path);
-    Ok(())
-  }
-
-  pub fn output_stats(&self) {
-    println!("Análise léxica concluída com sucesso, {} tokens no total.", self.token_list.len());
-    println!("Tabela de símbolos contém {} entradas.", self.token_table.len());
-    println!("Lista de tokens: [");
-    for token in &self.token_list { println!("  {:?}", token); }
-    println!("]\nTabela de símbolos: [");
-    for (key, value) in &self.token_table {
-      println!("  Símbolo: {}, Aparições: {:?}, Total: {:?}", key, value, value.len());
-    }
-    println!("]");
+    output.push_str(&format!("]"));
   }
 }

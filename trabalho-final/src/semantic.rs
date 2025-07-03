@@ -1,6 +1,5 @@
 use core::panic;
 use std::error::Error;
-use std::io::Write;
 use crate::code_attrs::CodeAttrs;
 use crate::scope_stack::ScopeStack;
 use crate::scope_stack::ScopeType;
@@ -174,7 +173,6 @@ impl SemanticNode {
         let mut called_types: Vec<VarType> = vec![];
         // verificar tipo (id PARAMLISTCALL)
         match paramlistcall {
-          //TODO: Implementar verificacao de funcao sem parametro
           None => {},
           Some(paramlistcall) => {
             let SemanticNodeData::Paramlistcall { paramlist } = &paramlistcall.children else { panic!(); };
@@ -1576,24 +1574,6 @@ impl SemanticTree {
     Ok(())
   }
 
-  pub fn _save(&self, path: &str) -> Result<(), Box<dyn Error>> {
-    let mut file = std::fs::File::create(path)?;
-    let mut output = "digraph G {\n".to_string();
-    self.root.save(&mut output, &mut 0);
-    output.push_str("}\n");
-    writeln!(file, "{}", output)?;
-    println!("Árvore de expressão salva em {}", path);
-    Ok(())
-  }
-
-  pub fn _save_code(&self, path: &str) -> Result<(), Box<dyn Error>> {
-    let mut file = std::fs::File::create(path)?;
-    let mut code_attrs = CodeAttrs::new();
-    self.root.generate_code(&mut code_attrs);
-    writeln!(file, "{}", code_attrs.code)?;
-    Ok(())
-  }
-
   pub fn generate_code(&self) -> String {
     let mut code_attrs = CodeAttrs::new();
     self.root.generate_code(&mut code_attrs);
@@ -1606,21 +1586,21 @@ impl SemanticTree {
     trees
   }
 
-  pub fn output_stats(&self) {
-    println!("Análise semântica concluída com sucesso.");
-    println!("Árvore semântica construída a partir da árvore sintática:");
+  pub fn output_stats(&self, output: &mut String) {
+    output.push_str(&format!("Análise semântica concluída com sucesso."));
+    output.push_str(&format!("Árvore semântica construída a partir da árvore sintática:"));
     let mut ast = "Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {\n".to_string();
     self.root.save(&mut ast, &mut 0);
-    println!("{}}}", ast);
+    output.push_str(&format!("{}}}", ast));
     let expression_trees = self.create_expression_trees();
-    println!("Árvores de expressão geradas: {} [", expression_trees.len());
+    output.push_str(&format!("Árvores de expressão geradas: {} [", expression_trees.len()));
     for (i, tree) in expression_trees.iter().enumerate() {
-      println!("Árvore de expressão {}:\n{}", i + 1, tree.output());
+      output.push_str(&format!("Árvore de expressão {}:\n{}", i + 1, tree.output()));
     }
-    println!("]");
-    println!("Tipos de símbolos por escopo:\n{}", self.scopes.output);
-    println!("Verificação de tipos: Ok");
-    println!("Verificação identificadores de escopos: Ok");
-    println!("Verificação de comandos por escopo: Ok");
+    output.push_str(&format!("]"));
+    output.push_str(&format!("Tipos de símbolos por escopo:\n{}", self.scopes.output));
+    output.push_str(&format!("Verificação de tipos: Ok"));
+    output.push_str(&format!("Verificação identificadores de escopos: Ok"));
+    output.push_str(&format!("Verificação de comandos por escopo: Ok"));
   }
 }

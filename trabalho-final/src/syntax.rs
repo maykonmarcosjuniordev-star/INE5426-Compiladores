@@ -7,7 +7,6 @@ use crate::semantic::SemanticNode;
 use crate::grammar::semantic_node::SemanticNodeData;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::io::Write;
 use crate::scope_stack::ScopeStack;
 
 #[derive(Clone)] 
@@ -907,15 +906,6 @@ impl SyntaxTree {
     Ok(())
   }
 
-  pub fn _save(&self, path: &str) -> Result<(), Box<dyn Error>> {
-    let mut file = std::fs::File::create(path)?;
-    writeln!(file, "// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot")?;
-    writeln!(file, "digraph G {{")?;
-    writeln!(file, "{}", self.root.to_string(&mut 0))?;
-    writeln!(file, "}}")?;
-    Ok(())
-  }
-
   pub fn semantic_tree(&mut self) -> Result<SemanticTree, Box<dyn Error>> {
     let semantic_tree = SemanticTree {
       root: self.root.visit(None),
@@ -924,8 +914,8 @@ impl SyntaxTree {
     Ok(semantic_tree)
   }
 
-  pub fn output_stats(&self) {
-    println!("Análise sintática concluída com sucesso. Árvore sintática gerada:");
-    println!("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {{{}}}", self.root.to_string(&mut 0));
+  pub fn output_stats(&self, output: &mut String) {
+    output.push_str(&format!("Análise sintática concluída com sucesso. Árvore sintática gerada:"));
+    output.push_str(&format!("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {{{}}}", self.root.to_string(&mut 0)));
   }
 }
