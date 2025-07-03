@@ -857,7 +857,7 @@ impl SemanticNode {
         } else if let Some(commandstat) = commandstat {
           commandstat.generate_code(inh)
         } else {
-          panic!("STATEMENT is empty");
+          String::new()
         }
       },
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
