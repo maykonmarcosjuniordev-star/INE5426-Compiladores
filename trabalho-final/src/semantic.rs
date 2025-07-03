@@ -536,22 +536,24 @@ impl SemanticNode {
     match &self.children {
       SemanticNodeData::Allocexpression { var_type, dimensions } => {
         // ALLOCEXPRESSION -> kw_new vartype VAR_INDEX
-        let tmp = inh.create_temp();
-        inh.code.push_str(&format!("{} = alloc ", tmp));
-        // Generate code for the variable type
-        var_type.generate_code(inh);
         // will not call generate_code for dimensions,
         // because it would print the dimensions between brackets
-        let SemanticNodeData::VarIndex { index } = &dimensions.children else { panic!(); };
+        let SemanticNodeData::VarIndex { index 
+        } = &dimensions.children else { panic!(); };
+        let tmp_dim = inh.create_temp();
+        inh.code.push_str(&format!("{} = 1\n", tmp_dim));
         if !index.is_empty() {
-          inh.code.push_str(", ");
-          for (i, child) in index.iter().enumerate() {
-            child.generate_code(inh);
-            if i < index.len() - 1 {
-              inh.code.push_str(", ");
-            }
+          for child in index.iter() {
+            let tmp0 = child.generate_code(inh);
+            inh.code.push_str(&format!("{} = {} * {}\n", tmp_dim, tmp_dim, tmp0));
           }
         }
+        // Generate code for the variable type
+        let var_size = var_type.generate_code(inh);
+        inh.code.push_str(&format!("param {}\n", var_size));
+        let tmp = inh.create_temp();
+        inh.code.push_str(&format!("param {}\n", tmp_dim));
+        inh.code.push_str(&format!("{} = call alloc, 2", tmp));
         inh.code.push_str("\n");
         tmp
       },
@@ -926,7 +928,7 @@ impl SemanticNode {
             String::from("0")
           },
           TokenType::VarType => {
-            panic!("VarType should not appear on generated code");
+            format!("{:?}", token.get_type())
           },
           TokenType::KwIf => {
             panic!("If keyword should not appear on generated code");

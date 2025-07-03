@@ -1,4 +1,8 @@
 def @multiplyMatrices() {
+    int z0;
+    int z1;
+    z1 = 10;
+    z0 = new int[2*z1];
     print "Verificando se a multiplicação de matrizes é válida";
 
     int aRows;
