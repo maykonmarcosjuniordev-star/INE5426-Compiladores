@@ -532,7 +532,7 @@ impl SemanticNode {
   }
 
   /// generate TAC (Three Address Code) for the semantic node
-  fn generate_code(&self, inh: &mut CodeAttrs) {
+  fn generate_code(&self, inh: &mut CodeAttrs) -> String {
     match &self.children {
       SemanticNodeData::Allocexpression { var_type, dimensions } => {
         // ALLOCEXPRESSION -> kw_new vartype VAR_INDEX
@@ -553,33 +553,34 @@ impl SemanticNode {
           }
         }
         inh.code.push_str("\n");
+        tmp
       },
       SemanticNodeData::Atribstat { lvalue, value } => {
         // ATRIBSTAT -> LVALUE op_assign ATRIBSTATEVALUE
-        // generate code for the value first
-        value.generate_code(inh);
-        let tmp = inh.get_prev_return().clone();
-        // then atributes it to the lvalue
-        lvalue.generate_code(inh);
-        inh.code.push_str(&format!("{} = {}\n", inh.get_prev_return(), tmp));
+        let tmp_lv = lvalue.generate_code(inh);
+        let tmp_v = value.generate_code(inh);
+        inh.code.push_str(&format!("{} = {}\n", tmp_lv, tmp_v));
+        tmp_lv
       },
       SemanticNodeData::Atribstatevalue { expression, allocexpression, funccall } => {
         // ATRIBSTATEVALUE -> EXPRESSION 
         // ATRIBSTATEVALUE -> ALLOCEXPRESSION
         // ATRIBSTATEVALUE -> FUNCCALL
         if let Some(expression) = expression {
-          expression.generate_code(inh);
+          expression.generate_code(inh)
         } else if let Some(allocexpression) = allocexpression {
-          allocexpression.generate_code(inh);
+          allocexpression.generate_code(inh)
         } else if let Some(funccall) = funccall {
-          funccall.generate_code(inh);
+          funccall.generate_code(inh)          
+        } else {
+          panic!("ATRIBSTATEVALUE is empty");
         }
       },
       SemanticNodeData::Constant { value, .. } => {
         // creates a new temporary variable for the constant
         let tmp = inh.create_temp();
         inh.code.push_str(&format!("{tmp} = {}\n", value.to_string()));
-        inh.set_prev_return(tmp);
+        tmp
       },
       SemanticNodeData::ConstIndex { index } => {
         // CONSTINDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
@@ -589,43 +590,44 @@ impl SemanticNode {
           child.generate_code(inh);
           inh.code.push_str("]");
         }
+        String::new() // No temporary variable is created for CONSTINDEX
       },
       SemanticNodeData::Elsestat { statement } => {
         // ELSESTAT -> kw_else IFSTAT
         // ELSESTAT -> kw_else lbrace STATELIST rbrace
-        statement.generate_code(inh);
+        statement.generate_code(inh)
       },
       SemanticNodeData::Expression { numexpression, numexpression2, op_expression } => {
-        // TODO: Resolver a troca de temporários
         // EXPRESSION -> NUMEXPRESSION
         // EXPRESSION -> NUMEXPRESSION op_expression numexpression2
         // inh.code.push_str(&format!("{{\n"));
 
-        numexpression.generate_code(inh);
-        // there should always be a previous return value
-        let tmp = inh.get_prev_return().clone();
+        let tmp = numexpression.generate_code(inh);
         if let Some(numexpression2) = numexpression2 {
-          numexpression2.generate_code(inh);
+          if let Some(op_expression) = op_expression {
+            let tmp2 = numexpression2.generate_code(inh);
+            inh.code.push_str(&format!("{} = {} ", tmp, tmp));
+            op_expression.generate_code(inh);
+            inh.code.push_str(&format!(" {}\n", tmp2));
+          }
         }
-        if let Some(op_expression) = op_expression {
-          inh.code.push_str(&format!("{} = {} ", tmp, tmp));
-          op_expression.generate_code(inh);
-          let tmp2 = inh.get_prev_return();
-          inh.code.push_str(&format!(" {}\n", tmp2));
-        }
-        inh.set_prev_return(tmp);
-        // inh.code.push_str("}\n");
+        tmp
       },
       SemanticNodeData::Factor { expression, lvalue, constant } => {
         // FACTOR -> EXPRESSION
         // FACTOR -> LVALUE
         // FACTOR -> CONSTANT
         if let Some(expression) = expression {
-          expression.generate_code(inh);
+          expression.generate_code(inh)
         } else if let Some(lvalue) = lvalue {
-          lvalue.generate_code(inh);
+          let id = lvalue.generate_code(inh);
+          let tmp = inh.create_temp();
+          inh.code.push_str(&format!("{} = {}\n", tmp, id));
+          tmp
         } else if let Some(constant) = constant {
-          constant.generate_code(inh);
+          constant.generate_code(inh)
+        } else {
+            panic!("FACTOR is empty");
         }
       },
       SemanticNodeData::Forstat { init, condition, increment, body } => {
@@ -636,10 +638,9 @@ impl SemanticNode {
         init.generate_code(inh);
         // adds the loop start label to the code
         inh.code.push_str(&format!("{}:\n", loop_start_label));
-        // generates code for the loop condition
-        condition.generate_code(inh);
+        // generates code for the loop condition and
         // gets the previous return value, which is the result of the condition
-        let cond_tmp = inh.get_prev_return().clone();
+        let cond_tmp = condition.generate_code(inh);
         // creates a label for the end of the loop
         let loop_end_label = inh.create_label();
         // inverts the condition and adds a goto to the end of the loop
@@ -654,6 +655,7 @@ impl SemanticNode {
         inh.code.push_str(&format!("goto {}\n", loop_start_label));
         // adds a label for the end of the loop
         inh.code.push_str(&format!("{}:\n", loop_end_label));
+        cond_tmp
       },
       SemanticNodeData::Funccall { id, paramlistcall } => {
         // FUNCCALL -> id
@@ -665,33 +667,34 @@ impl SemanticNode {
         } else {
           0
         };
-        inh.code.push_str("call ");
+        let tmp = inh.create_temp();
+        inh.code.push_str(&format!("{} = call ", tmp));
         id.generate_code(inh);
         inh.code.push_str(&format!(", {}\n", n_params));
+        tmp
       },
       SemanticNodeData::Funcdef { func_id, paramlist, statelist } => {
-        // TODO saber se pode usar labels
         // FUNCDEF -> func_id PARAMLIST STATELIST
         // FUNCDEF -> func_id STATELIST
         func_id.generate_code(inh);
-        inh.code.push_str(": ");
+        inh.code.push_str(":\n");
         if let Some(paramlist) = paramlist {
           paramlist.generate_code(inh);
         }
-        statelist.generate_code(inh);
+        statelist.generate_code(inh)
       },
       SemanticNodeData::Funclist { funclist } => {
         // FUNCLIST -> FUNCDEF+
         for func in funclist.iter() {
           func.generate_code(inh);
         }
+        String::new() // No temporary variable is created for FUNCLIST
       },
       SemanticNodeData::Ifstat { condition, then_branch, else_branch } => {
         // IFSTAT -> kw_if lparenthesis EXPRESSION rparenthesis lbrace STATELIST rbrace ELSESTAT
-        // calculates the condition
-        condition.generate_code(inh);
+        // calculates the condition, and
         // gets the previous return value, which is the result of the condition
-        let cond_tmp = inh.get_prev_return().clone();
+        let cond_tmp = condition.generate_code(inh);
         // creates a label for the end of then branch
         let then_end_label = inh.create_label();
         // inverts the condition and adds a goto to the end of then branch
@@ -711,38 +714,41 @@ impl SemanticNode {
           // adds a label for the end of the else branch
           inh.code.push_str(&format!("{}:\n", else_end_label));
         }
+        cond_tmp // returns the temporary variable generated for the condition
       },
       SemanticNodeData::Lvalue { id, var_index } => {
         // LVALUE -> id
         // LVALUE -> id VARINDEX
-        let tmp = inh.create_temp();
-        inh.code.push_str(&format!("{} = ", tmp));
-        id.generate_code(inh);
+        // let tmp = inh.create_temp();
+        // inh.code.push_str(&format!("{} = ", tmp));
+        let mut lval = if let SemanticNodeData::Terminal { value } = &id.children {
+            format!("{}", value.value.as_ref().unwrap().to_string())
+        } else {
+          panic!("Expected Terminal for LVALUE id");
+        };
         if let Some(var_index) = var_index {
-          var_index.generate_code(inh);
+          lval.push_str(var_index.generate_code(inh).as_str());
         }
-        inh.code.push_str("\n");
-        inh.set_prev_return(tmp);
+        // inh.code.push_str("\n");
+        lval
       },
       SemanticNodeData::Numexpression { term, op_numexpression, term2 } => {
         // NUMEXPRESSION -> term
         // NUMEXPRESSION -> term op_numexpressin term2
         // term may also be a Numexpression
         // inh.code.push_str(&format!("[\n"));
-        term.generate_code(inh);
         // there should always be a previous return value
-        let tmp = inh.get_prev_return().clone();
+        let tmp = term.generate_code(inh);
         if let Some(term2) = term2 {
-          term2.generate_code(inh);
-        }
-        if let Some(op_numexpression) = op_numexpression {
-          inh.code.push_str(&format!("{} = {} ", tmp, tmp));
-          op_numexpression.generate_code(inh);
-          let tmp2 = inh.get_prev_return();
-          inh.code.push_str(&format!(" {}\n", tmp2));
-        }
-        inh.set_prev_return(tmp);
+          let tmp2 = term2.generate_code(inh);
+          if let Some(op_numexpression) = op_numexpression {
+            inh.code.push_str(&format!("{} = {} ", tmp, tmp));
+            op_numexpression.generate_code(inh);
+            inh.code.push_str(&format!(" {}\n", tmp2));
+          }
+        } 
         // inh.code.push_str("]\n");
+        tmp
       },
       SemanticNodeData::OpExpression { op } => {
         // OP_EXPRESSION -> op_eq
@@ -750,74 +756,82 @@ impl SemanticNode {
         // OP_EXPRESSION -> op_ge
         // OP_EXPRESSION -> op_gt
         // OP_EXPRESSION -> op_le
-        // OP_EXPRESSION -> op_lt        
-        inh.code.push_str(&format!("{}", op.get_operator_type()));
+        // OP_EXPRESSION -> op_lt
+        let val = format!("{}", op.get_operator_type());
+        inh.code.push_str(&val);
+        val
       },
       SemanticNodeData::OpNumexpression { op } => {
         // OP_NUMEXPRESSION -> op_plus
         // OP_NUMEXPRESSION -> op_minus
-        inh.code.push_str(&format!("{}", op.get_operator_type()));
+        let val = format!("{}", op.get_operator_type());
+        inh.code.push_str(&val);
+        val
       },
       SemanticNodeData::OpTerm { op } => {
         // OP_TERM -> op_multiply
         // OP_TERM -> op_division
         // OP_TERM -> op_modular
-        inh.code.push_str(&format!("{}", op.get_operator_type()));
+        let val = format!("{}", op.get_operator_type());
+        inh.code.push_str(&val);
+        val
       },
       SemanticNodeData::Paramlist { .. } => {        
-        // TODO Vai ficar vazio?
         // PARAMLIST -> (vartype id)+
+        String::new()
       },
       SemanticNodeData::Paramlistcall { paramlist } => {
-        // TODO Verificar se é o jeito certo de calcular o tamanho dos parâmetros
         // PARAMLISTCALL -> (id)+
         for param in paramlist.iter() {
           inh.code.push_str("param ");
-          let param_start = inh.code.len();
           param.generate_code(inh);
-          let param_length = inh.code.len() - param_start;
-          inh.memory_params.push(param_length);
           inh.code.push_str("\n");
         }
+        String::new() // No temporary variable is created for PARAMLISTCALL
       },
       SemanticNodeData::Printstat { expression } => {
         // PRINTSTAT -> EXPRESSION
         // converts to TAC version of a print statement
         // gets the value of the expression
-        expression.generate_code(inh);
+        let tmp = expression.generate_code(inh);
         // loads as a parameter to the print function
-        inh.code.push_str(&format!("param {}\n", inh.get_prev_return()));
+        inh.code.push_str(&format!("param {}\n", tmp));
         // calls the print function
         inh.code.push_str("call print, 1\n");
-        //inh.code.push_str("PopParam 4\n"); // Pop the parameter from the stack
+        tmp // returns the temporary variable used for the expression
       },
       SemanticNodeData::Program { funclist, statement } => {
         // PROGRAM -> FUNCLIST
         // PROGRAM -> STATEMENT
         if let Some(funclist) = funclist {
-          funclist.generate_code(inh);
+          funclist.generate_code(inh)
         } else if let Some(statement) = statement {
-          statement.generate_code(inh);
+          statement.generate_code(inh)
+        } else {
+          panic!("PROGRAM is empty");
         }
       },
       SemanticNodeData::Readstat { lvalue } => {
-        // TODO: Add parameters push and pop
         // READSTAT -> LVALUE
         // converts to TAC version of a read statement
-        lvalue.generate_code(inh);
-        let tmp = inh.get_prev_return();
+        let tmp = lvalue.generate_code(inh);
         // call read function for the temporary variable
         inh.code.push_str(&format!("{} = call read, 0\n", tmp));
+        tmp
       },
       SemanticNodeData::Returnstat { .. } => {
         // RETURNSTAT -> kw_return semicolon
         inh.code.push_str("return\n");
+        String::new() // No temporary variable is created for RETURNSTAT
       },
       SemanticNodeData::Statelist { statelist } => {
         // STATELIST -> STATEMENT+
+        let mut tmp = String::new();
         for statement in statelist.iter() {
-          statement.generate_code(inh);
+          tmp = statement.generate_code(inh);
         }
+        // returns the last temporary variable generated
+        tmp
       },
       SemanticNodeData::Statement { vardecl, atribstat, ifstat, forstat, statelist, commandstat } => {
         // STATEMENT -> VARDECL 
@@ -831,96 +845,88 @@ impl SemanticNode {
         // STATEMENT -> RETURNSTAT
         // STATEMENT -> kw_break
         if let Some(vardecl) = vardecl {
-          vardecl.generate_code(inh);
+          vardecl.generate_code(inh)
         } else if let Some(atribstat) = atribstat {
-          atribstat.generate_code(inh);
+          atribstat.generate_code(inh)
         } else if let Some(ifstat) = ifstat {
-          ifstat.generate_code(inh);
+          ifstat.generate_code(inh)
         } else if let Some(forstat) = forstat {
-          forstat.generate_code(inh);
+          forstat.generate_code(inh)
         } else if let Some(statelist) = statelist {
-          statelist.generate_code(inh);
+          statelist.generate_code(inh)
         } else if let Some(commandstat) = commandstat {
-          commandstat.generate_code(inh);
+          commandstat.generate_code(inh)
+        } else {
+          panic!("STATEMENT is empty");
         }
       },
       SemanticNodeData::Term { unaryexpression, op_term, unaryexpression2 } => {
         // TERM -> UNARYEXPRESSION
         // TERM -> UNARYEXPRESSION op_term UNARYEXPRESSION
         // inh.code.push_str(&format!("(\n"));
-        unaryexpression.generate_code(inh);
-        let tmp = inh.get_prev_return().clone();
+        let tmp = unaryexpression.generate_code(inh);
         if let Some(unaryexpression2) = unaryexpression2 {
-          unaryexpression2.generate_code(inh);
-        }
-        if let Some(op_term) = op_term {
-          inh.code.push_str(&format!("{} = {} ", tmp, tmp));
-          op_term.generate_code(inh);
-          let tmp2 = inh.get_prev_return();
-          inh.code.push_str(&format!(" {}\n", tmp2));
-        }
-        inh.set_prev_return(tmp);
+          let tmp2 = unaryexpression2.generate_code(inh);
+          if let Some(op_term) = op_term {
+            inh.code.push_str(&format!("{} = {} ", tmp, tmp));
+            op_term.generate_code(inh);
+            inh.code.push_str(&format!(" {}\n", tmp2));
+          }
+        };
         // inh.code.push_str(")\n");
+        tmp
       },
-      SemanticNodeData::Unaryexpression { op, factor } => {
+      SemanticNodeData::Unaryexpression { op,  factor} => {
         // UNARYEXPRESSION -> FACTOR
         // UNARYEXPRESSION -> op FACTOR
         // inh.code.push_str(&format!("<\n --> {:?}\n", self));
-
-        let tmp = if inh.get_prev_return() != "" {
-          inh.get_prev_return().clone()
-        } else {
-          inh.create_temp()
-        };
-        factor.generate_code(inh);
+        let tmp = factor.generate_code(inh);
         if let Some(op) = op {
-          inh.code.push_str(&format!("{} = {} ", tmp, tmp));
+          // If there is an operator, we need to create a temporary variable
+          let tmp2 = inh.create_temp();
+          inh.code.push_str(&format!("{} = ", tmp2));
           op.generate_code(inh);
-          let tmp2 = inh.get_prev_return();
-          inh.code.push_str(&format!("{}\n", tmp2));
+          inh.code.push_str(&format!(" {}", tmp));
+          tmp2
+        } else {
+          // If there is no operator, we just return the factor
+          tmp
         }
-        inh.set_prev_return(tmp);
-        // inh.code.push_str(">\n");
       },
-      SemanticNodeData::Vardecl { id, const_index, .. } => {
-        // TODO Como criar uma variável vazia? Estou sempre iniciando com 0 por agora
+      SemanticNodeData::Vardecl { .. } => {
         //VARDECL -> var_type id
         //VARDECL -> var_type id CONSTINDEX
-        // cria uma variável local com um identificador especificado, não tX
-        id.generate_code(inh);
-        if let Some(const_index) = const_index {
-          const_index.generate_code(inh);
-        }
-        // Initialize the variable to 0
-        inh.code.push_str(" = 0\n");
-
+        // Vardecl is not used in code generation, 
+        String::new()
       },
       SemanticNodeData::VarIndex { index } => {
         // VARINDEX -> [NUMEXPRESSION1, NUMEXPRESSION2, NUMEXPRESSION3]
+        let mut output = String::new();
         for child in index.iter() {
-          inh.code.push_str("[");
-          child.generate_code(inh);
-          inh.code.push_str("]");
+          output.push_str("[");
+          let tmp = child.generate_code(inh);
+          output.push_str(&format!("{tmp}]"));
         }
+        output
       },
       SemanticNodeData::Terminal { value: token } => {
-        // TODO: Verificar o resto dos terminais
         match token.token_type {
           TokenType::Id | TokenType::FuncId => {
             let t = format!("{}", token.value.as_ref().unwrap().to_string());
             inh.code.push_str(&t);
+            t
           },
           TokenType::ConstInt | TokenType::ConstFloat | TokenType::ConstString => {
-            inh.code.push_str(&format!("{}\n", token.value.as_ref().unwrap().to_string()));
+            let val =format!("{}\n", token.value.as_ref().unwrap().to_string());
+            inh.code.push_str(&val);
+            val
           },
           TokenType::ConstNull => {
-            // TODO: É isso que null deveria ser?
             inh.code.push_str("0\n");
+            String::from("0")
           },
           TokenType::VarType => {
-            // adds the vartype to the code
-            let var_type = token.value.as_ref().unwrap().get_keyword_type();
-            inh.code.push_str(&format!("{:?} ", var_type));
+            panic!("VarType should not appear on generated code");
           },
           TokenType::KwIf => {
             panic!("If keyword should not appear on generated code");
@@ -932,10 +938,14 @@ impl SemanticNode {
             TokenType::OpLt | TokenType::OpLe | TokenType::OpPlus | TokenType::OpMinus |
             TokenType::OpMultiply | TokenType::OpDivision | TokenType::OpModular
             => {
-            inh.code.push_str(&format!("{} ", token.token_type.get_operator_type()));
+            let val = format!("{} ", token.token_type.get_operator_type());
+            inh.code.push_str(&val);
+            val
           },
           TokenType::KwBreak => {
-            inh.code.push_str(&format!("goto {}\n", &inh.get_scope_label()));
+            let br = inh.get_scope_label();
+            inh.code.push_str(&format!("goto {}\n", br));
+            String::new()
           },
           TokenType::KwNew => {
             // This is usually handled in the AllocExpression node

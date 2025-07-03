@@ -1,11 +1,9 @@
 #[allow(dead_code)]
 pub struct CodeAttrs {
-  pub register_counter: u32,
-  pub label_counter: u32,
-  pub code: String,
-  pub memory_params: Vec<usize>,
-  tmp_return: String,
+  register_counter: u32,
+  label_counter: u32,
   break_label: String,
+  pub code: String,
 }
 
 impl CodeAttrs {
@@ -14,9 +12,7 @@ impl CodeAttrs {
       register_counter: 0,
       label_counter: 0,
       break_label: String::new(),
-      tmp_return: String::new(),
       code: String::new(),
-      memory_params: vec![],
     }
   }
 
@@ -30,14 +26,6 @@ impl CodeAttrs {
     self.label_counter += 1;
     let label = format!("L{}", self.label_counter);
     label
-  }
-
-  pub fn get_prev_return(&self) -> &String {
-    &self.tmp_return
-  }
-
-  pub fn set_prev_return(&mut self, tmp: String) {
-    self.tmp_return = tmp;
   }
 
   pub fn get_scope_label(&self) -> &String {
