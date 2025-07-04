@@ -1342,6 +1342,7 @@ impl SemanticNode {
           ConstType::Int(i) => { Some(ExpressionTreeNode::Operand{ value: Operand::Integer(*i) }) },
           ConstType::Float(f) => { Some(ExpressionTreeNode::Operand{ value: Operand::Float(*f) })},
           ConstType::String(s) => { Some(ExpressionTreeNode::Operand{ value: Operand::String(s.clone()) }) },
+          ConstType::VarType(_) => { panic!() },
         }
       },
       SemanticNodeData::Elsestat { statement } => {

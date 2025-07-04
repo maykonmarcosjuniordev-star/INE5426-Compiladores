@@ -3,12 +3,16 @@ pub enum ConstType {
   Int(i64),
   Float(f64),
   String(String),
+  VarType(VarType),
 }
 
 impl ConstType {
   pub fn from_str(s: &str) -> ConstType {
     if let Ok(i) = s.parse::<i64>() { return ConstType::Int(i); }
     if let Ok(f) = s.parse::<f64>() { return ConstType::Float(f); }
+    if s == "int" { return ConstType::VarType(VarType::Int); }
+    if s == "float" { return ConstType::VarType(VarType::Float); }
+    if s == "string" { return ConstType::VarType(VarType::String); }
     ConstType::String(s.to_string())
   }
 
@@ -17,16 +21,14 @@ impl ConstType {
       ConstType::Int(_) => VarType::Int,
       ConstType::Float(_) => VarType::Float,
       ConstType::String(_) => VarType::String,
+      ConstType::VarType(v) => v.clone(),
     }
   }
 
   pub fn get_keyword_type(&self) -> VarType {
-    let ConstType::String(s) = self else { panic!("Expected ConstType::String"); };
-    match s.as_str() {
-      "int" => VarType::Int,
-      "float" => VarType::Float,
-      "string" => VarType::String,
-      _ => panic!("Unknown type keyword: {}", s),
+    match self {
+      ConstType::VarType(v) => v.clone(),
+      _ => panic!("Expected VarType"),
     }
   }
   
@@ -34,7 +36,8 @@ impl ConstType {
     match self {
       ConstType::Int(i) => i.to_string(),
       ConstType::Float(f) => f.to_string(),
-      ConstType::String(s) => s.replace("\"", "\\\"")
+      ConstType::String(s) => s.replace("\"", "\\\""),
+      ConstType::VarType(v) => format!("{}", v),
     }
   }
 }
@@ -45,6 +48,7 @@ impl std::fmt::Display for ConstType {
       ConstType::Int(i) => write!(f, "{}", i),
       ConstType::Float(fl) => write!(f, "{}", fl),
       ConstType::String(s) => write!(f, "{}", s),
+      ConstType::VarType(v) => write!(f, "{}", v),
     }
   }
 }
@@ -54,4 +58,14 @@ pub enum VarType {
   Int,
   Float,
   String
+}
+
+impl std::fmt::Display for VarType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      VarType::Int => write!(f, "int"),
+      VarType::Float => write!(f, "float"),
+      VarType::String => write!(f, "string"),
+    }
+  }
 }
