@@ -878,7 +878,7 @@ impl SyntaxTree {
       rules.push((head, body));
     }
     // Load LL1 Parse Table
-    let parse_table_file = std::fs::read_to_string("grammars/parse-table.txt")?;
+    let parse_table_file = include_str!("../grammars/parse-table.txt");
     let mut parse_table = HashMap::new();
     for line in parse_table_file.lines() {
       let parts: Vec<&str> = line.split(",").collect();
