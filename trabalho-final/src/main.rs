@@ -31,27 +31,27 @@ fn main() -> Result<(), Box<dyn Error>> {
 
   // Lexical analysis
   let mut output = String::new();
-  output.push_str(&format!("# INICIANDO ANÁLISE LÉXICA #"));
+  output.push_str(&format!("# INICIANDO ANÁLISE LÉXICA #\n"));
   let mut lexer = Lexer::new();
   lexer.parse(&input)?;
   lexer.output_stats(&mut output);
 
   // Syntax analysis
-  output.push_str(&format!("\n# INICIANDO ANÁLISE SINTÁTICA #"));
+  output.push_str(&format!("\n# INICIANDO ANÁLISE SINTÁTICA #\n"));
   let mut syntax_tree = SyntaxTree::new()?;
   syntax_tree.parse(&lexer.token_list)?;
   syntax_tree.output_stats(&mut output);
 
   // Semantic analysis
-  output.push_str(&format!("\n# INICIANDO ANÁLISE SEMÂNTICA #"));
+  output.push_str(&format!("\n# INICIANDO ANÁLISE SEMÂNTICA #\n"));
   let mut semantic_tree = syntax_tree.semantic_tree()?;
   semantic_tree.semantic_analysis()?;
   semantic_tree.output_stats(&mut output);
 
   // Generate intermediate code
-  output.push_str(&format!("\n# GERANDO CÓDIGO INTERMEDIÁRIO #"));
+  output.push_str(&format!("\n# GERANDO CÓDIGO INTERMEDIÁRIO #\n"));
   let intermediate_code = semantic_tree.generate_code();
-  output.push_str(&format!("Código intermediário gerado:\n{}", intermediate_code));
+  output.push_str(&format!("Código intermediário gerado:\n{}\n", intermediate_code));
 
   // print the output
   println!("{}", output);

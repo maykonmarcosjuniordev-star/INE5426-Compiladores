@@ -915,7 +915,7 @@ impl SyntaxTree {
   }
 
   pub fn output_stats(&self, output: &mut String) {
-    output.push_str(&format!("Análise sintática concluída com sucesso. Árvore sintática gerada:"));
-    output.push_str(&format!("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {{{}}}", self.root.to_string(&mut 0)));
+    output.push_str(&format!("Análise sintática concluída com sucesso. Árvore sintática gerada:\n"));
+    output.push_str(&format!("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {{{}}}\n", self.root.to_string(&mut 0)));
   }
 }

@@ -903,9 +903,9 @@ impl SemanticNode {
         // VARINDEX -> [NUMEXPRESSION1, NUMEXPRESSION2, NUMEXPRESSION3]
         let mut output = String::new();
         for child in index.iter() {
-          output.push_str("[");
+          output.push_str("[\n");
           let tmp = child.generate_code(inh);
-          output.push_str(&format!("{tmp}]"));
+          output.push_str(&format!("{tmp}]\n"));
         }
         output
       },
@@ -1587,20 +1587,20 @@ impl SemanticTree {
   }
 
   pub fn output_stats(&self, output: &mut String) {
-    output.push_str(&format!("Análise semântica concluída com sucesso."));
-    output.push_str(&format!("Árvore semântica construída a partir da árvore sintática:"));
+    output.push_str(&format!("Análise semântica concluída com sucesso.\n"));
+    output.push_str(&format!("Árvore semântica construída a partir da árvore sintática:\n"));
     let mut ast = "Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\ndigraph G {\n".to_string();
     self.root.save(&mut ast, &mut 0);
-    output.push_str(&format!("{}}}", ast));
+    output.push_str(&format!("{}}}\n", ast));
     let expression_trees = self.create_expression_trees();
-    output.push_str(&format!("Árvores de expressão geradas: {} [", expression_trees.len()));
+    output.push_str(&format!("Árvores de expressão geradas: {} [\n", expression_trees.len()));
     for (i, tree) in expression_trees.iter().enumerate() {
-      output.push_str(&format!("Árvore de expressão {}:\n{}", i + 1, tree.output()));
+      output.push_str(&format!("Árvore de expressão {}:\n{}\n", i + 1, tree.output()));
     }
-    output.push_str(&format!("]"));
-    output.push_str(&format!("Tipos de símbolos por escopo:\n{}", self.scopes.output));
-    output.push_str(&format!("Verificação de tipos: Ok"));
-    output.push_str(&format!("Verificação identificadores de escopos: Ok"));
-    output.push_str(&format!("Verificação de comandos por escopo: Ok"));
+    output.push_str(&format!("]\n"));
+    output.push_str(&format!("Tipos de símbolos por escopo:\n{}\n", self.scopes.output));
+    output.push_str(&format!("Verificação de tipos: Ok\n"));
+    output.push_str(&format!("Verificação identificadores de escopos: Ok\n"));
+    output.push_str(&format!("Verificação de comandos por escopo: Ok\n"));
   }
 }

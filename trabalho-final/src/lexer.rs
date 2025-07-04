@@ -162,16 +162,16 @@ impl Lexer {
   }
 
   pub fn output_stats(&self, output: &mut String) {
-    output.push_str(&format!("Análise léxica concluída com sucesso, {} tokens no total.", self.token_list.len()));
-    output.push_str(&format!("Tabela de símbolos contém {} entradas.", self.token_table.len()));
-    output.push_str(&format!("Lista de tokens: ["));
+    output.push_str(&format!("Análise léxica concluída com sucesso, {} tokens no total.\n", self.token_list.len()));
+    output.push_str(&format!("Tabela de símbolos contém {} entradas.\n", self.token_table.len()));
+    output.push_str(&format!("Lista de tokens: [\n"));
     for token in &self.token_list {
-        output.push_str(&format!("  {:?}", token));
+        output.push_str(&format!("  {:?}\n", token));
     }
-    output.push_str(&format!("]\nTabela de símbolos: ["));
+    output.push_str(&format!("]\nTabela de símbolos: [\n"));
     for (key, value) in &self.token_table {
-      output.push_str(&format!("  Símbolo: {}, Aparições: {:?}, Total: {:?}", key, value, value.len()));
+      output.push_str(&format!("  Símbolo: {}, Aparições: {:?}, Total: {:?}\n", key, value, value.len()));
     }
-    output.push_str(&format!("]"));
+    output.push_str(&format!("]\n"));
   }
 }

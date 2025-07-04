@@ -6,11 +6,11 @@ impl ExpressionTree {
 
   pub fn output(&self) -> String {
     let mut output = String::new();
-    output.push_str("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\n");
-    output.push_str("digraph ExpressionTree {\n");
+    output.push_str("// Visualize a árvore colando este arquivo em https://dreampuf.github.io/GraphvizOnline/?engine=dot\n\n");
+    output.push_str("digraph ExpressionTree {\n\n");
     let mut counter = 0;
     self.root.save(&mut output, &mut counter);
-    output.push_str("}\n");
+    output.push_str("}\n\n");
     output
   }
 }
@@ -36,23 +36,23 @@ impl ExpressionTreeNode {
     match self {
       ExpressionTreeNode::BinaryOperator { operator, left, right } => {
         let name = *counter;
-        output.push_str(&format!("  {} [label=\"{}\"];\n", name, operator));
-        output.push_str(&format!("  {} -> {};\n", name, *counter+1));
+        output.push_str(&format!("  {} [label=\"{}\"];\n\n", name, operator));
+        output.push_str(&format!("  {} -> {};\n\n", name, *counter+1));
         *counter += 1;
         left.save(output, counter);
-        output.push_str(&format!("  {} -> {};\n", name, *counter+1));
+        output.push_str(&format!("  {} -> {};\n\n", name, *counter+1));
         *counter += 1;
         right.save(output, counter);
       },
       ExpressionTreeNode::UnaryOperator { operator, operand } => {
         let name = *counter;
-        output.push_str(&format!("  {} [label=\"{}\"];\n", name, operator));
-        output.push_str(&format!("  {} -> {};\n", name, *counter+1));
+        output.push_str(&format!("  {} [label=\"{}\"];\n\n", name, operator));
+        output.push_str(&format!("  {} -> {};\n\n", name, *counter+1));
         *counter += 1;
         operand.save(output, counter);
       },
       ExpressionTreeNode::Operand { value } => {
-        output.push_str(&format!("  {} [label=\"{}\"];\n", *counter, value));
+        output.push_str(&format!("  {} [label=\"{}\"];\n\n", *counter, value));
         *counter += 1;
       }
     }
