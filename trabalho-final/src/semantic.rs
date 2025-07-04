@@ -579,7 +579,7 @@ impl SemanticNode {
       SemanticNodeData::Constant { value, .. } => {
         // creates a new temporary variable for the constant
         let tmp = inh.create_temp();
-        inh.code.push_str(&format!("{tmp} = {}\n", value.to_string()));
+        inh.code.push_str(&format!("{tmp} = {}\n", value));
         tmp
       },
       SemanticNodeData::ConstIndex { index } => {
@@ -917,7 +917,7 @@ impl SemanticNode {
             t
           },
           TokenType::ConstInt | TokenType::ConstFloat | TokenType::ConstString => {
-            let val =format!("{}\n", token.value.as_ref().unwrap().to_string());
+            let val =format!("{}\n", token.value.as_ref().unwrap());
             inh.code.push_str(&val);
             val
           },
@@ -926,7 +926,7 @@ impl SemanticNode {
             String::from("0")
           },
           TokenType::VarType => {
-            format!("{:?}", token.get_type())
+            format!("{}", token.get_type())
           },
           TokenType::KwIf => {
             panic!("If keyword should not appear on generated code");
