@@ -92,7 +92,7 @@ impl Node {
   /// Regras semânticas para criação da AST
   /// Nessa etapa, todos os outros nós serão apenas transformados em nós semânticos.
   /// Já para os nós relacionados a expressões, serão aplicadas as regras semânticas específicas para condensar a AST.
-  fn visit(&self, inh: Option<&Vec<SemanticNode>>) -> SemanticNode {
+  fn visit(&self, inh: Option<&mut Vec<SemanticNode>>) -> SemanticNode {
     match &self.value {
       Symbol::Terminal(_, token) => {
         // Cria um nó semântico terminal com o tipo do token
@@ -140,12 +140,12 @@ impl Node {
           //   FUNCLIST_2.inh = FUNCLIST_1.inh + [FUNCDEF.ptr]
           //   FUNCLIST_1.ptr = FUNCLIST_2.ptr 
           2 => {
-            let mut funclist = match inh {
-              None => vec![],
-              Some(inh) => inh.clone(),
+            let inh = match inh {
+              Some(inh) => inh,
+              None => &mut vec![]
             };
-            funclist.push(self.children[0].visit(None));
-            self.children[1].visit(Some(&funclist))
+            inh.push(self.children[0].visit(None));
+            self.children[1].visit(Some(inh))
           },
           _ => panic!()
         }        
@@ -172,14 +172,15 @@ impl Node {
         match self.children.len() {
           // PARAMLIST -> var_type id PARAMLIST1
           3 => {
-            let mut new_params = match inh {
-              None => vec![],
-              Some(inh) => inh.clone(),
+            let inh = match inh {
+              Some(inh) => { inh },
+              None => { &mut vec![] }
             };
-            new_params.push(self.children[0].visit(None));
-            new_params.push(self.children[1].visit(None));
 
-            self.children[2].visit(Some(&new_params))
+            inh.push(self.children[0].visit(None));
+            inh.push(self.children[1].visit(None));
+
+            self.children[2].visit(Some(inh))
           }
           // PARAMLIST -> '' is handled in FUNCDEF
           _ => panic!()
@@ -198,13 +199,14 @@ impl Node {
           //   PARAMLIST1_2.inh = PARAMLIST1_1.inh + [var_type.ptr, id.ptr]
           //   PARAMLIST1_1.ptr = PARAMLIST1_2.ptr
           4 => {
-            let mut new_params = match inh {
-              None => vec![],
-              Some(inh) => inh.clone(),
+            let inh = match inh {
+              Some(inh) => inh,
+              None => &mut vec![],
             };
-            new_params.push(self.children[1].visit(None));
-            new_params.push(self.children[2].visit(None));
-            self.children[3].visit(Some(&new_params))
+
+            inh.push(self.children[1].visit(None));
+            inh.push(self.children[2].visit(None));
+            self.children[3].visit(Some(inh))
           },
           _ => panic!()
         }
@@ -214,8 +216,8 @@ impl Node {
         // STATELIST -> STATEMENT STATELIST1
         //   STATELIST1.inh = [STATEMENT.ptr]
         //   STATELIST.ptr = STATELIST1.ptr
-        let statelist = vec![self.children[0].visit(None)];
-        self.children[1].visit(Some(&statelist))
+        let mut statelist = vec![self.children[0].visit(None)];
+        self.children[1].visit(Some(&mut statelist))
       }, 
       Symbol::NonTerminal(NonTerminal::Statelist1) => {
         match self.children.len() {
@@ -229,12 +231,12 @@ impl Node {
           // STATELIST1 -> STATEMENT STATELIST1
           //   STATELIST1_2.inh = STATELIST1_1.inh + [STATEMENT.ptr]
           2 => {
-            let mut statelist = match inh {
-              None => vec![],
-              Some(inh) => inh.clone(),
+            let inh = match inh {
+              Some(inh) => inh,
+              None => &mut vec![],
             };
-            statelist.push(self.children[0].visit(None));
-            self.children[1].visit(Some(&statelist))
+            inh.push(self.children[0].visit(None));
+            self.children[1].visit(Some(inh))
           },
           _ => panic!()
         }
@@ -366,12 +368,12 @@ impl Node {
           //   CONST_INDEX_2.inh = CONST_INDEX_1.inh + [const_int.ptr]
           //   CONST_INDEX_1.ptr = CONST_INDEX_2.ptr
           4 => {
-            let mut new_inh = match inh {
-              None => vec![],
-              Some(inh) => inh.clone(),
+            let inh = match inh {
+              Some(inh) => inh,
+              None => &mut vec![],
             };
-            new_inh.push(self.children[1].visit(None));
-            self.children[3].visit(Some(&new_inh))
+            inh.push(self.children[1].visit(None));
+            self.children[3].visit(Some(inh))
           },
           // CONST_INDEX -> ''
           //   CONST_INDEX.ptr = Node(CONST_INDEX, index=CONST_INDEX.inh)
@@ -396,12 +398,12 @@ impl Node {
           //   VAR_INDEX_2.inh = VAR_INDEX_1.inh + [NUMEXPRESSION.ptr]
           //   VAR_INDEX_1.ptr = VAR_INDEX_2.ptr
           4 => {
-            let mut new_params = match inh {
-              None => vec![],
-              Some(inh) => inh.clone()
+            let inh = match inh {
+              Some(inh) => inh,
+              None => &mut vec![],
             };
-            new_params.push(self.children[1].visit(None));
-            self.children[3].visit(Some(&new_params))
+            inh.push(self.children[1].visit(None));
+            self.children[3].visit(Some(inh))
           },
           _ => panic!()
         }
@@ -462,8 +464,8 @@ impl Node {
           // PARAMLISTCALL -> expression PARAMLISTCALL1
           //   PARAMLISTCALL_1.inh = [EXPRESSION.ptr]
           2 => {
-            let inh = vec![self.children[0].visit(None)];
-            self.children[1].visit(Some(&inh))
+            let mut inh = vec![self.children[0].visit(None)];
+            self.children[1].visit(Some(&mut inh))
           },
           // PARAMLISTCALL -> '' is handled in FUNCCALL
           _ => panic!()
@@ -481,12 +483,12 @@ impl Node {
           // PARAMLISTCALL_1 -> comma id PARAMLISTCALL_1
           //   PARAMLISTCALL_1_2.inh = PARAMLISTCALL_1_1.inh + [id.ptr]
           3 => {
-            let mut new_params = match inh {
-              None => vec![],
-              Some(inh) => inh.clone(),
+            let inh = match inh {
+              Some(inh) => inh,
+              None => &mut vec![],
             };
-            new_params.push(self.children[1].visit(None));
-            self.children[2].visit(Some(&new_params))
+            inh.push(self.children[1].visit(None));
+            self.children[2].visit(Some(inh))
           },
           _ => panic!()
         }
@@ -589,7 +591,7 @@ impl Node {
       //  EXPRESSION.ptr = EXPRESSION_1.ptr
       Symbol::NonTerminal(NonTerminal::Expression) => {
         let inh = self.children[0].visit(None);
-        self.children[1].visit(Some(&vec![inh]))
+        self.children[1].visit(Some(&mut vec![inh]))
       }, 
       Symbol::NonTerminal(NonTerminal::Expression1) => {
         match self.children.len() {
@@ -623,7 +625,7 @@ impl Node {
         //  NUMEXPRESSION_1.inh = [TERM.ptr]
         //  NUMEXPRESSION.ptr = NUMEXPRESSION_1.ptr
         let inh = self.children[0].visit(None);
-        self.children[1].visit(Some(&vec![inh]))
+        self.children[1].visit(Some(&mut vec![inh]))
       }, 
       Symbol::NonTerminal(NonTerminal::Numexpression1) => {
         match self.children.len() {
@@ -638,20 +640,21 @@ impl Node {
                 term2: Some(Box::new(self.children[1].visit(None))),
               },
             };
-            self.children[2].visit(Some(&vec![left_size]))
+            self.children[2].visit(Some(&mut vec![left_size]))
           }
           // NUMEXPRESSION_1 -> ''
           //  NUMEXPRESSION_1.ptr = NUMEXPRESSION_1.inh
           0 => {
             // Checa se o nodo herdado é do tipo Numexpression ou Term
-            match inh.unwrap()[0].children {
+            let Some(inh) = inh else { panic!() };
+            match inh[0].children {
               // Se for do tipo Numexpression, retorna o nodo herdado
-              SemanticNodeData::Numexpression { .. } => { inh.unwrap()[0].clone() }
+              SemanticNodeData::Numexpression { .. } => { inh[0].clone() }
               // Se for do tipo Term, retorna um novo nodo Numexpression com o termo herdado
               SemanticNodeData::Term { .. } => {
                 SemanticNode {
                   children: SemanticNodeData::Numexpression { 
-                    term: Box::new(inh.unwrap()[0].clone()),
+                    term: Box::new(inh[0].clone()),
                     op_numexpression: None,
                     term2: None,
                   },
@@ -668,7 +671,7 @@ impl Node {
         //  TERM_1.inh = [FACTOR.ptr]
         //  TERM.ptr = TERM_1.ptr
         let inh = self.children[0].visit(None);
-        self.children[1].visit(Some(&vec![inh]))
+        self.children[1].visit(Some(&mut vec![inh]))
       }, 
       Symbol::NonTerminal(NonTerminal::Term1) => {
         match self.children.len() {
@@ -683,20 +686,21 @@ impl Node {
                 unaryexpression2: Some(Box::new(self.children[1].visit(None))),
               },
             };
-            self.children[2].visit(Some(&vec![left_size]))
+            self.children[2].visit(Some(&mut vec![left_size]))
           }
           // TERM_1 -> ''
           //  TERM_1.ptr = TERM_1.inh
           0 => {
             // Checa se o nodo herdado é do tipo Term ou Factor
-            match inh.unwrap()[0].children {
+            let Some(inh) = inh else { panic!() };
+            match inh[0].children {
               // Se for do tipo Term, retorna o nodo herdado
-              SemanticNodeData::Term { .. } => { inh.unwrap()[0].clone() }
+              SemanticNodeData::Term { .. } => { inh[0].clone() }
               // Se for do tipo Unaryexpression, retorna um novo nodo Term com o fator herdado
               SemanticNodeData::Unaryexpression { .. } => {
                 SemanticNode {
                   children: SemanticNodeData::Term { 
-                    unaryexpression: Box::new(inh.unwrap()[0].clone()),
+                    unaryexpression: Box::new(inh[0].clone()),
                     op_term: None,
                     unaryexpression2: None,
                   },

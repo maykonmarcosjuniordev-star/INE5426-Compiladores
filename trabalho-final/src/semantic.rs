@@ -25,7 +25,7 @@ enum ReturnSem {
 
 impl SemanticNode {
   fn semantic_analysis(&self, scopes: &mut ScopeStack) -> Result<Option<ReturnSem>, Box<dyn Error>> {
-    match self.children.clone() {
+    match &self.children {
       SemanticNodeData::Allocexpression {var_type, dimensions} => {
         let tipo = var_type.semantic_analysis(scopes)?;
         dimensions.semantic_analysis(scopes)?;
@@ -37,8 +37,8 @@ impl SemanticNode {
 
         // get lvalue id
         // 
-        let SemanticNodeData::Lvalue { id, var_index } = lvalue.children else { panic!() };
-        let SemanticNodeData::Terminal { value: id_token } = id.children else { panic!() };
+        let SemanticNodeData::Lvalue { id, var_index } = &lvalue.children else { panic!() };
+        let SemanticNodeData::Terminal { value: id_token } = &id.children else { panic!() };
         let ConstType::String(id_name) = id_token.value.clone().unwrap() else { panic!() };
 
         // Insert id appearance in the current scope
@@ -56,7 +56,7 @@ impl SemanticNode {
         // Check if the variable index is valid
         // LVALUE -> id VAR_INDEX
         if let Some(var_index) = var_index {
-          let SemanticNodeData::VarIndex { index } = var_index.children else { panic!("{:?}", var_index.children) };
+          let SemanticNodeData::VarIndex { index } = &var_index.children else { panic!("{:?}", var_index.children) };
           for child in index.iter() {
             let tipo = child.semantic_analysis(scopes)?;
             if let Some(ReturnSem::Dado { tipo, pos: Some(index_pos) }) = tipo {
@@ -94,7 +94,7 @@ impl SemanticNode {
       SemanticNodeData::Constant {value, line, column} => {
         // CONSTANT -> const_int
         //  CONSTANT.tipo = "int"
-        return Ok(Some(ReturnSem::Dado{ tipo: value.get_type(), pos: Some((line, column)) }));
+        return Ok(Some(ReturnSem::Dado{ tipo: value.get_type(), pos: Some((*line, *column)) }));
       },
       SemanticNodeData::ConstIndex { index } => {
         // CONSTINDEX -> [CONSTANT1, CONSTANT2, CONSTANT3...]
@@ -166,7 +166,7 @@ impl SemanticNode {
       SemanticNodeData::Funccall {id, paramlistcall} => {
         // FUNCCALL -> id
         // FUNCCALL -> id PARAMLISTCALL
-        let SemanticNodeData::Terminal { value } = id.children else { panic!() };
+        let SemanticNodeData::Terminal { value } = &id.children else { panic!() };
         let (ConstType::String(func_id), func_line, func_col) = (value.value.clone().unwrap(), value.line, value.column) else { panic!() };
         let Some(func_types) = scopes.get_symbol(&func_id) else { return Err("Erro Semântico: função não definida nesse escopo".into()); };
         
@@ -209,7 +209,7 @@ impl SemanticNode {
       SemanticNodeData::Funcdef {func_id, paramlist, statelist} => {
         // Get function name
         // PARAMLIST.inh = func_id
-        let SemanticNodeData::Terminal { value } = func_id.children else { panic!() };
+        let SemanticNodeData::Terminal { value } = &func_id.children else { panic!() };
         let ConstType::String(func_id) = value.value.clone().unwrap() else { panic!(); };
         
         // Read function parameters
@@ -343,8 +343,8 @@ impl SemanticNode {
       },
       SemanticNodeData::Readstat { lvalue } => {
         // get value of lvalue
-        let SemanticNodeData::Lvalue { id, .. } = lvalue.children else { panic!() };
-        let SemanticNodeData::Terminal { value: id_token } = id.children else { panic!() };
+        let SemanticNodeData::Lvalue { id, .. } = &lvalue.children else { panic!() };
+        let SemanticNodeData::Terminal { value: id_token } = &id.children else { panic!() };
         let ConstType::String(id_name) = id_token.value.clone().unwrap() else { panic!(); };
         // Count the appearance of the variable
         scopes.count_appearance(&id_name, id_token.line, id_token.column)?;
@@ -415,17 +415,17 @@ impl SemanticNode {
       },
       SemanticNodeData::Vardecl {var_type, id, const_index} => {
         // Declared variable type
-        let SemanticNodeData::Terminal { value: var_type_node } = var_type.children else { panic!() };
-        let var_type = var_type_node.value.unwrap().get_keyword_type();
+        let SemanticNodeData::Terminal { value: var_type_node } = &var_type.children else { panic!() };
+        let var_type = var_type_node.value.clone().unwrap().get_keyword_type();
 
         // Declared variable name
-        let SemanticNodeData::Terminal { value: id_node } = id.children else { panic!() };
+        let SemanticNodeData::Terminal { value: id_node } = &id.children else { panic!() };
         let ConstType::String(id_name) = id_node.value.clone().unwrap() else { panic!() };
 
         // Declared variable dimensions
         let mut token_index = vec![];
         if let Some(const_index) = const_index {
-          let SemanticNodeData::ConstIndex { index } = const_index.children else { panic!() };
+          let SemanticNodeData::ConstIndex { index } = &const_index.children else { panic!() };
           for child in index.iter() {
             let SemanticNodeData::Terminal { value: token } = &child.children else { panic!(); };
             if let Some(ConstType::Int(index_value)) = &token.value { token_index.push(*index_value as u32); } 

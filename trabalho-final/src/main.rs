@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   let input = std::fs::read_to_string(input_file)?;
 
   // Lexical analysis
-  let mut output = String::new();
+  let mut output = String::with_capacity(512*1024); // 512 KB
   output.push_str(&format!("# INICIANDO ANÁLISE LÉXICA #\n"));
   let mut lexer = Lexer::new();
   lexer.parse(&input)?;
